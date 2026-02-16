@@ -1,0 +1,70 @@
+@page "/changelist"
+@inject HttpClient Http
+
+<PageTitle>Change List</PageTitle>
+
+<h1>Change List</h1>
+<p>Recent commits to the master branch:</p>
+
+@if (commits == null)
+{
+    <p><em>Loading commits...</em></p>
+}
+else if (commits.Length == 0)
+{
+    <p>No commits found.</p>
+}
+else
+{
+    <div class="commit-list">
+        @foreach (var commit in commits)
+        {
+            <div class="commit-item card mb-2 p-2">
+                <div class="commit-header">
+                    <span class="commit-hash badge bg-secondary">@commit.ShortHash</span>
+                    <span class="commit-date text-muted ms-2">@FormatDate(commit.Date)</span>
+                </div>
+                <div class="commit-message mt-1">
+                    <strong>@commit.Message</strong>
+                </div>
+                <div class="commit-author text-muted small">
+                    by @commit.Author
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private CommitInfo[]? commits;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            commits = await Http.GetFromJsonAsync<CommitInfo[]>("changelog.json");
+        }
+        catch
+        {
+            commits = [];
+        }
+    }
+
+    private static string FormatDate(string dateString)
+    {
+        if (DateTime.TryParse(dateString, out var date))
+        {
+            return date.ToString("yyyy-MM-dd HH:mm");
+        }
+        return dateString;
+    }
+
+    private class CommitInfo
+    {
+        public string Hash { get; set; } = "";
+        public string ShortHash { get; set; } = "";
+        public string Date { get; set; } = "";
+        public string Author { get; set; } = "";
+        public string Message { get; set; } = "";
+    }
+}

@@ -1,0 +1,9 @@
+[
+  {
+    "hash": "0000000000000000000000000000000000000000",
+    "shortHash": "0000000",
+    "date": "2024-01-01 12:00:00 +0000",
+    "author": "Local Development",
+    "message": "This is sample data for local development. Real commits will appear in production."
+  }
+]
