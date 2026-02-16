@@ -2,7 +2,7 @@
 set -e 
 
 # --- CONFIGURATION ---
-PROJECT_FOLDER="YourProjectSubfolder" 
+PROJECT_FOLDER="AbeGamingBlazorApp" 
 # ---------------------
 
 echo "Installing .NET 10.0..."
