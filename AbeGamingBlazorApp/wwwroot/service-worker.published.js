@@ -19,6 +19,9 @@ const manifestUrlList = self.assetsManifest.assets.map(asset => new URL(asset.ur
 async function onInstall(event) {
     console.info('Service worker: Install');
 
+    // Activate immediately without waiting for old service worker to finish
+    self.skipWaiting();
+
     // Fetch and cache all matching items from the assets manifest
     const assetsRequests = self.assetsManifest.assets
         .filter(asset => offlineAssetsInclude.some(pattern => pattern.test(asset.url)))
@@ -29,6 +32,9 @@ async function onInstall(event) {
 
 async function onActivate(event) {
     console.info('Service worker: Activate');
+
+    // Take control of all clients immediately
+    self.clients.claim();
 
     // Delete unused caches
     const cacheKeys = await caches.keys();
@@ -51,5 +57,20 @@ async function onFetch(event) {
         cachedResponse = await cache.match(request);
     }
 
-    return cachedResponse || fetch(event.request);
+    // If we have a cached response for navigation, return it
+    // Otherwise fetch from network, and for navigation requests fallback to index.html
+    if (cachedResponse) {
+        return cachedResponse;
+    }
+
+    try {
+        return await fetch(event.request);
+    } catch (err) {
+        // If offline and navigation request, serve cached index.html
+        if (event.request.mode === 'navigate') {
+            const cache = await caches.open(cacheName);
+            return await cache.match('index.html');
+        }
+        throw err;
+    }
 }

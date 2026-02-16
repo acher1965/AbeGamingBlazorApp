@@ -12,8 +12,26 @@ chmod +x dotnet-install.sh
 
 # --- GENERATE CHANGELOG FROM GIT COMMITS ---
 echo "Generating changelog from git commits..."
-git log --pretty=format:'{%n  "hash": "%H",%n  "shortHash": "%h",%n  "date": "%ci",%n  "author": "%an",%n  "message": "%s"%n},' HEAD | sed '$ s/,$//' | sed '1s/^/[/' | sed '$s/$/]/' > "$PROJECT_FOLDER/wwwroot/changelog.json"
-echo "Changelog generated with $(git rev-list --count HEAD) commits."
+# Use a simple approach that handles special characters in commit messages
+# The || true ensures build continues even if changelog generation fails
+(
+  echo "["
+  first=true
+  git log --format="%H|%h|%ci|%an|%s" HEAD | while IFS='|' read -r hash short date author message; do
+    # Escape quotes and backslashes in message for valid JSON
+    message=$(echo "$message" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g')
+    author=$(echo "$author" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g')
+    if [ "$first" = true ]; then
+      first=false
+    else
+      echo ","
+    fi
+    printf '  {"hash": "%s", "shortHash": "%s", "date": "%s", "author": "%s", "message": "%s"}' "$hash" "$short" "$date" "$author" "$message"
+  done
+  echo ""
+  echo "]"
+) > "$PROJECT_FOLDER/wwwroot/changelog.json" 2>/dev/null || echo "[]" > "$PROJECT_FOLDER/wwwroot/changelog.json"
+echo "Changelog generated."
 
 echo "Building $PROJECT_FOLDER..."
 ./dotnet-sdk/dotnet publish "$PROJECT_FOLDER" -c Release -o ./dist
