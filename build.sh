@@ -19,10 +19,8 @@ echo "Building $PROJECT_FOLDER..."
 ./dotnet-sdk/dotnet publish "$PROJECT_FOLDER" -c Release -o ./dist
 
 # --- SPA ROUTING FIX ---
-# This tells Cloudflare to send all traffic to index.html for internal routing
-echo "/* /index.html 200" > ./dist/wwwroot/_redirects
+# Copy index.html to 404.html - Cloudflare serves 404.html for unknown routes,
+# allowing Blazor's client-side router to handle the navigation
+cp ./dist/wwwroot/index.html ./dist/wwwroot/404.html
 
-# This prevents Cloudflare from ignoring folders starting with underscores
-touch ./dist/wwwroot/.nojekyll
-
-echo "Build and Routing configuration complete."
+echo "Build and SPA routing configuration complete."
