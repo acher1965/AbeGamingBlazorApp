@@ -9,7 +9,7 @@
         /// <param name="attackerDieRoll"></param>
         /// <param name="defenderDieRoll"></param>
         /// <returns>star already takes ResourceOrCapital into account</returns>
-        public static (int hitsToD, int hitsToA, bool star, int leaderDeathTopD, int leaderDeathTopA) DamageToDefender(
+        public static (int hitsToD, int hitsToA, bool star, int leaderDeathTopD, int leaderDeathTopA) Outcome(
             FtpLandBattle battle,
             int attackerDieRoll,
             int defenderDieRoll)

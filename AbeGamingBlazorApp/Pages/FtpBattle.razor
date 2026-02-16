@@ -1,0 +1,280 @@
+@page "/ftpbattle"
+@using AbeGamingBlazorApp.FtpBattle
+
+<PageTitle>FTP Battle Calculator</PageTitle>
+
+<h1>For The People - Battle Calculator</h1>
+
+<p>Enter the battle parameters below to calculate the result.</p>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <h4>Battle Location</h4>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="resourceOrCapital" @bind="ResourceOrCapital" />
+                <label class="form-check-label" for="resourceOrCapital">Resource or Capital</label>
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="fortPresent" @bind="FortPresent" />
+                <label class="form-check-label" for="fortPresent">Fort Present</label>
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="isInterception" @bind="IsInterception" />
+                <label class="form-check-label" for="isInterception">Is Interception</label>
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="isDefenderLeaderPresent" @bind="IsDefenderLeaderPresent" />
+                <label class="form-check-label" for="isDefenderLeaderPresent">Defender Leader Present</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <h4>Attacker</h4>
+            <div class="mb-3">
+                <label for="attackerSize" class="form-label">Attacker Size (SP)</label>
+                <input type="number" class="form-control" id="attackerSize" @bind="AttackerSize" min="1" max="15" />
+            </div>
+            <div class="mb-3">
+                <label for="attackerLeaderDRM" class="form-label">Attacker Leader DRM (incl. Cavalry Intelligence)</label>
+                <input type="number" class="form-control" id="attackerLeaderDRM" @bind="AttackerLeadersDRMIncludingCavalryIntelligence" min="0" max="10" />
+            </div>
+            <div class="mb-3">
+                <label for="attackerElites" class="form-label">Attacker Elites Committed</label>
+                <input type="number" class="form-control" id="attackerElites" @bind="AttackerElitesCommitted" min="0" max="2" />
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="attackerOOS" @bind="AttackerOOS" />
+                <label class="form-check-label" for="attackerOOS">Attacker Out of Supply</label>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <h4>Defender</h4>
+            <div class="mb-3">
+                <label for="defenderSize" class="form-label">Defender Size (SP)</label>
+                <input type="number" class="form-control" id="defenderSize" @bind="DefenderSize" min="0" max="100" />
+            </div>
+            <div class="mb-3">
+                <label for="defenderLeaderDRM" class="form-label">Defender Leader DRM (incl. Cavalry Intelligence)</label>
+                <input type="number" class="form-control" id="defenderLeaderDRM" @bind="DefenderLeadersDRMIncludingCavalryIntelligence" min="0" max="10" />
+            </div>
+            <div class="mb-3">
+                <label for="defenderElites" class="form-label">Defender Elites Committed</label>
+                <input type="number" class="form-control" id="defenderElites" @bind="DefenderElitesCommitted" min="0" max="2" />
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="defenderOOS" @bind="DefenderOOS" />
+                <label class="form-check-label" for="defenderOOS">Defender Out of Supply</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col">
+            <button class="btn btn-primary btn-lg" @onclick="CalculateBattleResult">Get Battle Result</button>
+        </div>
+    </div>
+
+    @if (BattleResult != null)
+    {
+        <div class="row mt-4">
+            <div class="col">
+                <div class="card @GetResultCardClass()">
+                    <div class="card-header">
+                        <h4 class="mb-0">Battle Result</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Outcome</h5>
+                                <p class="fs-4 fw-bold">
+                                    @if (BattleResult.Winner == Winner.Attacker)
+                                    {
+                                        <span class="text-success">🏆 Attacker Wins!</span>
+                                    }
+                                    else if (BattleResult.Winner == Winner.Defender)
+                                    {
+                                        <span class="text-danger">🛡️ Defender Wins!</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-warning">⚖️ Draw</span>
+                                    }
+                                </p>
+                                <p><strong>Battle Size:</strong> @BattleResult.BattleSize</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Dice Rolled</h5>
+                                <p><strong>Attacker Die:</strong> 🎲 @BattleResult.AttackerDieRoll</p>
+                                <p><strong>Defender Die:</strong> 🎲 @BattleResult.DefenderDieRoll</p>
+                                <p>
+                                    <strong>Star Result:</strong>
+                                    @if (BattleResult.Star)
+                                    {
+                                        <span class="text-warning">⭐ Yes</span>
+                                    }
+                                    else
+                                    {
+                                        <span>No</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <h5>Casualties</h5>
+                                <p>
+                                    <strong>Damage to Attacker:</strong>
+                                    @if (BattleResult.DamageToAttacker >= LastAttackerSize)
+                                    {
+                                        <span class="text-danger fw-bold">Wiped Out!</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@BattleResult.DamageToAttacker SP</span>
+                                    }
+                                </p>
+                                <p>
+                                    <strong>Damage to Defender:</strong>
+                                    @if (LastDefenderSize > 0 && BattleResult.DamageToDefender >= LastDefenderSize)
+                                    {
+                                        <span class="text-danger fw-bold">Wiped Out!</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@BattleResult.DamageToDefender SP</span>
+                                    }
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Leader Casualties</h5>
+                                <p>
+                                    <strong>Attacker Leader:</strong>
+                                    @if (BattleResult.AttackerLeaderDeathDieRoll.HasValue)
+                                    {
+                                        if (BattleResult.AttackerLeaderDeath)
+                                        {
+                                            <span class="text-danger">☠️ Killed (rolled 🎲 @BattleResult.AttackerLeaderDeathDieRoll)</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-success">✓ Survived (rolled 🎲 @BattleResult.AttackerLeaderDeathDieRoll)</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No risk</span>
+                                    }
+                                </p>
+                                <p>
+                                    <strong>Defender Leader:</strong>
+                                    @if (BattleResult.DefenderLeaderDeathDieRoll.HasValue)
+                                    {
+                                        if (BattleResult.DefenderLeaderDeath)
+                                        {
+                                            <span class="text-danger">☠️ Killed (rolled 🎲 @BattleResult.DefenderLeaderDeathDieRoll)</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-success">✓ Survived (rolled 🎲 @BattleResult.DefenderLeaderDeathDieRoll)</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No risk</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col">
+                                <h5>Movement</h5>
+                                <p>
+                                    <strong>Attacker Can Stay:</strong>
+                                    @(BattleResult.AttackerCanStay ? "Yes ✓" : "No ✗")
+                                </p>
+                                <p>
+                                    <strong>Attacker Can Continue Moving:</strong>
+                                    @(BattleResult.AttackerCanContinueMoving ? "Yes ✓" : "No ✗")
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    // Battle Location
+    private bool ResourceOrCapital;
+    private bool FortPresent;
+    private bool IsInterception;
+    private bool IsDefenderLeaderPresent;
+
+    // Attacker
+    private int AttackerSize = 5;
+    private int AttackerLeadersDRMIncludingCavalryIntelligence;
+    private int AttackerElitesCommitted;
+    private bool AttackerOOS;
+
+    // Defender
+    private int DefenderSize = 5;
+    private int DefenderLeadersDRMIncludingCavalryIntelligence;
+    private int DefenderElitesCommitted;
+    private bool DefenderOOS;
+
+    // Result
+    private FTPBattleResult? BattleResult;
+
+    // Store sizes at time of calculation for "Wiped Out!" display
+    private int LastAttackerSize;
+    private int LastDefenderSize;
+
+    private void CalculateBattleResult()
+    {
+        // Clamp values to valid ranges
+        int clampedAttackerSize = Math.Clamp(AttackerSize, 1, 15);
+        int clampedDefenderSize = Math.Clamp(DefenderSize, 0, 100);
+        int clampedAttackerLeaderDRM = Math.Clamp(AttackerLeadersDRMIncludingCavalryIntelligence, 0, 10);
+        int clampedDefenderLeaderDRM = Math.Clamp(DefenderLeadersDRMIncludingCavalryIntelligence, 0, 10);
+        int clampedAttackerElites = Math.Clamp(AttackerElitesCommitted, 0, 2);
+        int clampedDefenderElites = Math.Clamp(DefenderElitesCommitted, 0, 2);
+
+        // Store sizes for result display
+        LastAttackerSize = clampedAttackerSize;
+        LastDefenderSize = clampedDefenderSize;
+
+        var battle = new FtpLandBattle(
+            ResourceOrCapital,
+            FortPresent,
+            IsInterception,
+            IsDefenderLeaderPresent,
+            clampedAttackerSize,
+            clampedDefenderSize,
+            clampedAttackerLeaderDRM,
+            clampedDefenderLeaderDRM,
+            clampedAttackerElites,
+            clampedDefenderElites,
+            AttackerOOS,
+            DefenderOOS);
+
+        BattleResult = FtpBattleMethods.BattleResult(battle, new Random());
+    }
+
+    private string GetResultCardClass()
+    {
+        if (BattleResult == null) return "";
+
+        return BattleResult.Winner switch
+        {
+            Winner.Attacker => "border-success",
+            Winner.Defender => "border-danger",
+            _ => "border-warning"
+        };
+    }
+}

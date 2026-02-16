@@ -32,7 +32,7 @@
             int defenderDieRoll = rng.Next(1, 7);
 
             (int hitsToDefender, int hitsToAttacker, bool star, int defenderLeaderTop, int attackerLeaderTop) =
-                FtpCRT.DamageToDefender(battle, attackerDieRoll, defenderDieRoll);
+                FtpCRT.Outcome(battle, attackerDieRoll, defenderDieRoll);
 
             Winner winner = Winner.Defender;
             bool attackerCanStay = false;
@@ -77,8 +77,21 @@
                 attackerCanContinueMoving = true;
 
             //leader death logic            
-            bool attackerLeaderDeath = rng.Next(1, 7) <= attackerLeaderTop;
-            bool defenderLeaderDeath = rng.Next(1, 7) <= defenderLeaderTop;
+            int? attackerLeaderDeathDieRoll = null;
+            int? defenderLeaderDeathDieRoll = null;
+            bool attackerLeaderDeath = false;
+            bool defenderLeaderDeath = false;
+
+            if (attackerLeaderTop > 0)
+            {
+                attackerLeaderDeathDieRoll = rng.Next(1, 7);
+                attackerLeaderDeath = attackerLeaderDeathDieRoll <= attackerLeaderTop;
+            }
+            if (defenderLeaderTop > 0)
+            {
+                defenderLeaderDeathDieRoll = rng.Next(1, 7);
+                defenderLeaderDeath = defenderLeaderDeathDieRoll <= defenderLeaderTop;
+            }
 
             return new FTPBattleResult(winner,
                                        finalHitsToDefender,
@@ -87,7 +100,12 @@
                                        defenderLeaderDeath,
                                        attackerCanStay,
                                        attackerCanContinueMoving,
-                                       battle.Size());
+                                       battle.Size(),
+                                       attackerDieRoll,
+                                       defenderDieRoll,
+                                       star,
+                                       attackerLeaderDeathDieRoll,
+                                       defenderLeaderDeathDieRoll);
         }
     }
 }
