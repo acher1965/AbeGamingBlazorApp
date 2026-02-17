@@ -36,9 +36,13 @@ echo "Changelog generated."
 echo "Building $PROJECT_FOLDER..."
 ./dotnet-sdk/dotnet publish "$PROJECT_FOLDER" -c Release -o ./dist
 
-# --- SPA ROUTING FIX ---
-# Copy index.html to 404.html - Cloudflare serves 404.html for unknown routes,
-# allowing Blazor's client-side router to handle the navigation
+# --- SPA ROUTING FIX FOR CLOUDFLARE PAGES ---
+# Method 1: Create _redirects file - tells Cloudflare to serve index.html for all routes
+echo "/* /index.html 200" > ./dist/wwwroot/_redirects
+
+# Method 2: Copy index.html to 404.html as fallback
 cp ./dist/wwwroot/index.html ./dist/wwwroot/404.html
 
 echo "Build and SPA routing configuration complete."
+echo "Output directory contents:"
+ls -la ./dist/wwwroot/
