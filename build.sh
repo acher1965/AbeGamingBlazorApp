@@ -16,6 +16,11 @@ echo "Installing wasm-tools workload..."
 
 # --- GENERATE CHANGELOG FROM GIT COMMITS ---
 echo "Generating changelog from git commits..."
+
+# Cloudflare Pages does a shallow clone by default - fetch full history for changelog
+echo "Fetching full git history..."
+git fetch --unshallow 2>/dev/null || git fetch --depth=100 2>/dev/null || echo "Could not fetch more history"
+
 # Use a simple approach that handles special characters in commit messages
 # The || true ensures build continues even if changelog generation fails
 (
