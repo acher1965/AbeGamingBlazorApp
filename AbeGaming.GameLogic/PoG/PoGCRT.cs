@@ -1,4 +1,4 @@
-namespace AbeGamingBlazorApp.PoG
+namespace AbeGaming.GameLogic.PoG
 {
     /// <summary>
     /// Combat Results Table (CRT) for Paths of Glory.

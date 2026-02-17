@@ -1,4 +1,4 @@
-﻿namespace AbeGamingBlazorApp.FtpBattle
+namespace AbeGaming.GameLogic.FtpBattle
 {
     public static class FtpCRT
     {
@@ -48,11 +48,12 @@
             // Rolled modified 10 or greater: Leader killed on 1-3
             // Rolled less than 10: Leader killed on 1
             int defenderLeaderDeathTop = (!inAttackerFavour && ratio > Ratio.Low)
-                ?0
-                :modifiedRollD >= 10
-                    ? 3 
+                ? 0
+                : modifiedRollD >= 10
+                    ? 3
                     : modifiedRollA >= 10
-                        ? 1                    : 0;
+                        ? 1
+                        : 0;
             int attackerLeaderDeathTop = (inAttackerFavour && ratio > Ratio.Low)
                 ? 0
                 : modifiedRollA >= 10

@@ -1,4 +1,4 @@
-﻿namespace AbeGamingBlazorApp.FtpBattle
+namespace AbeGaming.GameLogic.FtpBattle
 {
     public static partial class FtpBattleMethods
     {
@@ -19,12 +19,14 @@
 
             return (ratio, inAttackerFavour);
         }
+
         public static BattleSize Size(this FtpLandBattle battle) => (battle.AttackerSize + battle.DefenderSize) switch
         {
             <= 5 => BattleSize.Small,
             <= 19 => BattleSize.Medium,
             _ => BattleSize.Large
         };
+
         public static bool IsOverrun(this FtpLandBattle battle)
         {
             (Ratio ratio, bool inAttackerFavour) = battle.RatioDRM();

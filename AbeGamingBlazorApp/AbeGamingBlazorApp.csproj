@@ -17,4 +17,13 @@
     <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\AbeGaming.GameLogic\AbeGaming.GameLogic.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="FtpBattle\" />
+    <Folder Include="PoG\" />
+  </ItemGroup>
+
 </Project>

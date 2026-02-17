@@ -1,4 +1,4 @@
-namespace AbeGamingBlazorApp.PoG
+namespace AbeGaming.GameLogic.PoG
 {
     /// <summary>
     /// Result of a Paths of Glory combat resolution.

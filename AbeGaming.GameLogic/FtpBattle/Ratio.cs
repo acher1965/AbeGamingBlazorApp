@@ -1,4 +1,4 @@
-﻿namespace AbeGamingBlazorApp.FtpBattle
+namespace AbeGaming.GameLogic.FtpBattle
 {
     public enum Ratio
     {

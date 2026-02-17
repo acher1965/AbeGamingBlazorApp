@@ -1,4 +1,4 @@
-namespace AbeGamingBlazorApp.PoG
+namespace AbeGaming.GameLogic.PoG
 {
     /// <summary>
     /// Represents the combat type in Paths of Glory
