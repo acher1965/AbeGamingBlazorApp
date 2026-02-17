@@ -22,7 +22,6 @@
 
             // Calculate attacker's DRM: leader DRM + elites + opponent OOS bonus
             int totalAttackerDRM = (inAttackerFavour ? (int)ratio : 0)
-                + (battle.FortPresent ? 2 : 0)
                 + (battle.IsInterception ? 2 : 0)
                 + battle.AttackerLeadersDRMIncludingCavalryIntelligence
                 + battle.AttackerElitesCommitted
@@ -36,6 +35,7 @@
             bool star = !battle.ResourceOrCapital && tableStar[battleSize][tableIndex];
 
             int totalDefenderDRM = (inAttackerFavour ? 0 : (int)ratio)
+                + (battle.FortPresent ? 2 : 0)
                 + battle.DefenderLeadersDRMIncludingCavalryIntelligence
                 + battle.DefenderElitesCommitted
                 + (battle.IsInterception ? 2 : 0)
