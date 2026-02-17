@@ -112,7 +112,7 @@
             <div class="col">
                 <div class="card border-info">
                     <div class="card-header bg-info text-white">
-                        <h4 class="mb-0">📊 Monte Carlo Results (@MonteCarloResult.Trials.ToString("N0") trials)</h4>
+                        <h4 class="mb-0">📊 Monte Carlo Results (@MonteCarloResult.Trials.ToString("N0") trials, @MonteCarloResult.BattleSize battle)</h4>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -178,6 +178,50 @@
                                         @(MonteCarloResult.DefenderLeaderDeathProbability.ToString("P1"))
                                     </p>
                                 }
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <h6>Attacker Losses Distribution</h6>
+                                <table class="table table-sm table-bordered mb-0" style="font-size: 0.85em;">
+                                    <thead class="table-light">
+                                        <tr>
+                                            @for (int i = 0; i < MonteCarloResult.AttackerCasualtyDistribution.Length; i++)
+                                            {
+                                                <th class="text-center px-1">@i</th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            @foreach (var prob in MonteCarloResult.AttackerCasualtyDistribution)
+                                            {
+                                                <td class="text-center px-1">@(prob.ToString("P0"))</td>
+                                            }
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Defender Losses Distribution</h6>
+                                <table class="table table-sm table-bordered mb-0" style="font-size: 0.85em;">
+                                    <thead class="table-light">
+                                        <tr>
+                                            @for (int i = 0; i < MonteCarloResult.DefenderCasualtyDistribution.Length; i++)
+                                            {
+                                                <th class="text-center px-1">@i</th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            @foreach (var prob in MonteCarloResult.DefenderCasualtyDistribution)
+                                            {
+                                                <td class="text-center px-1">@(prob.ToString("P0"))</td>
+                                            }
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>

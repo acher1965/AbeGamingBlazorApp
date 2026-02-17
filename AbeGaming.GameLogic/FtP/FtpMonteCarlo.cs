@@ -8,6 +8,7 @@ namespace AbeGaming.GameLogic.FtP
     /// </summary>
     public record FtpMonteCarloResult(
         int Trials,
+        BattleSize BattleSize,
         double AttackerWinProbability,
         double DefenderWinProbability,
         double DrawProbability,
@@ -18,7 +19,9 @@ namespace AbeGaming.GameLogic.FtP
         double AttackerLeaderDeathProbability,
         double DefenderLeaderDeathProbability,
         double OverrunProbability,
-        double StarResultProbability);
+        double StarResultProbability,
+        double[] AttackerCasualtyDistribution,
+        double[] DefenderCasualtyDistribution);
 
     /// <summary>
     /// Monte Carlo simulation for FtP battle outcomes.
@@ -78,8 +81,21 @@ namespace AbeGaming.GameLogic.FtP
             var (avgAttackerCasualties, stdAttackerCasualties) = MeanAndStdDevVectorized(attackerCasualties);
             var (avgDefenderCasualties, stdDefenderCasualties) = MeanAndStdDevVectorized(defenderCasualties);
 
+            // Calculate casualty distributions based on battle size (CRT max values)
+            // Small: Attacker 0-2, Defender 0-1 | Medium: Both 0-3 | Large: Attacker 0-6, Defender 0-5
+            var battleSize = battle.Size();
+            var (maxAttackerLoss, maxDefenderLoss) = battleSize switch
+            {
+                BattleSize.Small => (2, 1),
+                BattleSize.Medium => (3, 3),
+                _ => (6, 5) // Large
+            };
+            var attackerCasualtyDist = CalculateCasualtyDistribution(attackerCasualties, trials, maxAttackerLoss);
+            var defenderCasualtyDist = CalculateCasualtyDistribution(defenderCasualties, trials, maxDefenderLoss);
+
             return new FtpMonteCarloResult(
                 Trials: trials,
+                BattleSize: battleSize,
                 AttackerWinProbability: (double)totalAttackerWins / trials,
                 DefenderWinProbability: (double)totalDefenderWins / trials,
                 DrawProbability: (double)(trials - totalAttackerWins - totalDefenderWins) / trials,
@@ -90,7 +106,26 @@ namespace AbeGaming.GameLogic.FtP
                 AttackerLeaderDeathProbability: (double)totalAttackerLeaderDeaths / trials,
                 DefenderLeaderDeathProbability: (double)totalDefenderLeaderDeaths / trials,
                 OverrunProbability: (double)totalOverruns / trials,
-                StarResultProbability: (double)totalStars / trials);
+                StarResultProbability: (double)totalStars / trials,
+                AttackerCasualtyDistribution: attackerCasualtyDist,
+                DefenderCasualtyDistribution: defenderCasualtyDist);
+        }
+
+        /// <summary>
+        /// Calculates the probability distribution of casualties (0 to maxLoss SP).
+        /// </summary>
+        private static double[] CalculateCasualtyDistribution(int[] casualties, int trials, int maxLoss)
+        {
+            Span<int> counts = stackalloc int[7]; // 0-6 max possible from CRT
+            foreach (var c in casualties)
+                counts[c]++;
+
+            int size = maxLoss + 1;
+            var distribution = new double[size];
+            for (int i = 0; i < size; i++)
+                distribution[i] = (double)counts[i] / trials;
+
+            return distribution;
         }
 
         /// <summary>
