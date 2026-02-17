@@ -1,4 +1,4 @@
-namespace AbeGaming.GameLogic.FtpBattle
+namespace AbeGaming.GameLogic.FtP
 {
     public record FtpLandBattle(
         bool ResourceOrCapital,

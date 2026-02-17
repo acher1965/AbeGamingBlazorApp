@@ -1,7 +1,15 @@
-namespace AbeGaming.GameLogic.FtpBattle
+namespace AbeGaming.GameLogic.FtP
 {
     public static partial class FtpBattleMethods
     {
+        public static int DRM_fromRatio(this Ratio ratio) => ratio switch
+        {
+            Ratio.ThreeToOne => 2,
+            Ratio.FourToOne => 3,
+            Ratio.FiveToOnePlus or Ratio.TenToOnePlus => 4,
+            _ => 0
+        };
+
         public static (Ratio Ratio, bool InAttackerFavour) RatioDRM(this FtpLandBattle battle)
         {
             bool inAttackerFavour = battle.AttackerSize >= battle.DefenderSize;

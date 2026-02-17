@@ -1,4 +1,4 @@
-namespace AbeGaming.GameLogic.FtpBattle
+namespace AbeGaming.GameLogic.FtP
 {
     public static class FtpCRT
     {
@@ -19,10 +19,11 @@ namespace AbeGaming.GameLogic.FtpBattle
 
             if (battle.IsOverrun())
                 return (battle.DefenderSize, 0, false, 0, 0);
+            
+            //We continue if it is not an overrun
 
             // Calculate attacker's DRM: leader DRM + elites + opponent OOS bonus
-            int totalAttackerDRM = (inAttackerFavour ? (int)ratio : 0)
-                + (battle.IsInterception ? 2 : 0)
+            int totalAttackerDRM = (inAttackerFavour ? ratio.DRM_fromRatio() : 0)
                 + battle.AttackerLeadersDRMIncludingCavalryIntelligence
                 + battle.AttackerElitesCommitted
                 + (battle.DefenderOOS ? 2 : 0);
@@ -34,11 +35,11 @@ namespace AbeGaming.GameLogic.FtpBattle
             int hitsToDefender = tablesHitToD[battleSize][tableIndex];
             bool star = !battle.ResourceOrCapital && tableStar[battleSize][tableIndex];
 
-            int totalDefenderDRM = (inAttackerFavour ? 0 : (int)ratio)
-                + (battle.FortPresent ? 2 : 0)
+            int totalDefenderDRM = (inAttackerFavour ? 0 : ratio.DRM_fromRatio())
                 + battle.DefenderLeadersDRMIncludingCavalryIntelligence
                 + battle.DefenderElitesCommitted
                 + (battle.IsInterception ? 2 : 0)
+                + (battle.FortPresent ? 2 : 0)
                 + (battle.AttackerOOS ? 2 : 0);
             int modifiedRollD = defenderDieRoll + totalDefenderDRM;
             tableIndex = Math.Clamp(modifiedRollD - 1, 0, 9);

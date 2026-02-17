@@ -1,4 +1,4 @@
-namespace AbeGaming.GameLogic.FtpBattle
+namespace AbeGaming.GameLogic
 {
     public enum Winner { Defender, Attacker, Draw }
 }
