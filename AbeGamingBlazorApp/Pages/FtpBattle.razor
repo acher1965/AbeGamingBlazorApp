@@ -84,15 +84,15 @@
     <div class="row mt-4">
         <div class="col">
             <button class="btn btn-primary btn-lg me-2" @onclick="CalculateBattleResult">Get Single Battle Result</button>
-            <button class="btn btn-outline-secondary btn-lg" @onclick="RunMonteCarloSimulation" disabled="@IsSimulating">
-                @if (IsSimulating)
-                {
-                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                    <span>Simulating...</span>
-                }
-                else
-                {
-                    <span>📊 Run @SimulationCount.ToString("N0") Simulations</span>
+            <button class="btn btn-outline-secondary btn-lg" @onclick="RunMonteCarloTrials" disabled="@IsRunning">
+                @if (IsRunning)
+                    {
+                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        <span>Running...</span>
+                    }
+                    else
+                    {
+                        <span>📊 Run @Trials.ToString("N0") Trials</span>
                 }
             </button>
         </div>
@@ -100,9 +100,9 @@
 
     <div class="row mt-2">
         <div class="col-md-6">
-            <label for="simulationCount" class="form-label">Simulations: <strong>@SimulationCount.ToString("N0")</strong></label>
-            <input type="range" class="form-range" id="simulationCount" @bind="SimulationCountSlider" @bind:event="oninput" min="1" max="100" />
-            <small class="text-muted">10,000 to 1,000,000 (higher = more accurate, slower)</small>
+            <label for="trials" class="form-label">Trials: <strong>2<sup>@TrialsExponent</sup> = @Trials.ToString("N0")</strong></label>
+            <input type="range" class="form-range" id="trials" @bind="TrialsExponent" @bind:event="oninput" min="13" max="20" />
+            <small class="text-muted">8,192 to 1,048,576 (powers of 2 for better performance)</small>
         </div>
     </div>
 
@@ -112,7 +112,7 @@
             <div class="col">
                 <div class="card border-info">
                     <div class="card-header bg-info text-white">
-                        <h4 class="mb-0">📊 Monte Carlo Simulation Results (@MonteCarloResult.SimulationCount.ToString("N0") simulations)</h4>
+                        <h4 class="mb-0">📊 Monte Carlo Results (@MonteCarloResult.Trials.ToString("N0") trials)</h4>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -345,9 +345,9 @@
 
     // Monte Carlo
     private FtpMonteCarloResult? MonteCarloResult;
-    private bool IsSimulating;
-    private int SimulationCountSlider = 1; // 1-100 slider maps to 10,000-1,000,000
-    private int SimulationCount => 10_000 + (SimulationCountSlider - 1) * 10_000; // Maps 1-100 to 10,000-1,000,000
+    private bool IsRunning;
+    private int TrialsExponent = 14; // 2^14 = 16,384 as default
+    private int Trials => 1 << TrialsExponent; // 2^exponent
 
     // Store sizes at time of calculation for "Wiped Out!" display
     private int LastAttackerSize;
@@ -373,20 +373,19 @@
         LastAttackerSize = AttackerSize;
         LastDefenderSize = DefenderSize;
 
-        BattleResult = FtpBattleMethods.BattleResult(CreateBattle(), new Random());
+        BattleResult = FtpBattleMethods.BattleResult(CreateBattle(), FtpBattleMethods.RollDice(4));
     }
 
-    private async Task RunMonteCarloSimulation()
+    private async Task RunMonteCarloTrials()
     {
-        IsSimulating = true;
+        IsRunning = true;
         StateHasChanged();
 
-        // Run simulation on a background thread to keep UI responsive
+        // Run trials on a background thread to keep UI responsive
         var battle = CreateBattle();
-        var count = SimulationCount;
-        MonteCarloResult = await Task.Run(() => FtpMonteCarlo.Simulate(battle, simulationCount: count));
+        MonteCarloResult = await Task.Run(() => FtpMonteCarlo.Run(battle, TrialsExponent));
 
-        IsSimulating = false;
+        IsRunning = false;
         StateHasChanged();
     }
 

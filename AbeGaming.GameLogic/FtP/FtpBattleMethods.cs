@@ -2,6 +2,12 @@ namespace AbeGaming.GameLogic.FtP
 {
     public static partial class FtpBattleMethods
     {
+        public static Random Random { get; set; } = new Random();
+
+        public static int[] Die => [1, 2, 3, 4, 5, 6];
+
+        public static Span<int> RollDice(int count)=> Random.GetItems(Die, count);
+
         public static int DRM_fromRatio(this Ratio ratio) => ratio switch
         {
             Ratio.ThreeToOne => 2,
@@ -41,10 +47,13 @@ namespace AbeGaming.GameLogic.FtP
             return ratio == Ratio.TenToOnePlus && inAttackerFavour && !battle.FortPresent;
         }
 
-        public static FTPBattleResult BattleResult(FtpLandBattle battle, Random rng)
+        public static FTPBattleResult BattleResult(FtpLandBattle battle, Span<int> randoms)
         {
-            int attackerDieRoll = rng.Next(1, 7);
-            int defenderDieRoll = rng.Next(1, 7);
+            if (randoms.Length < 4)
+                throw new ArgumentException($"{nameof(FtpBattleMethods)}.{BattleResult}(): 4 random numbers must be passed in",
+                    nameof(randoms));
+            int attackerDieRoll = randoms[0];
+            int defenderDieRoll = randoms[1];
 
             (int hitsToDefender, int hitsToAttacker, bool star, int defenderLeaderDeathTop, int attackerLeaderDeathTop) =
                 FtpCRT.Outcome(battle, attackerDieRoll, defenderDieRoll);
@@ -99,12 +108,12 @@ namespace AbeGaming.GameLogic.FtP
 
             if (attackerLeaderDeathTop > 0)
             {
-                attackerLeaderDeathDieRoll = rng.Next(1, 7);
+                attackerLeaderDeathDieRoll = randoms[2];
                 attackerLeaderDeath = attackerLeaderDeathDieRoll <= attackerLeaderDeathTop;
             }
             if (defenderLeaderDeathTop > 0)
             {
-                defenderLeaderDeathDieRoll = rng.Next(1, 7);
+                defenderLeaderDeathDieRoll = randoms[3];
                 defenderLeaderDeath = defenderLeaderDeathDieRoll <= defenderLeaderDeathTop;
             }
 
