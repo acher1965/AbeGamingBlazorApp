@@ -25,6 +25,11 @@
             <= 19 => BattleSize.Medium,
             _ => BattleSize.Large
         };
+        public static bool IsOverrun(this FtpLandBattle battle)
+        {
+            (Ratio ratio, bool inAttackerFavour) = battle.RatioDRM();
+            return ratio == Ratio.TenToOnePlus && inAttackerFavour && !battle.FortPresent;
+        }
 
         public static FTPBattleResult BattleResult(FtpLandBattle battle, Random rng)
         {
@@ -61,7 +66,7 @@
                 else if (winner == Winner.Defender)
                 {
                     finalHitsToDefender = battle.DefenderSize - 1;
-                    attackerWipedOut = false;
+                    defenderWipedOut = false;
                 }
             }
 
@@ -105,7 +110,8 @@
                                        defenderDieRoll,
                                        star,
                                        attackerLeaderDeathDieRoll,
-                                       defenderLeaderDeathDieRoll);
+                                       defenderLeaderDeathDieRoll,
+                                       battle.IsOverrun());
         }
     }
 }

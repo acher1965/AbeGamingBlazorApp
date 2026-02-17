@@ -13,5 +13,6 @@
         int DefenderDieRoll,
         bool Star,
         int? AttackerLeaderDeathDieRoll,
-        int? DefenderLeaderDeathDieRoll);
+        int? DefenderLeaderDeathDieRoll,
+        bool Overrun);
 }

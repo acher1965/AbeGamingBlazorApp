@@ -17,11 +17,8 @@
             BattleSize battleSize = battle.Size();
             (Ratio ratio, bool inAttackerFavour) = battle.RatioDRM();
 
-            if (ratio == Ratio.TenToOnePlus && !battle.FortPresent)
-            {
-                //this is an overrun
+            if (battle.IsOverrun())
                 return (battle.DefenderSize, 0, false, 0, 0);
-            }
 
             // Calculate attacker's DRM: leader DRM + elites + opponent OOS bonus
             int totalAttackerDRM = (inAttackerFavour ? (int)ratio : 0)
