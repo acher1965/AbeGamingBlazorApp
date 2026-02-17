@@ -15,10 +15,16 @@
             int defenderDieRoll)
         {
             BattleSize battleSize = battle.Size();
-            (Ratio Ratio, bool InAttackerFavour) = battle.RatioDRM();
+            (Ratio ratio, bool inAttackerFavour) = battle.RatioDRM();
+
+            if (ratio == Ratio.TenToOnePlus && !battle.FortPresent)
+            {
+                //this is an overrun
+                return (battle.DefenderSize, 0, false, 0, 0);
+            }
 
             // Calculate attacker's DRM: leader DRM + elites + opponent OOS bonus
-            int totalAttackerDRM = (InAttackerFavour ? (int)Ratio : 0)
+            int totalAttackerDRM = (inAttackerFavour ? (int)ratio : 0)
                 + (battle.FortPresent ? 2 : 0)
                 + (battle.IsInterception ? 2 : 0)
                 + battle.AttackerLeadersDRMIncludingCavalryIntelligence
@@ -32,7 +38,7 @@
             int hitsToDefender = tablesHitToD[battleSize][tableIndex];
             bool star = !battle.ResourceOrCapital && tableStar[battleSize][tableIndex];
 
-            int totalDefenderDRM = (InAttackerFavour ? 0 : (int)Ratio)
+            int totalDefenderDRM = (inAttackerFavour ? 0 : (int)ratio)
                 + battle.DefenderLeadersDRMIncludingCavalryIntelligence
                 + battle.DefenderElitesCommitted
                 + (battle.IsInterception ? 2 : 0)
@@ -44,16 +50,19 @@
             // Leaders death changes: determine leader death roll threshold
             // Rolled modified 10 or greater: Leader killed on 1-3
             // Rolled less than 10: Leader killed on 1
-            int defenderLeaderDeathTop = modifiedRollD >= 10
-                ? 3
+            int defenderLeaderDeathTop = (!inAttackerFavour && ratio > Ratio.Low)
+                ?0
+                :modifiedRollD >= 10
+                    ? 3 
+                    : modifiedRollA >= 10
+                        ? 1                    : 0;
+            int attackerLeaderDeathTop = (inAttackerFavour && ratio > Ratio.Low)
+                ? 0
                 : modifiedRollA >= 10
-                    ? 1
-                    : 0;
-            int attackerLeaderDeathTop = modifiedRollA >= 10
-                ? 3
-                : modifiedRollD >= 10
-                    ? 1
-                    : 0;
+                    ? 3
+                    : modifiedRollD >= 10
+                        ? 1
+                        : 0;
 
             return (hitsToDefender, hitsToAttacker, star, defenderLeaderDeathTop, attackerLeaderDeathTop);
         }
