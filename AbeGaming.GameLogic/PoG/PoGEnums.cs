@@ -1,37 +1,27 @@
 namespace AbeGaming.GameLogic.PoG
 {
-    /// <summary>
-    /// Represents the combat type in Paths of Glory
-    /// </summary>
-    public enum CombatType
+    public enum CRTTableType
     {
-        FireCombat,
-        Assault
+        Corps,
+        Army,
     }
 
-    /// <summary>
-    /// Terrain types that affect combat
-    /// </summary>
     public enum Terrain
     {
         Clear,
         Forest,
         Marsh,
         Mountain,
-        Trench,
-        Fortress
+        Desert,
     }
 
-    /// <summary>
-    /// Combat result types from the CRT
-    /// </summary>
-    public enum CombatResultType
+    public enum FortressLevel
     {
-        AttackerEliminated,  // AE
-        AttackerLoss,        // AL
-        Exchange,            // EX
-        DefenderLoss,        // DL
-        DefenderRouted,      // DR
-        Breakthrough         // BT
+        None = 0,
+        LevelOne,
+        LevelTwo,
+        LevelThree,
+        Besieged,
+        Destroyed,
     }
 }
