@@ -21,9 +21,4 @@
     <ProjectReference Include="..\AbeGaming.GameLogic\AbeGaming.GameLogic.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="FtpBattle\" />
-    <Folder Include="PoG\" />
-  </ItemGroup>
-
 </Project>
