@@ -10,6 +10,10 @@ curl -sSL https://dot.net/v1/dotnet-install.sh > dotnet-install.sh
 chmod +x dotnet-install.sh
 ./dotnet-install.sh --channel 10.0 --install-dir ./dotnet-sdk
 
+# Install wasm-tools workload for optimized WebAssembly output
+echo "Installing wasm-tools workload..."
+./dotnet-sdk/dotnet workload install wasm-tools --skip-manifest-update
+
 # --- GENERATE CHANGELOG FROM GIT COMMITS ---
 echo "Generating changelog from git commits..."
 # Use a simple approach that handles special characters in commit messages
@@ -37,11 +41,13 @@ echo "Building $PROJECT_FOLDER..."
 ./dotnet-sdk/dotnet publish "$PROJECT_FOLDER" -c Release -o ./dist
 
 # --- SPA ROUTING FIX FOR CLOUDFLARE PAGES ---
-# Method 1: Create _redirects file - tells Cloudflare to serve index.html for all routes
-echo "/* /index.html 200" > ./dist/wwwroot/_redirects
-
-# Method 2: Copy index.html to 404.html as fallback
+# Copy index.html to 404.html - Cloudflare serves 404.html for unknown routes,
+# allowing Blazor's client-side router to handle the navigation
 cp ./dist/wwwroot/index.html ./dist/wwwroot/404.html
+
+# Note: _redirects with "/* /index.html 200" causes Cloudflare to warn about infinite loop
+# but we keep it commented here in case we need to re-enable it
+# echo "/* /index.html 200" > ./dist/wwwroot/_redirects
 
 echo "Build and SPA routing configuration complete."
 echo "Output directory contents:"
