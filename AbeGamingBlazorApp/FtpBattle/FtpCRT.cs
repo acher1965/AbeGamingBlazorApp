@@ -35,6 +35,7 @@
             int totalDefenderDRM = (InAttackerFavour ? 0 : (int)Ratio)
                 + battle.DefenderLeadersDRMIncludingCavalryIntelligence
                 + battle.DefenderElitesCommitted
+                + (battle.IsInterception ? 2 : 0)
                 + (battle.AttackerOOS ? 2 : 0);
             int modifiedRollD = defenderDieRoll + totalDefenderDRM;
             tableIndex = Math.Clamp(modifiedRollD - 1, 0, 9);
@@ -75,7 +76,7 @@
         };
         private static readonly Dictionary<BattleSize, bool[]> tableStar = new()
         {
-            [BattleSize.Small] = [false, false, false, false, false, true, true, true, true, true],
+            [BattleSize.Small] = [false, false, false, false, false, false, true, true, true, true],
             [BattleSize.Medium] = [false, false, false, false, false, false, true, true, true, true],
             [BattleSize.Large] = [false, false, false, false, false, false, false, true, true, true]
         };
