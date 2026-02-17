@@ -10,7 +10,7 @@
 
             Ratio ratio = smaller == 0 ? Ratio.TenToOnePlus : (larger / smaller) switch
             {
-                >= 10 => Ratio.TenToOnePlus,
+                >= 10 when inAttackerFavour => Ratio.TenToOnePlus,
                 >= 5 => Ratio.FiveToOnePlus,
                 >= 4 => Ratio.FourToOne,
                 >= 3 => Ratio.ThreeToOne,
@@ -36,7 +36,7 @@
             int attackerDieRoll = rng.Next(1, 7);
             int defenderDieRoll = rng.Next(1, 7);
 
-            (int hitsToDefender, int hitsToAttacker, bool star, int defenderLeaderTop, int attackerLeaderTop) =
+            (int hitsToDefender, int hitsToAttacker, bool star, int defenderLeaderDeathTop, int attackerLeaderDeathTop) =
                 FtpCRT.Outcome(battle, attackerDieRoll, defenderDieRoll);
 
             Winner winner = Winner.Defender;
@@ -87,15 +87,15 @@
             bool attackerLeaderDeath = false;
             bool defenderLeaderDeath = false;
 
-            if (attackerLeaderTop > 0)
+            if (attackerLeaderDeathTop > 0)
             {
                 attackerLeaderDeathDieRoll = rng.Next(1, 7);
-                attackerLeaderDeath = attackerLeaderDeathDieRoll <= attackerLeaderTop;
+                attackerLeaderDeath = attackerLeaderDeathDieRoll <= attackerLeaderDeathTop;
             }
-            if (defenderLeaderTop > 0)
+            if (defenderLeaderDeathTop > 0)
             {
                 defenderLeaderDeathDieRoll = rng.Next(1, 7);
-                defenderLeaderDeath = defenderLeaderDeathDieRoll <= defenderLeaderTop;
+                defenderLeaderDeath = defenderLeaderDeathDieRoll <= defenderLeaderDeathTop;
             }
 
             return new FTPBattleResult(winner,
