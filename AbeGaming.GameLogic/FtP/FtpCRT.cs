@@ -53,7 +53,39 @@ namespace AbeGaming.GameLogic.FtP
         }
 
         #region private
+        // CRT lookup tables - must be declared BEFORE RawTables to ensure proper static initialization order
+        // Def column: Attacker's Roll -> Defender's Result (hits to defender)
+        // Index 0-9 = die roll 1-10+
+        private static readonly Dictionary<BattleSize, int[]> tablesHitToD = new()
+        {
+            [BattleSize.Small] = [0, 0, 0, 1, 1, 1, 1, 1, 1, 1],
+            [BattleSize.Medium] = [0, 1, 1, 1, 1, 2, 2, 2, 2, 3],
+            [BattleSize.Large] = [1, 2, 2, 3, 3, 3, 4, 4, 5, 5]
+        };
+        // Att column: Defender's Roll -> Attacker's Result (hits to attacker)
+        // Index 0-9 = die roll 1-10+
+        private static readonly Dictionary<BattleSize, int[]> tablesHitToA = new()
+        {
+            [BattleSize.Small] = [0, 1, 1, 1, 1, 1, 1, 1, 1, 2],
+            [BattleSize.Medium] = [1, 1, 1, 1, 1, 1, 2, 3, 3, 3],
+            [BattleSize.Large] = [1, 2, 3, 3, 3, 4, 4, 4, 5, 6]
+        };
+        private static readonly Dictionary<BattleSize, int> maxHitsToA = new()
+        {
+            [BattleSize.Small] = 2,
+            [BattleSize.Medium] = 3,
+            [BattleSize.Large] = 6
+        };
+        private static readonly Dictionary<BattleSize, int> maxHitsToD = new()
+        {
+            [BattleSize.Small] = 1,
+            [BattleSize.Medium] = 3,
+            [BattleSize.Large] = 5
+        };
+
+        // Pre-calculated tables - depends on tablesHitToD/tablesHitToA being initialized first
         private static readonly Dictionary<BattleSize, (int hitsToD, int hitsToA)[,]> RawTables = PreCalculateRawTables();
+
         private static (int hitsToD, int hitsToA) RawTable(BattleSize battleSize, int attackerModifiedDieRoll, int defenderModifiedDieRoll)
         {
             int hitsToDefender = tablesHitToD[battleSize][Math.Clamp(attackerModifiedDieRoll - 1, 0, 9)];
@@ -100,7 +132,6 @@ namespace AbeGaming.GameLogic.FtP
                 distributionHtoA.Select((prblty, hits) => (hits, prblty)).ToDictionary(x => x.hits, x => x.prblty));
         }
 
-
         private static (int aDRM, int dDRM, Ratio ratio, bool inAttackerFavour) Extract(FtpLandBattle battle)
         {
             (Ratio ratio, bool inAttackerFavour) = battle.RatioDRM();
@@ -116,35 +147,6 @@ namespace AbeGaming.GameLogic.FtP
                  + (battle.AttackerOOS ? 2 : 0);
             return (aDRM, dDRM, ratio, inAttackerFavour);
         }
-
-        // Def column: Attacker's Roll -> Defender's Result (hits to defender)
-        // Index 0-9 = die roll 1-10+
-        private static readonly Dictionary<BattleSize, int[]> tablesHitToD = new()
-        {
-            [BattleSize.Small] = [0, 0, 0, 1, 1, 1, 1, 1, 1, 1],
-            [BattleSize.Medium] = [0, 1, 1, 1, 1, 2, 2, 2, 2, 3],
-            [BattleSize.Large] = [1, 2, 2, 3, 3, 3, 4, 4, 5, 5]
-        };
-        // Att column: Defender's Roll -> Attacker's Result (hits to attacker)
-        // Index 0-9 = die roll 1-10+
-        private static readonly Dictionary<BattleSize, int[]> tablesHitToA = new()
-        {
-            [BattleSize.Small] = [0, 1, 1, 1, 1, 1, 1, 1, 1, 2],
-            [BattleSize.Medium] = [1, 1, 1, 1, 1, 1, 2, 3, 3, 3],
-            [BattleSize.Large] = [1, 2, 3, 3, 3, 4, 4, 4, 5, 6]
-        };
-        private static readonly Dictionary<BattleSize, int> maxHitsToA = new()
-        {
-            [BattleSize.Small] = 2,
-            [BattleSize.Medium] = 3,
-            [BattleSize.Large] = 6
-        };
-        private static readonly Dictionary<BattleSize, int> maxHitsToD = new()
-        {
-            [BattleSize.Small] = 1,
-            [BattleSize.Medium] = 3,
-            [BattleSize.Large] = 5
-        };
         #endregion
     }
 }

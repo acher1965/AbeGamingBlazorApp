@@ -83,6 +83,9 @@
                         <span>📊 Run @Trials.ToString("N0") Trials</span>
                 }
             </button>
+            <button class="btn btn-outline-info btn-lg" @onclick="CalculateExactStats">
+                📈 Calculate Exact Stats
+            </button>
         </div>
     </div>
 
@@ -93,6 +96,86 @@
             <small class="text-muted">8,192 to 1,048,576 (powers of 2 for better performance)</small>
         </div>
     </div>
+
+    @if (ExactStats != null)
+    {
+        <div class="row mt-4">
+            <div class="col">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">📈 Exact Statistics (@CreateBattle().Size() battle)</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Expected Casualties</h5>
+                                <p>
+                                    <strong>Attacker:</strong> 
+                                    @(ExactStats.MeanHtoA.ToString("F2")) SP
+                                    <small class="text-muted">(±@(ExactStats.StdDevHtoA.ToString("F2")))</small>
+                                </p>
+                                <p>
+                                    <strong>Defender:</strong> 
+                                    @(ExactStats.MeanHtoD.ToString("F2")) SP
+                                    <small class="text-muted">(±@(ExactStats.StdDevHtoD.ToString("F2")))</small>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">
+                                    These are exact probabilities calculated from the CRT, 
+                                    not simulated. Does not include special outcomes (star, leader death, overrun).
+                                </small>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <h6>Attacker Losses Distribution</h6>
+                                <table class="table table-sm table-bordered mb-0" style="font-size: 0.85em;">
+                                    <thead class="table-light">
+                                        <tr>
+                                            @foreach (var kvp in ExactStats.HitsA_Prblty.OrderBy(x => x.Key))
+                                            {
+                                                <th class="text-center px-1">@kvp.Key</th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            @foreach (var kvp in ExactStats.HitsA_Prblty.OrderBy(x => x.Key))
+                                            {
+                                                <td class="text-center px-1">@(kvp.Value.ToString("P0"))</td>
+                                            }
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Defender Losses Distribution</h6>
+                                <table class="table table-sm table-bordered mb-0" style="font-size: 0.85em;">
+                                    <thead class="table-light">
+                                        <tr>
+                                            @foreach (var kvp in ExactStats.HitsD_Prblty.OrderBy(x => x.Key))
+                                            {
+                                                <th class="text-center px-1">@kvp.Key</th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            @foreach (var kvp in ExactStats.HitsD_Prblty.OrderBy(x => x.Key))
+                                            {
+                                                <td class="text-center px-1">@(kvp.Value.ToString("P0"))</td>
+                                            }
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
     @if (MonteCarloResult != null)
     {
@@ -381,6 +464,9 @@
     private int TrialsExponent = 14; // 2^14 = 16,384 as default
     private int Trials => 1 << TrialsExponent; // 2^exponent
 
+    // Exact Stats
+    private LossStats? ExactStats;
+
     // Store sizes at time of calculation for "Wiped Out!" display
     private int LastAttackerSize;
     private int LastDefenderSize;
@@ -419,6 +505,11 @@
 
         IsRunning = false;
         StateHasChanged();
+    }
+
+    private void CalculateExactStats()
+    {
+        ExactStats = CreateBattle().LossDistributions();
     }
 
     private string GetResultCardClass()
