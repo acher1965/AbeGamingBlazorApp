@@ -2,31 +2,10 @@ namespace AbeGaming.GameLogic.FtP
 {
     public static class FtpCRT
     {
-        internal static readonly Dictionary<BattleSize, (int hitsToD, int hitsToA)[,]> RawTables = PreCalculateRawTables();
-
-        private static Dictionary<BattleSize, (int hitsToD, int hitsToA)[,]> PreCalculateRawTables()
+        public static LossStats LossDistributions(this FtpLandBattle battle)
         {
-            var dict = new Dictionary<BattleSize, (int hitsToD, int hitsToA)[,]>();
-            foreach (BattleSize size in Enum.GetValues<BattleSize>())
-            {
-                (int hitsToD, int hitsToA)[,] table = new (int hitsToD, int hitsToA)[10, 10];
-                for (int a = 0; a < 10; a++)
-                {
-                    for (int d = 0; d < 10; d++)
-                    {
-                        table[a, d] = RawTable(size, a + 1, d + 1);
-                    }
-                    dict[size] = table;
-                }
-            }
-            return dict;
-        }
-
-        public static (int hitsToD, int hitsToA) RawTable(BattleSize battleSize, int attackerModifiedDieRoll, int defenderModifiedDieRoll)
-        {
-            int hitsToDefender = tablesHitToD[battleSize][Math.Clamp(attackerModifiedDieRoll - 1, 0, 9)];
-            int hitsToAttacker = tablesHitToA[battleSize][Math.Clamp(defenderModifiedDieRoll - 1, 0, 9)];
-            return (hitsToDefender, hitsToAttacker);
+            (int aDRM, int dDRM, _, _) = Extract(battle);
+            return LossDistributions(battle.Size(), aDRM, dDRM);
         }
 
         /// <summary>
@@ -37,39 +16,17 @@ namespace AbeGaming.GameLogic.FtP
         /// <param name="defenderDieRoll"></param>
         /// <returns>star already takes ResourceOrCapital into account</returns>
         public static (int hitsToD, int hitsToA, bool star, int leaderDeathTopD, int leaderDeathTopA) Outcome(
-            FtpLandBattle battle,
+            this FtpLandBattle battle,
             int attackerDieRoll,
             int defenderDieRoll)
         {
-            BattleSize battleSize = battle.Size();
-            (Ratio ratio, bool inAttackerFavour) = battle.RatioDRM();
-
+            //Get out if it is not an overrun
             if (battle.IsOverrun())
                 return (battle.DefenderSize, 0, false, 0, 0);
 
-            //We continue if it is not an overrun
-            var rawTable = RawTables[battleSize];
-
-            // Calculate attacker's DRM: leader DRM + elites + opponent OOS bonus
-            int totalAttackerDRM = (inAttackerFavour ? ratio.DRM_fromRatio() : 0)
-                + battle.AttackerLeadersDRMIncludingCavalryIntelligence
-                + battle.AttackerElitesCommitted
-                + (battle.DefenderOOS ? 2 : 0);
-
-            // Apply DRM to die roll and clamp to valid range (1-10+)
-            int modifiedRollA = attackerDieRoll + totalAttackerDRM;
-            int tableIndex = Math.Clamp(modifiedRollA - 1, 0, 9);
-
-            bool star = !battle.ResourceOrCapital && tableIndex >= 6;
-
-            int totalDefenderDRM = (inAttackerFavour ? 0 : ratio.DRM_fromRatio())
-                + battle.DefenderLeadersDRMIncludingCavalryIntelligence
-                + battle.DefenderElitesCommitted
-                + (battle.IsInterception ? 2 : 0)
-                + (battle.FortPresent ? 2 : 0)
-                + (battle.AttackerOOS ? 2 : 0);
-            int modifiedRollD = defenderDieRoll + totalDefenderDRM;
-            tableIndex = Math.Clamp(modifiedRollD - 1, 0, 9);
+            (int aDRM, int dDRM, Ratio ratio, bool inAttackerFavour) = Extract(battle);
+            int modifiedRollA = attackerDieRoll + aDRM;
+            int modifiedRollD = defenderDieRoll + dDRM;
 
             // Leaders death changes: determine leader death roll threshold
             // Rolled modified 10 or greater: Leader killed on 1-3
@@ -89,9 +46,75 @@ namespace AbeGaming.GameLogic.FtP
                         ? 1
                         : 0;
 
-            (int hitsToD, int hitsToA) = rawTable[modifiedRollA, modifiedRollD]; 
+            (int hitsToD, int hitsToA) = RawTables[battle.Size()][modifiedRollA, modifiedRollD];
+            bool star = !battle.ResourceOrCapital && modifiedRollA > 6;
 
             return (hitsToD, hitsToA, star, defenderLeaderDeathTop, attackerLeaderDeathTop);
+        }
+
+        #region private
+        private static readonly Dictionary<BattleSize, (int hitsToD, int hitsToA)[,]> RawTables = PreCalculateRawTables();
+        private static (int hitsToD, int hitsToA) RawTable(BattleSize battleSize, int attackerModifiedDieRoll, int defenderModifiedDieRoll)
+        {
+            int hitsToDefender = tablesHitToD[battleSize][Math.Clamp(attackerModifiedDieRoll - 1, 0, 9)];
+            int hitsToAttacker = tablesHitToA[battleSize][Math.Clamp(defenderModifiedDieRoll - 1, 0, 9)];
+            return (hitsToDefender, hitsToAttacker);
+        }
+        private static Dictionary<BattleSize, (int hitsToD, int hitsToA)[,]> PreCalculateRawTables()
+        {
+            var dict = new Dictionary<BattleSize, (int hitsToD, int hitsToA)[,]>();
+            foreach (BattleSize size in Enum.GetValues<BattleSize>())
+            {
+                (int hitsToD, int hitsToA)[,] table = new (int hitsToD, int hitsToA)[10, 10];
+                for (int a = 0; a < 10; a++)
+                {
+                    for (int d = 0; d < 10; d++)
+                    {
+                        table[a, d] = RawTable(size, a + 1, d + 1);
+                    }
+                    dict[size] = table;
+                }
+            }
+            return dict;
+        }
+
+        private static LossStats LossDistributions(BattleSize size, int aDRM, int dDRM)
+        {
+            int[] hitsToAVector = new int[36];
+            int[] hitsToDVector = new int[36];
+            (int hitsToD, int hitsToA)[,] rawTable = RawTables[size];
+            foreach ((int black, int white) in Dice.TwoDice)
+            {
+                (int hitsToD, int hitsToA) = rawTable[black + aDRM, white + dDRM];
+                hitsToAVector[white - 1] = hitsToA;
+                hitsToDVector[black - 1] = hitsToD;
+            }
+            (double MeanA, double StdDevA) = IntArrayStatHelpers.MeanAndStdDevVectorised(hitsToAVector);
+            (double MeanD, double StdDevD) = IntArrayStatHelpers.MeanAndStdDevVectorised(hitsToDVector);
+
+            double[] distributionHtoA = IntArrayStatHelpers.CalculateDistribution(hitsToAVector, maxHitsToA[size]);
+            double[] distributionHtoD = IntArrayStatHelpers.CalculateDistribution(hitsToDVector, maxHitsToD[size]);
+
+            return (MeanA, StdDevA, MeanD, StdDevD,
+                distributionHtoD.Select((prblty, hits) => (hits, prblty)).ToDictionary(x => x.hits, x => x.prblty),
+                distributionHtoA.Select((prblty, hits) => (hits, prblty)).ToDictionary(x => x.hits, x => x.prblty));
+        }
+
+
+        private static (int aDRM, int dDRM, Ratio ratio, bool inAttackerFavour) Extract(FtpLandBattle battle)
+        {
+            (Ratio ratio, bool inAttackerFavour) = battle.RatioDRM();
+            int aDRM = (inAttackerFavour ? ratio.DRM_fromRatio() : 0)
+                 + battle.AttackerLeadersDRMIncludingCavalryIntelligence
+                 + battle.AttackerElitesCommitted
+                 + (battle.DefenderOOS ? 2 : 0);
+            int dDRM = (inAttackerFavour ? 0 : ratio.DRM_fromRatio())
+                 + battle.DefenderLeadersDRMIncludingCavalryIntelligence
+                 + battle.DefenderElitesCommitted
+                 + (battle.IsInterception ? 2 : 0)
+                 + (battle.FortPresent ? 2 : 0)
+                 + (battle.AttackerOOS ? 2 : 0);
+            return (aDRM, dDRM, ratio, inAttackerFavour);
         }
 
         // Def column: Attacker's Roll -> Defender's Result (hits to defender)
@@ -110,5 +133,18 @@ namespace AbeGaming.GameLogic.FtP
             [BattleSize.Medium] = [1, 1, 1, 1, 1, 1, 2, 3, 3, 3],
             [BattleSize.Large] = [1, 2, 3, 3, 3, 4, 4, 4, 5, 6]
         };
+        private static readonly Dictionary<BattleSize, int> maxHitsToA = new()
+        {
+            [BattleSize.Small] = 2,
+            [BattleSize.Medium] = 3,
+            [BattleSize.Large] = 6
+        };
+        private static readonly Dictionary<BattleSize, int> maxHitsToD = new()
+        {
+            [BattleSize.Small] = 1,
+            [BattleSize.Medium] = 3,
+            [BattleSize.Large] = 5
+        };
+        #endregion
     }
 }

@@ -1,12 +1,12 @@
+using AbeGaming.GameLogic.PoG;
+
 namespace AbeGaming.GameLogic.FtP
 {
     public static partial class FtpBattleMethods
     {
         public static Random Random { get; set; } = new Random();
 
-        public static int[] Die => [1, 2, 3, 4, 5, 6];
-
-        public static Span<int> RollDice(int count)=> Random.GetItems(Die, count);
+        public static Span<int> RollDice(int count) => Random.GetItems(Dice.Die, count);
 
         public static int DRM_fromRatio(this Ratio ratio) => ratio switch
         {
@@ -56,7 +56,7 @@ namespace AbeGaming.GameLogic.FtP
             int defenderDieRoll = randoms[1];
 
             (int hitsToDefender, int hitsToAttacker, bool star, int defenderLeaderDeathTop, int attackerLeaderDeathTop) =
-                FtpCRT.Outcome(battle, attackerDieRoll, defenderDieRoll);
+               battle.Outcome(attackerDieRoll, defenderDieRoll);
 
             Winner winner = Winner.Defender;
             bool attackerCanStay = false;

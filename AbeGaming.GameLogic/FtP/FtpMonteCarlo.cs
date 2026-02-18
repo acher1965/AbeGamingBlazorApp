@@ -69,16 +69,16 @@ namespace AbeGaming.GameLogic.FtP
             }
 
             // SIMD-accelerated summation
-            int totalAttackerWins = VectorizedMath.Sum(attackerWins);
-            int totalDefenderWins = VectorizedMath.Sum(defenderWins);
-            int totalOverruns = VectorizedMath.Sum(overruns);
-            int totalStars = VectorizedMath.Sum(stars);
-            int totalAttackerLeaderDeaths = VectorizedMath.Sum(attackerLeaderDeaths);
-            int totalDefenderLeaderDeaths = VectorizedMath.Sum(defenderLeaderDeaths);
+            int totalAttackerWins = IntArrayStatHelpers.SumVectorised(attackerWins);
+            int totalDefenderWins = IntArrayStatHelpers.SumVectorised(defenderWins);
+            int totalOverruns = IntArrayStatHelpers.SumVectorised(overruns);
+            int totalStars = IntArrayStatHelpers.SumVectorised(stars);
+            int totalAttackerLeaderDeaths = IntArrayStatHelpers.SumVectorised(attackerLeaderDeaths);
+            int totalDefenderLeaderDeaths = IntArrayStatHelpers.SumVectorised(defenderLeaderDeaths);
 
             // SIMD-accelerated mean and stddev directly from int arrays (no double[] allocation)
-            var (avgAttackerCasualties, stdAttackerCasualties) = VectorizedMath.MeanAndStdDev(attackerCasualties);
-            var (avgDefenderCasualties, stdDefenderCasualties) = VectorizedMath.MeanAndStdDev(defenderCasualties);
+            var (avgAttackerCasualties, stdAttackerCasualties) = IntArrayStatHelpers.MeanAndStdDevVectorised(attackerCasualties);
+            var (avgDefenderCasualties, stdDefenderCasualties) = IntArrayStatHelpers.MeanAndStdDevVectorised(defenderCasualties);
 
             // Calculate casualty distributions based on battle size (CRT max values)
             // Small: Attacker 0-2, Defender 0-1 | Medium: Both 0-3 | Large: Attacker 0-6, Defender 0-5
@@ -89,8 +89,8 @@ namespace AbeGaming.GameLogic.FtP
                 BattleSize.Medium => (3, 3),
                 _ => (6, 5) // Large
             };
-            var attackerCasualtyDist = VectorizedMath.CalculateDistribution(attackerCasualties, trials, maxAttackerLoss);
-            var defenderCasualtyDist = VectorizedMath.CalculateDistribution(defenderCasualties, trials, maxDefenderLoss);
+            double[] attackerCasualtyDist = IntArrayStatHelpers.CalculateDistribution(attackerCasualties, maxAttackerLoss);
+            double[] defenderCasualtyDist = IntArrayStatHelpers.CalculateDistribution(defenderCasualties, maxDefenderLoss);
 
             return new FtpMonteCarloResult(
                 Trials: trials,
