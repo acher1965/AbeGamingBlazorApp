@@ -1,5 +1,4 @@
 using System.Numerics;
-using System.Runtime.InteropServices;
 
 namespace AbeGaming.GameLogic.FtP
 {
@@ -70,16 +69,16 @@ namespace AbeGaming.GameLogic.FtP
             }
 
             // SIMD-accelerated summation
-            int totalAttackerWins = SumVectorized(attackerWins);
-            int totalDefenderWins = SumVectorized(defenderWins);
-            int totalOverruns = SumVectorized(overruns);
-            int totalStars = SumVectorized(stars);
-            int totalAttackerLeaderDeaths = SumVectorized(attackerLeaderDeaths);
-            int totalDefenderLeaderDeaths = SumVectorized(defenderLeaderDeaths);
+            int totalAttackerWins = VectorizedMath.Sum(attackerWins);
+            int totalDefenderWins = VectorizedMath.Sum(defenderWins);
+            int totalOverruns = VectorizedMath.Sum(overruns);
+            int totalStars = VectorizedMath.Sum(stars);
+            int totalAttackerLeaderDeaths = VectorizedMath.Sum(attackerLeaderDeaths);
+            int totalDefenderLeaderDeaths = VectorizedMath.Sum(defenderLeaderDeaths);
 
             // SIMD-accelerated mean and stddev directly from int arrays (no double[] allocation)
-            var (avgAttackerCasualties, stdAttackerCasualties) = MeanAndStdDevVectorized(attackerCasualties);
-            var (avgDefenderCasualties, stdDefenderCasualties) = MeanAndStdDevVectorized(defenderCasualties);
+            var (avgAttackerCasualties, stdAttackerCasualties) = VectorizedMath.MeanAndStdDev(attackerCasualties);
+            var (avgDefenderCasualties, stdDefenderCasualties) = VectorizedMath.MeanAndStdDev(defenderCasualties);
 
             // Calculate casualty distributions based on battle size (CRT max values)
             // Small: Attacker 0-2, Defender 0-1 | Medium: Both 0-3 | Large: Attacker 0-6, Defender 0-5
@@ -90,8 +89,8 @@ namespace AbeGaming.GameLogic.FtP
                 BattleSize.Medium => (3, 3),
                 _ => (6, 5) // Large
             };
-            var attackerCasualtyDist = CalculateCasualtyDistribution(attackerCasualties, trials, maxAttackerLoss);
-            var defenderCasualtyDist = CalculateCasualtyDistribution(defenderCasualties, trials, maxDefenderLoss);
+            var attackerCasualtyDist = VectorizedMath.CalculateDistribution(attackerCasualties, trials, maxAttackerLoss);
+            var defenderCasualtyDist = VectorizedMath.CalculateDistribution(defenderCasualties, trials, maxDefenderLoss);
 
             return new FtpMonteCarloResult(
                 Trials: trials,
@@ -109,93 +108,6 @@ namespace AbeGaming.GameLogic.FtP
                 StarResultProbability: (double)totalStars / trials,
                 AttackerCasualtyDistribution: attackerCasualtyDist,
                 DefenderCasualtyDistribution: defenderCasualtyDist);
-        }
-
-        /// <summary>
-        /// Calculates the probability distribution of casualties (0 to maxLoss SP).
-        /// </summary>
-        private static double[] CalculateCasualtyDistribution(int[] casualties, int trials, int maxLoss)
-        {
-            Span<int> counts = stackalloc int[7]; // 0-6 max possible from CRT
-            foreach (var c in casualties)
-                counts[c]++;
-
-            int size = maxLoss + 1;
-            var distribution = new double[size];
-            for (int i = 0; i < size; i++)
-                distribution[i] = (double)counts[i] / trials;
-
-            return distribution;
-        }
-
-        /// <summary>
-        /// SIMD-accelerated mean and standard deviation from an int array.
-        /// Computes both in a single pass, converting to double only at the final step.
-        /// </summary>
-        private static (double Mean, double StdDev) MeanAndStdDevVectorized(int[] array)
-        {
-            var span = array.AsSpan();
-            var vectors = MemoryMarshal.Cast<int, Vector<int>>(span);
-
-            var sum = Vector<int>.Zero;
-            var sumSquares = Vector<int>.Zero;
-
-            foreach (var v in vectors)
-            {
-                sum += v;
-                sumSquares += v * v;
-            }
-
-            // Sum the vector lanes (use long to avoid overflow when combining)
-            long totalSum = 0;
-            long totalSumSquares = 0;
-            for (int i = 0; i < Vector<int>.Count; i++)
-            {
-                totalSum += sum[i];
-                totalSumSquares += sumSquares[i];
-            }
-
-            // Handle remainder (if array length not divisible by vector width)
-            int remainder = span.Length % Vector<int>.Count;
-            for (int i = span.Length - remainder; i < span.Length; i++)
-            {
-                totalSum += span[i];
-                totalSumSquares += (long)span[i] * span[i];
-            }
-
-            // Final double arithmetic
-            double n = array.Length;
-            double mean = totalSum / n;
-            double variance = (totalSumSquares / n) - (mean * mean);
-            double stdDev = Math.Sqrt(variance);
-
-            return (mean, stdDev);
-        }
-
-        /// <summary>
-        /// SIMD-accelerated sum of an int array using Vector&lt;int&gt;.
-        /// Falls back to scalar for remainder elements.
-        /// </summary>
-        private static int SumVectorized(int[] array)
-        {
-            var span = array.AsSpan();
-            var vectors = MemoryMarshal.Cast<int, Vector<int>>(span);
-
-            var sum = Vector<int>.Zero;
-            foreach (var v in vectors)
-                sum += v;
-
-            // Sum the vector lanes
-            int total = 0;
-            for (int i = 0; i < Vector<int>.Count; i++)
-                total += sum[i];
-
-            // Handle remainder (if array length not divisible by vector width)
-            int remainder = span.Length % Vector<int>.Count;
-            for (int i = span.Length - remainder; i < span.Length; i++)
-                total += span[i];
-
-            return total;
         }
     }
 }

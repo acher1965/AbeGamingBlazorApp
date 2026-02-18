@@ -1,11 +1,9 @@
 namespace AbeGaming.GameLogic.PoG
 {
-    /// <summary>
-    /// Result of a Paths of Glory combat resolution.
-    /// </summary>
-    public record PoGCombatResult(
-        int AttackerLosses,
-        int DefenderLosses,
+    public record PoGBattleResult(
+        Winner Winner,
+        int HitsByAttacker,
+        int HitsByDefender,
         int DefenderRetreatLength,
         int AttackerDieRoll,
         int DefenderDieRoll,

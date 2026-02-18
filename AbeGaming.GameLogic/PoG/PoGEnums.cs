@@ -1,6 +1,6 @@
 namespace AbeGaming.GameLogic.PoG
 {
-    public enum CRTTableType
+    public enum FireTable
     {
         Corps,
         Army,
