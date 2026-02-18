@@ -33,7 +33,7 @@ namespace AbeGaming.GameLogic.FtP
             int tableIndex = Math.Clamp(modifiedRollA - 1, 0, 9);
 
             int hitsToDefender = tablesHitToD[battleSize][tableIndex];
-            bool star = !battle.ResourceOrCapital && tableStar[battleSize][tableIndex];
+            bool star = !battle.ResourceOrCapital && tableIndex >= 6;
 
             int totalDefenderDRM = (inAttackerFavour ? 0 : ratio.DRM_fromRatio())
                 + battle.DefenderLeadersDRMIncludingCavalryIntelligence
@@ -81,12 +81,6 @@ namespace AbeGaming.GameLogic.FtP
             [BattleSize.Small] = [0, 1, 1, 1, 1, 1, 1, 1, 1, 2],
             [BattleSize.Medium] = [1, 1, 1, 1, 1, 1, 2, 3, 3, 3],
             [BattleSize.Large] = [1, 2, 3, 3, 3, 4, 4, 4, 5, 6]
-        };
-        private static readonly Dictionary<BattleSize, bool[]> tableStar = new()
-        {
-            [BattleSize.Small] = [false, false, false, false, false, false, true, true, true, true],
-            [BattleSize.Medium] = [false, false, false, false, false, false, true, true, true, true],
-            [BattleSize.Large] = [false, false, false, false, false, false, false, true, true, true]
         };
     }
 }
