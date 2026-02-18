@@ -2,6 +2,33 @@ namespace AbeGaming.GameLogic.FtP
 {
     public static class FtpCRT
     {
+        internal static readonly Dictionary<BattleSize, (int hitsToD, int hitsToA)[,]> RawTables = PreCalculateRawTables();
+
+        private static Dictionary<BattleSize, (int hitsToD, int hitsToA)[,]> PreCalculateRawTables()
+        {
+            var dict = new Dictionary<BattleSize, (int hitsToD, int hitsToA)[,]>();
+            foreach (BattleSize size in Enum.GetValues<BattleSize>())
+            {
+                (int hitsToD, int hitsToA)[,] table = new (int hitsToD, int hitsToA)[10, 10];
+                for (int a = 0; a < 10; a++)
+                {
+                    for (int d = 0; d < 10; d++)
+                    {
+                        table[a, d] = RawTable(size, a + 1, d + 1);
+                    }
+                    dict[size] = table;
+                }
+            }
+            return dict;
+        }
+
+        public static (int hitsToD, int hitsToA) RawTable(BattleSize battleSize, int attackerModifiedDieRoll, int defenderModifiedDieRoll)
+        {
+            int hitsToDefender = tablesHitToD[battleSize][Math.Clamp(attackerModifiedDieRoll - 1, 0, 9)];
+            int hitsToAttacker = tablesHitToA[battleSize][Math.Clamp(defenderModifiedDieRoll - 1, 0, 9)];
+            return (hitsToDefender, hitsToAttacker);
+        }
+
         /// <summary>
         /// Calculates hits to defender and attacker based on the battle conditions and die rolls.
         /// </summary>
@@ -19,8 +46,9 @@ namespace AbeGaming.GameLogic.FtP
 
             if (battle.IsOverrun())
                 return (battle.DefenderSize, 0, false, 0, 0);
-            
+
             //We continue if it is not an overrun
+            var rawTable = RawTables[battleSize];
 
             // Calculate attacker's DRM: leader DRM + elites + opponent OOS bonus
             int totalAttackerDRM = (inAttackerFavour ? ratio.DRM_fromRatio() : 0)
@@ -32,7 +60,6 @@ namespace AbeGaming.GameLogic.FtP
             int modifiedRollA = attackerDieRoll + totalAttackerDRM;
             int tableIndex = Math.Clamp(modifiedRollA - 1, 0, 9);
 
-            int hitsToDefender = tablesHitToD[battleSize][tableIndex];
             bool star = !battle.ResourceOrCapital && tableIndex >= 6;
 
             int totalDefenderDRM = (inAttackerFavour ? 0 : ratio.DRM_fromRatio())
@@ -43,7 +70,6 @@ namespace AbeGaming.GameLogic.FtP
                 + (battle.AttackerOOS ? 2 : 0);
             int modifiedRollD = defenderDieRoll + totalDefenderDRM;
             tableIndex = Math.Clamp(modifiedRollD - 1, 0, 9);
-            int hitsToAttacker = tablesHitToA[battleSize][tableIndex];
 
             // Leaders death changes: determine leader death roll threshold
             // Rolled modified 10 or greater: Leader killed on 1-3
@@ -63,7 +89,9 @@ namespace AbeGaming.GameLogic.FtP
                         ? 1
                         : 0;
 
-            return (hitsToDefender, hitsToAttacker, star, defenderLeaderDeathTop, attackerLeaderDeathTop);
+            (int hitsToD, int hitsToA) = rawTable[modifiedRollA, modifiedRollD]; 
+
+            return (hitsToD, hitsToA, star, defenderLeaderDeathTop, attackerLeaderDeathTop);
         }
 
         // Def column: Attacker's Roll -> Defender's Result (hits to defender)
