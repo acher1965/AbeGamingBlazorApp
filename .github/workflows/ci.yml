@@ -26,7 +26,7 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Build Tests (Debug)
-        run: dotnet build --no-restore --configuration Debug --project AbeGaming.GameLogic.Tests
+        run: dotnet build --no-restore --configuration Debug AbeGaming.GameLogic.Tests/AbeGaming.GameLogic.Tests.csproj
 
       - name: Test
         run: dotnet test --no-build --configuration Debug --verbosity normal
