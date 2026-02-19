@@ -69,7 +69,10 @@ namespace AbeGaming.GameLogic.FtP
                         ? 1
                         : 0;
 
-            (int hitsToD, int hitsToA) = RawTables[size][modifiedRollA - 1, modifiedRollD - 1];
+            // Clamp indices to table bounds (0-9 for modified rolls 1-10+)
+            int tableIndexA = Math.Clamp(modifiedRollA - 1, 0, 9);
+            int tableIndexD = Math.Clamp(modifiedRollD - 1, 0, 9);
+            (int hitsToD, int hitsToA) = RawTables[size][tableIndexA, tableIndexD];
 
             bool star = !battle.ResourceOrCapital && modifiedRollA > 6;
 
