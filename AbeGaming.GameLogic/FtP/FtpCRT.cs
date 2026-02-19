@@ -2,33 +2,34 @@ using System.Drawing;
 
 namespace AbeGaming.GameLogic.FtP
 {
+
     public static class FtpCRT
     {
-        public static HitStats LossDistributions(this FtpBattle battle)
-        {
-            (int aDRM, int dDRM, _, _, BattleSize size) = Extract(battle);
-            int[] hitsToAVector = new int[36];
-            int[] hitsToDVector = new int[36];
-            (int hitsToD, int hitsToA)[,] rawTable = RawTables[size];
-            int i = 0;
-            foreach ((int black, int white) in Dice.TwoDice)
-            {
-                (int hitsToD, int hitsToA) = rawTable[black + aDRM - 1, white + dDRM - 1];
-                hitsToDVector[i] = hitsToD;
-                hitsToAVector[i] = hitsToA;
-                i++;
-            }
-            (double MeanToA, double StdDevToA) = IntArrayStatHelpers.MeanAndStdDevVectorised(hitsToAVector);
-            (double MeanToD, double StdDevToD) = IntArrayStatHelpers.MeanAndStdDevVectorised(hitsToDVector);
+        //public static HitStats LossDistributionsP(this FtpBattle battle)
+        //{
+        //    (int aDRM, int dDRM, _, _, BattleSize size) = Extract(battle);
+        //    int[] hitsToAVector = new int[36];
+        //    int[] hitsToDVector = new int[36];
+        //    (int hitsToD, int hitsToA)[,] rawTable = RawTables[size];
+        //    int i = 0;
+        //    foreach ((int black, int white) in Dice.TwoDice)
+        //    {
+        //        (int hitsToD, int hitsToA) = rawTable[black + aDRM - 1, white + dDRM - 1];
+        //        hitsToDVector[i] = hitsToD;
+        //        hitsToAVector[i] = hitsToA;
+        //        i++;
+        //    }
+        //    (double MeanToA, double StdDevToA) = IntArrayStatHelpers.MeanAndStdDevVectorised(hitsToAVector);
+        //    (double MeanToD, double StdDevToD) = IntArrayStatHelpers.MeanAndStdDevVectorised(hitsToDVector);
 
-            double[] distributionHtoA = IntArrayStatHelpers.CalculateDistribution(hitsToAVector, maxHitsToA[size]);
-            double[] distributionHtoD = IntArrayStatHelpers.CalculateDistribution(hitsToDVector, maxHitsToD[size]);
+        //    double[] distributionHtoA = IntArrayStatHelpers.CalculateDistribution(hitsToAVector, MaxHitsToA[size]);
+        //    double[] distributionHtoD = IntArrayStatHelpers.CalculateDistribution(hitsToDVector, MaxHitsToA[size]);
 
-            return (MeanToD, StdDevToD,
-                MeanToA, StdDevToA,
-                distributionHtoD.Index().ToDictionary(x => x.Index, x => x.Item),
-                distributionHtoA.Index().ToDictionary(x => x.Index, x => x.Item));
-        }
+        //    return (MeanToD, StdDevToD,
+        //        MeanToA, StdDevToA,
+        //        distributionHtoD.Index().ToDictionary(x => x.Index, x => x.Item),
+        //        distributionHtoA.Index().ToDictionary(x => x.Index, x => x.Item));
+        //}
 
         /// <summary>
         /// Calculates hits to defender and attacker based on the battle conditions and die rolls.
@@ -104,7 +105,7 @@ namespace AbeGaming.GameLogic.FtP
             [BattleSize.Medium] = [0, 1, 1, 1, 1, 2, 2, 2, 2, 3],
             [BattleSize.Large] = [1, 2, 2, 3, 3, 3, 4, 4, 5, 5]
         };
-        private static readonly Dictionary<BattleSize, int> maxHitsToD = new()
+        internal static readonly Dictionary<BattleSize, int> MaxHitsToD = new()
         {
             [BattleSize.Small] = 1,
             [BattleSize.Medium] = 3,
@@ -118,7 +119,7 @@ namespace AbeGaming.GameLogic.FtP
             [BattleSize.Medium] = [1, 1, 1, 1, 1, 1, 2, 3, 3, 3],
             [BattleSize.Large] = [1, 2, 3, 3, 3, 4, 4, 4, 5, 6]
         };
-        private static readonly Dictionary<BattleSize, int> maxHitsToA = new()
+        internal static readonly Dictionary<BattleSize, int> MaxHitsToA = new()
         {
             [BattleSize.Small] = 2,
             [BattleSize.Medium] = 3,

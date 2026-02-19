@@ -1,4 +1,6 @@
 using AbeGaming.GameLogic.PoG;
+using System.ComponentModel.Design;
+using System.Drawing;
 
 namespace AbeGaming.GameLogic.FtP
 {
@@ -43,7 +45,19 @@ namespace AbeGaming.GameLogic.FtP
             return ratio == Ratio.TenToOnePlus && inAttackerFavour && !battle.FortPresent;
         }
 
-        public static FTPBattleResult BattleResult(FtpBattle battle, Span<int> FourDiceRolls)
+        /// <summary>
+        /// One battle outcome
+        /// </summary>
+        /// <param name="battle"></param>
+        /// <param name="FourDiceRolls">
+        /// First is attacker die roll,
+        /// second is defender die roll,
+        /// third is attacker leader death die roll (if needed),
+        /// fourth is defender leader death die roll (if needed)
+        /// </param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static FTPBattleResult BattleResult(this FtpBattle battle, Span<int> FourDiceRolls)
         {
             if (FourDiceRolls.Length < 4)
                 throw new ArgumentException($"{nameof(FtpBattleMethods)}.{BattleResult}(): 4 random numbers must be passed in",
@@ -127,6 +141,54 @@ namespace AbeGaming.GameLogic.FtP
                                        attackerLeaderDeathDieRoll,
                                        defenderLeaderDeathDieRoll,
                                        battle.IsOverrun());
+        }
+
+        public static FtpStats ExactStats(this FtpBattle battle)
+        {
+            List<FTPBattleResult> results = new List<FTPBattleResult>(36 * 36);
+            int[] fourDiceRolls = [0, 0, 1, 1];
+            int[] hitsToAVector = new int[36];
+            int[] hitsToDVector = new int[36];
+            int totalAttackerWins = 0;
+            int totalDefenderWins = 0;
+            int totalStars = 0;
+            int totalAttackerLeaderDeaths = 0;
+            int totalDefenderLeaderDeaths = 0;
+            BattleSize size = battle.Size();
+            int i = 0;
+            foreach ((int black, int white) in Dice.TwoDice)
+            {
+                fourDiceRolls[0] = black;
+                fourDiceRolls[1] = white;
+                FTPBattleResult r = battle.BattleResult(fourDiceRolls);
+                results.Add(r);
+                hitsToAVector[i] = r.DamageToAttacker;
+                hitsToDVector[i] = r.DamageToDefender;
+                totalAttackerWins += r.Winner == Winner.Attacker ? 1 : 0;
+                totalDefenderWins += r.Winner == Winner.Defender ? 1 : 0;
+                totalStars += r.Star ? 1 : 0;
+                totalAttackerLeaderDeaths += r.AttackerLeaderDeath ? 1 : 0;
+                totalDefenderLeaderDeaths += r.DefenderLeaderDeath ? 1 : 0;
+                i++;
+            }
+            (double MeanToA, double StdDevToA) = IntArrayStatHelpers.MeanAndStdDevVectorised(hitsToAVector);
+            (double MeanToD, double StdDevToD) = IntArrayStatHelpers.MeanAndStdDevVectorised(hitsToDVector);
+
+            double[] distributionHtoA = IntArrayStatHelpers.CalculateDistribution(hitsToAVector, FtpCRT.MaxHitsToA[size]);
+            double[] distributionHtoD = IntArrayStatHelpers.CalculateDistribution(hitsToDVector, FtpCRT.MaxHitsToD[size]);
+
+            HitStats hitsStats = (MeanToD, StdDevToD,
+                MeanToA, StdDevToA,
+                distributionHtoD.Index().ToDictionary(x => x.Index, x => x.Item),
+                distributionHtoA.Index().ToDictionary(x => x.Index, x => x.Item));
+            return new FtpStats(
+                size,
+                (double)totalAttackerWins / 36,
+                (double)totalDefenderWins / 36,
+                hitsStats,
+                (double)totalAttackerLeaderDeaths / 36,
+                (double)totalDefenderLeaderDeaths / 36,
+                (double)totalStars / 36);
         }
     }
 }
