@@ -351,45 +351,94 @@ namespace AbeGaming.GameLogic.Tests
 
         public static IEnumerable<object[]> ComprehensiveBattleScenarios()
         {
-            // Basic equal strength battles (various sizes)
-            yield return new object[] { CreateBattle(3, 3) };
+            // ===== BATTLE SIZE EDGE CASES =====
+            // Small battles (total SP <= 5)
+            yield return new object[] { CreateBattle(1, 1) };  // Minimum
+            yield return new object[] { CreateBattle(2, 2) };
+            yield return new object[] { CreateBattle(3, 2) };  // Edge: total = 5
+            yield return new object[] { CreateBattle(1, 4) };  // Unequal small
+
+            // Medium battles (total SP 6-19)
+            yield return new object[] { CreateBattle(3, 3) };  // Edge: total = 6
             yield return new object[] { CreateBattle(5, 5) };
             yield return new object[] { CreateBattle(8, 8) };
-            yield return new object[] { CreateBattle(12, 12) };
+            yield return new object[] { CreateBattle(10, 9) }; // Edge: total = 19
 
-            // Unequal strengths
+            // Large battles (total SP >= 20)
+            yield return new object[] { CreateBattle(10, 10) }; // Edge: total = 20
+            yield return new object[] { CreateBattle(12, 12) };
+            yield return new object[] { CreateBattle(15, 15) }; // Maximum typical
+
+            // ===== RATIO EDGE CASES =====
+            // Low ratio (< 3:1)
             yield return new object[] { CreateBattle(5, 3) };
             yield return new object[] { CreateBattle(3, 5) };
-            yield return new object[] { CreateBattle(10, 5) };
-            yield return new object[] { CreateBattle(5, 10) };
 
-            // With leader DRMs
+            // 3:1 ratio edge
+            yield return new object[] { CreateBattle(6, 2) };  // Exactly 3:1
+            yield return new object[] { CreateBattle(2, 6) };  // Defender 3:1
+
+            // 4:1 ratio edge
+            yield return new object[] { CreateBattle(8, 2) };  // Exactly 4:1
+            yield return new object[] { CreateBattle(2, 8) };  // Defender 4:1
+
+            // 5:1+ ratio edge
+            yield return new object[] { CreateBattle(10, 2) }; // Exactly 5:1
+            yield return new object[] { CreateBattle(2, 10) }; // Defender 5:1
+
+            // 10:1+ ratio (overrun territory)
+            yield return new object[] { CreateBattle(10, 1) }; // Exactly 10:1 - overrun!
+            yield return new object[] { CreateBattle(15, 1) }; // > 10:1 - overrun!
+
+            // ===== DRM COMBINATIONS =====
+            // Leader DRMs
+            yield return new object[] { CreateBattle(5, 5, attackerLeaderDRM: 1) };
             yield return new object[] { CreateBattle(5, 5, attackerLeaderDRM: 2) };
+            yield return new object[] { CreateBattle(5, 5, attackerLeaderDRM: 3) };
+            yield return new object[] { CreateBattle(5, 5, defenderLeaderDRM: 1) };
             yield return new object[] { CreateBattle(5, 5, defenderLeaderDRM: 2) };
-            yield return new object[] { CreateBattle(5, 5, attackerLeaderDRM: 2, defenderLeaderDRM: 1) };
+            yield return new object[] { CreateBattle(5, 5, defenderLeaderDRM: 3) };
+            yield return new object[] { CreateBattle(5, 5, attackerLeaderDRM: 2, defenderLeaderDRM: 2) };
 
-            // With elites
+            // Elites (max 2 each)
             yield return new object[] { CreateBattle(5, 5, attackerElites: 1) };
+            yield return new object[] { CreateBattle(5, 5, attackerElites: 2) };
+            yield return new object[] { CreateBattle(5, 5, defenderElites: 1) };
             yield return new object[] { CreateBattle(5, 5, defenderElites: 2) };
-            yield return new object[] { CreateBattle(5, 5, attackerElites: 1, defenderElites: 1) };
+            yield return new object[] { CreateBattle(5, 5, attackerElites: 2, defenderElites: 2) };
 
-            // With terrain modifiers
+            // ===== TERRAIN MODIFIERS =====
             yield return new object[] { CreateBattle(5, 5, fortPresent: true) };
             yield return new object[] { CreateBattle(5, 5, isInterception: true) };
-            // TODO: Re-add fort+interception and complex DRM cases once divergence is investigated
-            // These pass in the app but fail in tests - possible test infrastructure issue
+            yield return new object[] { CreateBattle(5, 5, fortPresent: true, isInterception: true) };
 
-            // With supply status
+            // Fort prevents overrun
+            yield return new object[] { CreateBattle(10, 1, fortPresent: true) }; // Would be overrun without fort
+
+            // ===== SUPPLY STATUS =====
             yield return new object[] { CreateBattle(5, 5, attackerOOS: true) };
             yield return new object[] { CreateBattle(5, 5, defenderOOS: true) };
+            yield return new object[] { CreateBattle(5, 5, attackerOOS: true, defenderOOS: true) };
 
-            // Resource/Capital (affects star results)
+            // ===== RESOURCE/CAPITAL (affects star results) =====
             yield return new object[] { CreateBattle(5, 5, resourceOrCapital: true) };
             yield return new object[] { CreateBattle(10, 10, resourceOrCapital: true) };
+            yield return new object[] { CreateBattle(5, 5, resourceOrCapital: false) }; // Star possible
 
-            // Complex combinations
-            yield return new object[] { CreateBattle(8, 5, attackerLeaderDRM: 2, defenderElites: 1) };
+            // ===== COMPLEX COMBINATIONS =====
+            // High attacker advantage
+            yield return new object[] { CreateBattle(8, 5, attackerLeaderDRM: 3, attackerElites: 2, defenderOOS: true) };
+
+            // High defender advantage
+            yield return new object[] { CreateBattle(5, 8, defenderLeaderDRM: 3, defenderElites: 2, fortPresent: true, isInterception: true) };
+
+            // Balanced with many modifiers
+            yield return new object[] { CreateBattle(8, 6, attackerLeaderDRM: 2, defenderLeaderDRM: 1, attackerElites: 1, fortPresent: true) };
+            yield return new object[] { CreateBattle(6, 8, defenderLeaderDRM: 3, isInterception: true, attackerOOS: true) };
             yield return new object[] { CreateBattle(10, 10, attackerLeaderDRM: 2, defenderLeaderDRM: 2, attackerElites: 1, defenderElites: 1) };
+
+            // Maximum DRMs stacked
+            yield return new object[] { CreateBattle(5, 5, defenderLeaderDRM: 3, defenderElites: 2, fortPresent: true, isInterception: true, attackerOOS: true) };
         }
 
         [Theory]
