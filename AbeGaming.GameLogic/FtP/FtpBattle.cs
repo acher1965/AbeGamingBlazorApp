@@ -1,6 +1,6 @@
 namespace AbeGaming.GameLogic.FtP
 {
-    public record FtpLandBattle(
+    public record FtpBattle(
         bool ResourceOrCapital,
         bool FortPresent,
         bool IsInterception,
@@ -12,5 +12,6 @@ namespace AbeGaming.GameLogic.FtP
         int AttackerElitesCommitted,
         int DefenderElitesCommitted,
         bool AttackerOOS,
-        bool DefenderOOS);
+        bool DefenderOOS,
+        bool IsAmphibious);
 }

@@ -10,17 +10,10 @@ namespace AbeGaming.GameLogic.FtP
         BattleSize BattleSize,
         double AttackerWinProbability,
         double DefenderWinProbability,
-        double DrawProbability,
-        double AverageAttackerCasualties,
-        double AverageDefenderCasualties,
-        double AttackerCasualtiesStdDev,
-        double DefenderCasualtiesStdDev,
+        HitStats HitsStats,
         double AttackerLeaderDeathProbability,
         double DefenderLeaderDeathProbability,
-        double OverrunProbability,
-        double StarResultProbability,
-        double[] AttackerCasualtyDistribution,
-        double[] DefenderCasualtyDistribution);
+        double StarResultProbability);
 
     /// <summary>
     /// Monte Carlo simulation for FtP battle outcomes.
@@ -35,27 +28,27 @@ namespace AbeGaming.GameLogic.FtP
         /// <param name="battle">The battle configuration to simulate</param>
         /// <param name="trialsExponent">Power of 2 exponent for number of trials (e.g., 14 = 2^14 = 16,384 trials)</param>
         /// <returns>Statistical results of the trials</returns>
-        public static FtpMonteCarloResult Run(FtpLandBattle battle, int trialsExponent)
+        public static FtpMonteCarloResult Run(FtpBattle battle, int trialsExponent)
         {
             int trials = 1 << trialsExponent;
 
             // Allocate arrays for results - using int for SIMD-friendly counting
-            var attackerWins = new int[trials];
-            var defenderWins = new int[trials];
-            var overruns = new int[trials];
-            var stars = new int[trials];
-            var attackerLeaderDeaths = new int[trials];
-            var defenderLeaderDeaths = new int[trials];
-            var attackerCasualties = new int[trials];
-            var defenderCasualties = new int[trials];
+            int[] attackerWins = new int[trials];
+            int[] defenderWins = new int[trials];
+            int[] overruns = new int[trials];
+            int[] stars = new int[trials];
+            int[] attackerLeaderDeaths = new int[trials];
+            int[] defenderLeaderDeaths = new int[trials];
+            int[] attackerCasualties = new int[trials];
+            int[] defenderCasualties = new int[trials];
 
             // Pre-roll all random numbers (SIMD-optimized in RollDice)
-            var randoms = FtpBattleMethods.RollDice(trials << 2);
+            Span<int> randoms = Dice.RollOneDieRepeatedly(trials << 2);
 
             // Main loop - minimal branching, just store results
             for (int i = 0; i < trials; i++)
             {
-                var result = FtpBattleMethods.BattleResult(battle, randoms.Slice(i << 2, 4));
+                FTPBattleResult result = FtpBattleMethods.BattleResult(battle, randoms.Slice(i << 2, 4));
 
                 // Store as 0/1 for SIMD summation (branchless where possible)
                 attackerWins[i] = result.Winner == Winner.Attacker ? 1 : 0;
@@ -77,37 +70,33 @@ namespace AbeGaming.GameLogic.FtP
             int totalDefenderLeaderDeaths = IntArrayStatHelpers.SumVectorised(defenderLeaderDeaths);
 
             // SIMD-accelerated mean and stddev directly from int arrays (no double[] allocation)
-            var (avgAttackerCasualties, stdAttackerCasualties) = IntArrayStatHelpers.MeanAndStdDevVectorised(attackerCasualties);
-            var (avgDefenderCasualties, stdDefenderCasualties) = IntArrayStatHelpers.MeanAndStdDevVectorised(defenderCasualties);
+            (double avgAttackerCasualties, double stdAttackerCasualties) = IntArrayStatHelpers.MeanAndStdDevVectorised(attackerCasualties);
+            (double avgDefenderCasualties, double stdDefenderCasualties) = IntArrayStatHelpers.MeanAndStdDevVectorised(defenderCasualties);
 
             // Calculate casualty distributions based on battle size (CRT max values)
-            // Small: Attacker 0-2, Defender 0-1 | Medium: Both 0-3 | Large: Attacker 0-6, Defender 0-5
-            var battleSize = battle.Size();
-            var (maxAttackerLoss, maxDefenderLoss) = battleSize switch
+            BattleSize battleSize = battle.Size();
+            (int maxAttackerLoss, int maxDefenderLoss) = battleSize switch
             {
                 BattleSize.Small => (2, 1),
                 BattleSize.Medium => (3, 3),
                 _ => (6, 5) // Large
             };
-            double[] attackerCasualtyDist = IntArrayStatHelpers.CalculateDistribution(attackerCasualties, maxAttackerLoss);
-            double[] defenderCasualtyDist = IntArrayStatHelpers.CalculateDistribution(defenderCasualties, maxDefenderLoss);
+            Dictionary<int, double> attackerCasualtyDist = IntArrayStatHelpers.CalculateDistribution(attackerCasualties, maxAttackerLoss)
+                .Index().ToDictionary(x => x.Index, x => x.Item);
+            Dictionary<int, double> defenderCasualtyDist = IntArrayStatHelpers.CalculateDistribution(defenderCasualties, maxDefenderLoss)
+                .Index().ToDictionary(x => x.Index, x => x.Item);
+
+            HitStats hitsStats = new(avgDefenderCasualties, stdDefenderCasualties, avgAttackerCasualties, stdAttackerCasualties, defenderCasualtyDist, attackerCasualtyDist);
 
             return new FtpMonteCarloResult(
-                Trials: trials,
-                BattleSize: battleSize,
-                AttackerWinProbability: (double)totalAttackerWins / trials,
-                DefenderWinProbability: (double)totalDefenderWins / trials,
-                DrawProbability: (double)(trials - totalAttackerWins - totalDefenderWins) / trials,
-                AverageAttackerCasualties: avgAttackerCasualties,
-                AverageDefenderCasualties: avgDefenderCasualties,
-                AttackerCasualtiesStdDev: stdAttackerCasualties,
-                DefenderCasualtiesStdDev: stdDefenderCasualties,
-                AttackerLeaderDeathProbability: (double)totalAttackerLeaderDeaths / trials,
-                DefenderLeaderDeathProbability: (double)totalDefenderLeaderDeaths / trials,
-                OverrunProbability: (double)totalOverruns / trials,
-                StarResultProbability: (double)totalStars / trials,
-                AttackerCasualtyDistribution: attackerCasualtyDist,
-                DefenderCasualtyDistribution: defenderCasualtyDist);
+                trials,
+                battleSize,
+                (double)totalAttackerWins / trials,
+                (double)totalDefenderWins / trials,
+                hitsStats,
+                (double)totalAttackerLeaderDeaths / trials,
+                (double)totalDefenderLeaderDeaths / trials,
+                (double)totalStars / trials);
         }
     }
 }

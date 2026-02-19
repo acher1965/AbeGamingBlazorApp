@@ -4,8 +4,10 @@ using System.Text;
 
 namespace AbeGaming.GameLogic
 {
-    internal static class Dice
+    public static class Dice
     {
+        public static Span<int> RollOneDieRepeatedly(int count) => Random.Shared.GetItems(Dice.Die, count);
+
         public static readonly int[] Die = { 1, 2, 3, 4, 5, 6 };
 
         public static readonly (int black, int white)[,] TwoDice = new (int black, int white)[,]

@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="AbeGaming.GameLogic.Tests/AbeGaming.GameLogic.Tests.csproj" />
   <Project Path="AbeGaming.GameLogic/AbeGaming.GameLogic.csproj" />
   <Project Path="AbeGamingBlazorApp/AbeGamingBlazorApp.csproj" />
 </Solution>

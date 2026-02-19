@@ -4,10 +4,6 @@ namespace AbeGaming.GameLogic.FtP
 {
     public static partial class FtpBattleMethods
     {
-        public static Random Random { get; set; } = new Random();
-
-        public static Span<int> RollDice(int count) => Random.GetItems(Dice.Die, count);
-
         public static int DRM_fromRatio(this Ratio ratio) => ratio switch
         {
             Ratio.ThreeToOne => 2,
@@ -16,7 +12,7 @@ namespace AbeGaming.GameLogic.FtP
             _ => 0
         };
 
-        public static (Ratio Ratio, bool InAttackerFavour) BattleRatio(this FtpLandBattle battle)
+        public static (Ratio Ratio, bool InAttackerFavour) BattleRatio(this FtpBattle battle)
         {
             bool inAttackerFavour = battle.AttackerSize >= battle.DefenderSize;
             int larger = inAttackerFavour ? battle.AttackerSize : battle.DefenderSize;
@@ -34,20 +30,20 @@ namespace AbeGaming.GameLogic.FtP
             return (ratio, inAttackerFavour);
         }
 
-        public static BattleSize Size(this FtpLandBattle battle) => (battle.AttackerSize + battle.DefenderSize) switch
+        public static BattleSize Size(this FtpBattle battle) => (battle.AttackerSize + battle.DefenderSize) switch
         {
             <= 5 => BattleSize.Small,
             <= 19 => BattleSize.Medium,
             _ => BattleSize.Large
         };
 
-        public static bool IsOverrun(this FtpLandBattle battle)
+        public static bool IsOverrun(this FtpBattle battle)
         {
             (Ratio ratio, bool inAttackerFavour) = battle.BattleRatio();
             return ratio == Ratio.TenToOnePlus && inAttackerFavour && !battle.FortPresent;
         }
 
-        public static FTPBattleResult BattleResult(FtpLandBattle battle, Span<int> FourDiceRolls)
+        public static FTPBattleResult BattleResult(FtpBattle battle, Span<int> FourDiceRolls)
         {
             if (FourDiceRolls.Length < 4)
                 throw new ArgumentException($"{nameof(FtpBattleMethods)}.{BattleResult}(): 4 random numbers must be passed in",

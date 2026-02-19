@@ -55,13 +55,13 @@ namespace AbeGaming.GameLogic
             if (array.Length == 0)
                 return (0, 0);
 
-            var span = array.AsSpan();
-            var vectors = MemoryMarshal.Cast<int, Vector<int>>(span);
+            Span<int> span = array.AsSpan();
+            ReadOnlySpan<Vector<int>> vectors = MemoryMarshal.Cast<int, Vector<int>>(span);
 
-            var sum = Vector<int>.Zero;
-            var sumSquares = Vector<int>.Zero;
+            Vector<int> sum = Vector<int>.Zero;
+            Vector<int> sumSquares = Vector<int>.Zero;
 
-            foreach (var v in vectors)
+            foreach (Vector<int> v in vectors)
             {
                 sum += v;
                 sumSquares += v * v;
@@ -126,11 +126,11 @@ namespace AbeGaming.GameLogic
         /// </summary>
         public static int SumVectorised(int[] array)
         {
-            var span = array.AsSpan();
-            var vectors = MemoryMarshal.Cast<int, Vector<int>>(span);
+            Span<int> span = array.AsSpan();
+            ReadOnlySpan<Vector<int>> vectors = MemoryMarshal.Cast<int, Vector<int>>(span);
 
-            var sum = Vector<int>.Zero;
-            foreach (var v in vectors)
+            Vector<int> sum = Vector<int>.Zero;
+            foreach (Vector<int> v in vectors)
                 sum += v;
 
             // Sum the vector lanes
