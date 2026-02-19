@@ -46,7 +46,8 @@ namespace AbeGaming.GameLogic.FtP
                         ? 1
                         : 0;
 
-            (int hitsToD, int hitsToA) = RawTables[battle.Size()][modifiedRollA, modifiedRollD];
+            (int hitsToD, int hitsToA) = RawTables[battle.Size()][modifiedRollA-1, modifiedRollD-1];
+
             bool star = !battle.ResourceOrCapital && modifiedRollA > 6;
 
             return (hitsToD, hitsToA, star, defenderLeaderDeathTop, attackerLeaderDeathTop);
@@ -62,6 +63,12 @@ namespace AbeGaming.GameLogic.FtP
             [BattleSize.Medium] = [0, 1, 1, 1, 1, 2, 2, 2, 2, 3],
             [BattleSize.Large] = [1, 2, 2, 3, 3, 3, 4, 4, 5, 5]
         };
+        private static readonly Dictionary<BattleSize, int> maxHitsToD = new()
+        {
+            [BattleSize.Small] = 1,
+            [BattleSize.Medium] = 3,
+            [BattleSize.Large] = 5
+        };
         // Att column: Defender's Roll -> Attacker's Result (hits to attacker)
         // Index 0-9 = die roll 1-10+
         private static readonly Dictionary<BattleSize, int[]> tablesHitToA = new()
@@ -75,12 +82,6 @@ namespace AbeGaming.GameLogic.FtP
             [BattleSize.Small] = 2,
             [BattleSize.Medium] = 3,
             [BattleSize.Large] = 6
-        };
-        private static readonly Dictionary<BattleSize, int> maxHitsToD = new()
-        {
-            [BattleSize.Small] = 1,
-            [BattleSize.Medium] = 3,
-            [BattleSize.Large] = 5
         };
 
         // Pre-calculated tables - depends on tablesHitToD/tablesHitToA being initialized first
@@ -115,11 +116,13 @@ namespace AbeGaming.GameLogic.FtP
             int[] hitsToAVector = new int[36];
             int[] hitsToDVector = new int[36];
             (int hitsToD, int hitsToA)[,] rawTable = RawTables[size];
+            int i = 0;
             foreach ((int black, int white) in Dice.TwoDice)
             {
-                (int hitsToD, int hitsToA) = rawTable[black + aDRM, white + dDRM];
-                hitsToAVector[white - 1] = hitsToA;
-                hitsToDVector[black - 1] = hitsToD;
+                (int hitsToD, int hitsToA) = rawTable[black + aDRM-1, white + dDRM-1];
+                hitsToDVector[i] = hitsToD;
+                hitsToAVector[i] = hitsToA;
+                i++;
             }
             (double MeanA, double StdDevA) = IntArrayStatHelpers.MeanAndStdDevVectorised(hitsToAVector);
             (double MeanD, double StdDevD) = IntArrayStatHelpers.MeanAndStdDevVectorised(hitsToDVector);
@@ -134,7 +137,7 @@ namespace AbeGaming.GameLogic.FtP
 
         private static (int aDRM, int dDRM, Ratio ratio, bool inAttackerFavour) Extract(FtpLandBattle battle)
         {
-            (Ratio ratio, bool inAttackerFavour) = battle.RatioDRM();
+            (Ratio ratio, bool inAttackerFavour) = battle.BattleRatio();
             int aDRM = (inAttackerFavour ? ratio.DRM_fromRatio() : 0)
                  + battle.AttackerLeadersDRMIncludingCavalryIntelligence
                  + battle.AttackerElitesCommitted

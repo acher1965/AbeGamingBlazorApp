@@ -16,7 +16,7 @@ namespace AbeGaming.GameLogic.FtP
             _ => 0
         };
 
-        public static (Ratio Ratio, bool InAttackerFavour) RatioDRM(this FtpLandBattle battle)
+        public static (Ratio Ratio, bool InAttackerFavour) BattleRatio(this FtpLandBattle battle)
         {
             bool inAttackerFavour = battle.AttackerSize >= battle.DefenderSize;
             int larger = inAttackerFavour ? battle.AttackerSize : battle.DefenderSize;
@@ -43,17 +43,17 @@ namespace AbeGaming.GameLogic.FtP
 
         public static bool IsOverrun(this FtpLandBattle battle)
         {
-            (Ratio ratio, bool inAttackerFavour) = battle.RatioDRM();
+            (Ratio ratio, bool inAttackerFavour) = battle.BattleRatio();
             return ratio == Ratio.TenToOnePlus && inAttackerFavour && !battle.FortPresent;
         }
 
-        public static FTPBattleResult BattleResult(FtpLandBattle battle, Span<int> randoms)
+        public static FTPBattleResult BattleResult(FtpLandBattle battle, Span<int> FourDiceRolls)
         {
-            if (randoms.Length < 4)
+            if (FourDiceRolls.Length < 4)
                 throw new ArgumentException($"{nameof(FtpBattleMethods)}.{BattleResult}(): 4 random numbers must be passed in",
-                    nameof(randoms));
-            int attackerDieRoll = randoms[0];
-            int defenderDieRoll = randoms[1];
+                    nameof(FourDiceRolls));
+            int attackerDieRoll = FourDiceRolls[0];
+            int defenderDieRoll = FourDiceRolls[1];
 
             (int hitsToDefender, int hitsToAttacker, bool star, int defenderLeaderDeathTop, int attackerLeaderDeathTop) =
                battle.Outcome(attackerDieRoll, defenderDieRoll);
@@ -108,12 +108,12 @@ namespace AbeGaming.GameLogic.FtP
 
             if (attackerLeaderDeathTop > 0)
             {
-                attackerLeaderDeathDieRoll = randoms[2];
+                attackerLeaderDeathDieRoll = FourDiceRolls[2];
                 attackerLeaderDeath = attackerLeaderDeathDieRoll <= attackerLeaderDeathTop;
             }
             if (defenderLeaderDeathTop > 0)
             {
-                defenderLeaderDeathDieRoll = randoms[3];
+                defenderLeaderDeathDieRoll = FourDiceRolls[3];
                 defenderLeaderDeath = defenderLeaderDeathDieRoll <= defenderLeaderDeathTop;
             }
 
