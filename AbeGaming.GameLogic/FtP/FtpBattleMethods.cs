@@ -79,8 +79,8 @@ namespace AbeGaming.GameLogic.FtP
             }
 
             //final hits logic
-            int finalHitsToDefender = Math.Min(hitsToDefender, 2 * battle.AttackerSize);
-            int finalHitsToAttacker = Math.Min(hitsToAttacker, 2 * battle.DefenderSize);
+            int finalHitsToDefender =Math.Min(battle.DefenderSize, Math.Min(hitsToDefender, 2 * battle.AttackerSize));
+            int finalHitsToAttacker = Math.Min(battle.AttackerSize, Math.Min(hitsToAttacker, 2 * battle.DefenderSize));
 
             bool defenderWipedOut = finalHitsToDefender >= battle.DefenderSize;
             bool attackerWipedOut = finalHitsToAttacker >= battle.AttackerSize;
@@ -161,7 +161,6 @@ namespace AbeGaming.GameLogic.FtP
                 fourDiceRolls[0] = black;
                 fourDiceRolls[1] = white;
                 FTPBattleResult r = battle.BattleResult(fourDiceRolls);
-                results.Add(r);
                 hitsToAVector[i] = r.DamageToAttacker;
                 hitsToDVector[i] = r.DamageToDefender;
                 totalAttackerWins += r.Winner == Winner.Attacker ? 1 : 0;
@@ -169,8 +168,51 @@ namespace AbeGaming.GameLogic.FtP
                 totalStars += r.Star ? 1 : 0;
                 totalAttackerLeaderDeaths += r.AttackerLeaderDeath ? 1 : 0;
                 totalDefenderLeaderDeaths += r.DefenderLeaderDeath ? 1 : 0;
+                results.Add(r);
                 i++;
             }
+            //for all the possible results where leaders could die,
+            //we need to calculate the probabilities of leader deaths, which
+            // requires looking at all possible leader death die rolls for those results
+            int deadlyCases = 0;
+            if (totalAttackerLeaderDeaths > 0 || totalDefenderLeaderDeaths > 0)
+            {
+                totalAttackerLeaderDeaths = 0;
+                totalDefenderLeaderDeaths = 0;
+                int[] rolls = [0, 0, 0, 0];
+                FTPBattleResult newR;
+                foreach (FTPBattleResult oldR in results)
+                {
+                    if (oldR.AttackerLeaderDeath || oldR.DefenderLeaderDeath)
+                    {
+                        deadlyCases++;
+                        rolls[0] = oldR.AttackerDieRoll;
+                        rolls[1] = oldR.DefenderDieRoll;
+                        foreach (int red in Dice.OneDie)
+                        {
+                            foreach (int blue in Dice.OneDie)
+                            {
+                                rolls[2] = red;
+                                rolls[3] = blue;
+                                newR = battle.BattleResult(rolls);
+                                totalAttackerLeaderDeaths += newR.AttackerLeaderDeath ? 1 : 0;
+                                totalDefenderLeaderDeaths += newR.DefenderLeaderDeath ? 1 : 0;
+                            }
+                        }
+                    }
+                }
+            }
+            double AttackerLeaderDeathPrblty = 0;
+            double DefenderLeaderDeathPrblty = 0;
+            if(deadlyCases > 0)
+            {
+                double conditionalOnDeathPossible = ((double)deadlyCases / 36);
+                AttackerLeaderDeathPrblty = (double)totalAttackerLeaderDeaths /  36 /deadlyCases
+                    * conditionalOnDeathPossible;
+                DefenderLeaderDeathPrblty = (double)totalDefenderLeaderDeaths / 36 /deadlyCases
+                    * conditionalOnDeathPossible;
+            }
+
             (double MeanToA, double StdDevToA) = IntArrayStatHelpers.MeanAndStdDevVectorised(hitsToAVector);
             (double MeanToD, double StdDevToD) = IntArrayStatHelpers.MeanAndStdDevVectorised(hitsToDVector);
 
@@ -186,8 +228,8 @@ namespace AbeGaming.GameLogic.FtP
                 (double)totalAttackerWins / 36,
                 (double)totalDefenderWins / 36,
                 hitsStats,
-                (double)totalAttackerLeaderDeaths / 36,
-                (double)totalDefenderLeaderDeaths / 36,
+                AttackerLeaderDeathPrblty,
+                DefenderLeaderDeathPrblty,
                 (double)totalStars / 36);
         }
     }
