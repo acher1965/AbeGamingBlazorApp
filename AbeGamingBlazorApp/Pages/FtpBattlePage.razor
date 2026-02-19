@@ -183,7 +183,7 @@
         <div class="col">
             <div class="card border-info">
                 <div class="card-header bg-info text-white">
-                    <h4 class="mb-0">📊 Monte Carlo Results (@MonteCarloResult.Trials.ToString("N0") trials, @MonteCarloResult.BattleSize battle)</h4>
+                    <h4 class="mb-0">📊 Monte Carlo Results (@MonteCarloResult.Value.trials.ToString("N0") trials, @MonteCarloResult.Value.result.BattleSize battle)</h4>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -192,21 +192,21 @@
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between">
                                     <span>Attacker Wins:</span>
-                                    <strong class="text-success">@(MonteCarloResult.AttackerWinProbability.ToString("P1"))</strong>
+                                    <strong class="text-success">@(MonteCarloResult.Value.result.AttackerWinProbability.ToString("P1"))</strong>
                                 </div>
                                 <div class="progress" style="height: 20px;">
                                     <div class="progress-bar bg-success" role="progressbar"
-                                         style="width: @(MonteCarloResult.AttackerWinProbability * 100)%"></div>
+                                         style="width: @(MonteCarloResult.Value.result.AttackerWinProbability * 100)%"></div>
                                 </div>
                             </div>
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between">
                                     <span>Defender Wins:</span>
-                                    <strong class="text-danger">@(MonteCarloResult.DefenderWinProbability.ToString("P1"))</strong>
+                                    <strong class="text-danger">@(MonteCarloResult.Value.result.DefenderWinProbability.ToString("P1"))</strong>
                                 </div>
                                 <div class="progress" style="height: 20px;">
                                     <div class="progress-bar bg-danger" role="progressbar"
-                                         style="width: @(MonteCarloResult.DefenderWinProbability * 100)%"></div>
+                                         style="width: @(MonteCarloResult.Value.result.DefenderWinProbability * 100)%"></div>
                                 </div>
                             </div>
                         </div>
@@ -214,30 +214,30 @@
                             <h5>Expected Casualties</h5>
                             <p>
                                 <strong>Attacker:</strong>
-                                @(MonteCarloResult.HitsStats.MeanHtoA.ToString("F1")) SP
-                                <small class="text-muted">(±@(MonteCarloResult.HitsStats.StdDevHtoA.ToString("F1")))</small>
+                                @(MonteCarloResult.Value.result.HitsStats.MeanHtoA.ToString("F1")) SP
+                                <small class="text-muted">(±@(MonteCarloResult.Value.result.HitsStats.StdDevHtoA.ToString("F1")))</small>
                             </p>
                             <p>
                                 <strong>Defender:</strong>
-                                @(MonteCarloResult.HitsStats.MeanHtoD.ToString("F1")) SP
-                                <small class="text-muted">(±@(MonteCarloResult.HitsStats.StdDevHtoD.ToString("F1")))</small>
+                                @(MonteCarloResult.Value.result.HitsStats.MeanHtoD.ToString("F1")) SP
+                                <small class="text-muted">(±@(MonteCarloResult.Value.result.HitsStats.StdDevHtoD.ToString("F1")))</small>
                             </p>
                         </div>
                         <div class="col-md-4">
                             <h5>Special Outcomes</h5>
                             <p>
                                 <strong>⭐ Star Result:</strong>
-                                @(MonteCarloResult.StarResultProbability.ToString("P1"))
+                                @(MonteCarloResult.Value.result.StarResultProbability.ToString("P1"))
                             </p>
-                            @if (MonteCarloResult.AttackerLeaderDeathProbability > 0 || MonteCarloResult.DefenderLeaderDeathProbability > 0)
+                            @if (MonteCarloResult.Value.result.AttackerLeaderDeathProbability > 0 || MonteCarloResult.Value.result.DefenderLeaderDeathProbability > 0)
                             {
                                 <p>
                                     <strong>☠️ Attacker Leader Death:</strong>
-                                    @(MonteCarloResult.AttackerLeaderDeathProbability.ToString("P1"))
+                                    @(MonteCarloResult.Value.result.AttackerLeaderDeathProbability.ToString("P1"))
                                 </p>
                                 <p>
                                     <strong>☠️ Defender Leader Death:</strong>
-                                    @(MonteCarloResult.DefenderLeaderDeathProbability.ToString("P1"))
+                                    @(MonteCarloResult.Value.result.DefenderLeaderDeathProbability.ToString("P1"))
                                 </p>
                             }
                         </div>
@@ -248,7 +248,7 @@
                             <table class="table table-sm table-bordered mb-0" style="font-size: 0.85em;">
                                 <thead class="table-light">
                                     <tr>
-                                        @foreach (var kv in MonteCarloResult.HitsStats.HitsToA_Prblty)
+                                        @foreach (var kv in MonteCarloResult.Value.result.HitsStats.HitsToA_Prblty)
                                         {
                                             <th class="text-center px-1">@kv.Key</th>
                                         }
@@ -256,7 +256,7 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        @foreach (var kv in MonteCarloResult.HitsStats.HitsToA_Prblty)
+                                        @foreach (var kv in MonteCarloResult.Value.result.HitsStats.HitsToA_Prblty)
                                         {
                                             <td class="text-center px-1">@(kv.Value.ToString("P1"))</td>
                                         }
@@ -269,7 +269,7 @@
                             <table class="table table-sm table-bordered mb-0" style="font-size: 0.85em;">
                                 <thead class="table-light">
                                     <tr>
-                                        @foreach (var kv in MonteCarloResult.HitsStats.HitsToD_Prblty)
+                                        @foreach (var kv in MonteCarloResult.Value.result.HitsStats.HitsToD_Prblty)
                                         {
                                             <th class="text-center px-1">@kv.Key</th>
                                         }
@@ -277,7 +277,7 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        @foreach (var kv in MonteCarloResult.HitsStats.HitsToD_Prblty)
+                                        @foreach (var kv in MonteCarloResult.Value.result.HitsStats.HitsToD_Prblty)
                                         {
                                             <td class="text-center px-1">@(kv.Value.ToString("P1"))</td>
                                         }
@@ -451,7 +451,7 @@
     private FTPBattleResult? BattleResult;
 
     // Monte Carlo
-    private FtpMonteCarloResult? MonteCarloResult;
+    private (int trials, FtpStats result)? MonteCarloResult;
     private bool IsRunning;
     private int TrialsExponent = 15; // 2^15 = 32,768 as default
     private int Trials => 1 << TrialsExponent; // 2^exponent
@@ -484,7 +484,7 @@
         LastAttackerSize = AttackerSize;
         LastDefenderSize = DefenderSize;
 
-        BattleResult = FtpBattleMethods.BattleResult(CreateBattle(), Dice.RollOneDieRepeatedly(4));
+        BattleResult = CreateBattle().BattleResult(Dice.RollOneDieRepeatedly(4));
     }
 
     private async Task RunMonteCarloTrials()
@@ -502,7 +502,7 @@
 
     private void CalculateExactStats()
     {
-        ExactStats = CreateBattle().LossDistributions();
+        ExactStats = CreateBattle().ExactStats().HitsStats;
     }
 
     private string GetResultCardClass()
