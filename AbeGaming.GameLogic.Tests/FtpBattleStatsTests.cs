@@ -439,6 +439,19 @@ namespace AbeGaming.GameLogic.Tests
 
             // Maximum DRMs stacked
             yield return new object[] { CreateBattle(5, 5, defenderLeaderDRM: 3, defenderElites: 2, fortPresent: true, isInterception: true, attackerOOS: true) };
+
+            // ===== EXTREME/EDGE CASES =====
+            // Extreme defender advantage (2v20)
+            yield return new object[] { CreateBattle(2, 20) };
+
+            // Minimum battle (1v1)
+            yield return new object[] { CreateBattle(1, 1) };
+
+            // Overrun scenario (10v1)
+            yield return new object[] { CreateBattle(10, 1) };
+
+            // Maximum DRM modifiers on both sides (3v3 with DRM+9 each, both OOS, interception)
+            yield return new object[] { CreateBattle(3, 3, isInterception: true, attackerLeaderDRM: 9, defenderLeaderDRM: 9, attackerOOS: true, defenderOOS: true) };
         }
 
         [Theory]
@@ -613,6 +626,46 @@ namespace AbeGaming.GameLogic.Tests
                 1.8333333333333333, 1.6666666666666667,
                 0.89752746785575113, 0.47140452079103168,
                 0.5 
+            };
+
+            // Large battle 2v20 - extreme defender advantage
+            yield return new object[] { 
+                CreateBattle(2, 20), 
+                BattleSize.Large, 
+                0.0, 1.0,
+                2.0, 2.3333333333333335,
+                0.0, 0.7453559924999291,
+                0.0 
+            };
+
+            // Small battle 1v1 - minimum battle
+            yield return new object[] { 
+                CreateBattle(1, 1), 
+                BattleSize.Small, 
+                0.08333333333333333, 0.9166666666666666,
+                0.8333333333333334, 0.08333333333333333,
+                0.3726779962499649, 0.2763853991962833,
+                0.0 
+            };
+
+            // Medium battle 10v1 - overrun scenario
+            yield return new object[] { 
+                CreateBattle(10, 1), 
+                BattleSize.Medium, 
+                1.0, 0.0,
+                0.0, 1.0,
+                0.0, 0.0,
+                0.0 
+            };
+
+            // Medium 3v3 with max DRM modifiers - extreme case
+            yield return new object[] { 
+                CreateBattle(3, 3, isInterception: true, attackerLeaderDRM: 9, defenderLeaderDRM: 9, attackerOOS: true, defenderOOS: true), 
+                BattleSize.Medium, 
+                1.0, 0.0,
+                2.0, 3.0,
+                0.0, 0.0,
+                1.0 
             };
         }
 
