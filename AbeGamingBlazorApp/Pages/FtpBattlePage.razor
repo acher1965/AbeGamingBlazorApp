@@ -29,7 +29,7 @@
                 <input class="form-check-input" type="checkbox" id="isInterception" @bind="IsInterception" />
                 <label class="form-check-label small" for="isInterception">
                     Interception
-                    <InfoTip Text="Defender gets +1 DRM when intercepting" />
+                    <InfoTip Text="Defender gets +2 DRM when intercepting" />
                 </label>
             </div>
             <div class="form-check form-check-inline mb-0">
@@ -53,7 +53,7 @@
             <div class="card-body py-2">
                 <div class="row g-1 mb-1">
                     <label class="col-5 col-form-label col-form-label-sm">
-                        SP <InfoTip Text="Strength Points committed to battle" />
+                        SP <InfoTip Text="Strength Points attacking" />
                     </label>
                     <div class="col-7">
                         <input type="number" class="form-control form-control-sm" @bind="AttackerSize" min="1" max="15" />
@@ -132,7 +132,7 @@
     </button>
     <div class="btn-group" role="group">
         <button class="btn btn-outline-secondary" @onclick="CalculateBattleResult">
-            🎲 Single Roll
+            🎲 🎲 Roll 1 Battle
         </button>
         <button class="btn btn-outline-secondary" @onclick="RunMonteCarloTrials" disabled="@IsRunning">
             @if (IsRunning)
