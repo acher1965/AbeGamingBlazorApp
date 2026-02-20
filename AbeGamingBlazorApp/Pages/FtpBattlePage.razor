@@ -125,13 +125,21 @@
     </div>
 </div>
 
+@* Show Overrun warning if applicable *@
+@if (CurrentBattle.IsOverrun())
+{
+    <div class="alert alert-danger py-2 mb-2">
+        <strong>⚠️ OVERRUN!</strong> 10:1+ ratio with no Fort — Defender is automatically eliminated.
+    </div>
+}
+
 @* Action Buttons - Exact Stats is primary *@
 <div class="d-grid gap-2 mb-3">
     <button class="btn btn-primary btn-lg" @onclick="CalculateExactStats">
         📈 Calculate Exact Stats
     </button>
     <div class="btn-group" role="group">
-        <button class="btn btn-outline-secondary" @onclick="CalculateBattleResult">
+        <button class="btn btn-secondary" @onclick="CalculateBattleResult">
             🎲 🎲 Roll 1 Battle
         </button>
         <button class="btn btn-outline-secondary" @onclick="RunMonteCarloTrials" disabled="@IsRunning">
@@ -376,6 +384,9 @@
     // Store sizes at time of calculation for "Wiped Out!" display
     private int LastAttackerSize;
     private int LastDefenderSize;
+
+    // Current battle for live calculations (e.g., IsOverrun check)
+    private FtpBattle CurrentBattle => CreateBattle();
 
     private FtpBattle CreateBattle() => new FtpBattle(
         ResourceOrCapital,
