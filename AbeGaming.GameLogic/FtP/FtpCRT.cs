@@ -5,32 +5,6 @@ namespace AbeGaming.GameLogic.FtP
 
     public static class FtpCRT
     {
-        //public static HitStats LossDistributionsP(this FtpBattle battle)
-        //{
-        //    (int aDRM, int dDRM, _, _, BattleSize size) = Extract(battle);
-        //    int[] hitsToAVector = new int[36];
-        //    int[] hitsToDVector = new int[36];
-        //    (int hitsToD, int hitsToA)[,] rawTable = RawTables[size];
-        //    int i = 0;
-        //    foreach ((int black, int white) in Dice.TwoDice)
-        //    {
-        //        (int hitsToD, int hitsToA) = rawTable[black + aDRM - 1, white + dDRM - 1];
-        //        hitsToDVector[i] = hitsToD;
-        //        hitsToAVector[i] = hitsToA;
-        //        i++;
-        //    }
-        //    (double MeanToA, double StdDevToA) = IntArrayStatHelpers.MeanAndStdDevVectorised(hitsToAVector);
-        //    (double MeanToD, double StdDevToD) = IntArrayStatHelpers.MeanAndStdDevVectorised(hitsToDVector);
-
-        //    double[] distributionHtoA = IntArrayStatHelpers.CalculateDistribution(hitsToAVector, MaxHitsToA[size]);
-        //    double[] distributionHtoD = IntArrayStatHelpers.CalculateDistribution(hitsToDVector, MaxHitsToA[size]);
-
-        //    return (MeanToD, StdDevToD,
-        //        MeanToA, StdDevToA,
-        //        distributionHtoD.Index().ToDictionary(x => x.Index, x => x.Item),
-        //        distributionHtoA.Index().ToDictionary(x => x.Index, x => x.Item));
-        //}
-
         /// <summary>
         /// Calculates hits to defender and attacker based on the battle conditions and die rolls.
         /// </summary>
@@ -69,7 +43,10 @@ namespace AbeGaming.GameLogic.FtP
                         ? 1
                         : 0;
 
-            (int hitsToD, int hitsToA) = RawTables[size][modifiedRollA - 1, modifiedRollD - 1];
+            // Clamp indices to table bounds (0-9 for modified rolls 1-10+)
+            int tableIndexA = Math.Clamp(modifiedRollA - 1, 0, 9);
+            int tableIndexD = Math.Clamp(modifiedRollD - 1, 0, 9);
+            (int hitsToD, int hitsToA) = RawTables[size][tableIndexA, tableIndexD];
 
             bool star = !battle.ResourceOrCapital && modifiedRollA > 6;
 

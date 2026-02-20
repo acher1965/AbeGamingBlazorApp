@@ -318,5 +318,304 @@ namespace AbeGaming.GameLogic.Tests
         }
 
         #endregion
+
+        #region Comprehensive Comparison Tests (ExactStats vs MonteCarlo)
+
+        /// <summary>
+        /// Creates a battle with all parameters specified for comprehensive testing.
+        /// </summary>
+        private static FtpBattle CreateBattle(
+            int attackerSize, int defenderSize,
+            bool resourceOrCapital = false, bool fortPresent = false,
+            bool isInterception = false, bool isDefenderLeaderPresent = false,
+            int attackerLeaderDRM = 0, int defenderLeaderDRM = 0,
+            int attackerElites = 0, int defenderElites = 0,
+            bool attackerOOS = false, bool defenderOOS = false,
+            bool isAmphibious = false)
+        {
+            return new FtpBattle(
+                ResourceOrCapital: resourceOrCapital,
+                FortPresent: fortPresent,
+                IsInterception: isInterception,
+                IsDefenderLeaderPresent: isDefenderLeaderPresent,
+                AttackerSize: attackerSize,
+                DefenderSize: defenderSize,
+                AttackerLeadersDRMIncludingCavalryIntelligence: attackerLeaderDRM,
+                DefenderLeadersDRMIncludingCavalryIntelligence: defenderLeaderDRM,
+                AttackerElitesCommitted: attackerElites,
+                DefenderElitesCommitted: defenderElites,
+                AttackerOOS: attackerOOS,
+                DefenderOOS: defenderOOS,
+                IsAmphibious: isAmphibious);
+        }
+
+        public static IEnumerable<object[]> ComprehensiveBattleScenarios()
+        {
+            // ===== BATTLE SIZE EDGE CASES =====
+            // Small battles (total SP <= 5)
+            yield return new object[] { CreateBattle(1, 1) };  // Minimum
+            yield return new object[] { CreateBattle(2, 2) };
+            yield return new object[] { CreateBattle(3, 2) };  // Edge: total = 5
+            yield return new object[] { CreateBattle(1, 4) };  // Unequal small
+
+            // Medium battles (total SP 6-19)
+            yield return new object[] { CreateBattle(3, 3) };  // Edge: total = 6
+            yield return new object[] { CreateBattle(5, 5) };
+            yield return new object[] { CreateBattle(8, 8) };
+            yield return new object[] { CreateBattle(10, 9) }; // Edge: total = 19
+
+            // Large battles (total SP >= 20)
+            yield return new object[] { CreateBattle(10, 10) }; // Edge: total = 20
+            yield return new object[] { CreateBattle(12, 12) };
+            yield return new object[] { CreateBattle(15, 15) }; // Maximum typical
+
+            // ===== RATIO EDGE CASES =====
+            // Low ratio (< 3:1)
+            yield return new object[] { CreateBattle(5, 3) };
+            yield return new object[] { CreateBattle(3, 5) };
+
+            // 3:1 ratio edge
+            yield return new object[] { CreateBattle(6, 2) };  // Exactly 3:1
+            yield return new object[] { CreateBattle(2, 6) };  // Defender 3:1
+
+            // 4:1 ratio edge
+            yield return new object[] { CreateBattle(8, 2) };  // Exactly 4:1
+            yield return new object[] { CreateBattle(2, 8) };  // Defender 4:1
+
+            // 5:1+ ratio edge
+            yield return new object[] { CreateBattle(10, 2) }; // Exactly 5:1
+            yield return new object[] { CreateBattle(2, 10) }; // Defender 5:1
+
+            // 10:1+ ratio (overrun territory)
+            yield return new object[] { CreateBattle(10, 1) }; // Exactly 10:1 - overrun!
+            yield return new object[] { CreateBattle(15, 1) }; // > 10:1 - overrun!
+
+            // ===== DRM COMBINATIONS =====
+            // Leader DRMs
+            yield return new object[] { CreateBattle(5, 5, attackerLeaderDRM: 1) };
+            yield return new object[] { CreateBattle(5, 5, attackerLeaderDRM: 2) };
+            yield return new object[] { CreateBattle(5, 5, attackerLeaderDRM: 3) };
+            yield return new object[] { CreateBattle(5, 5, defenderLeaderDRM: 1) };
+            yield return new object[] { CreateBattle(5, 5, defenderLeaderDRM: 2) };
+            yield return new object[] { CreateBattle(5, 5, defenderLeaderDRM: 3) };
+            yield return new object[] { CreateBattle(5, 5, attackerLeaderDRM: 2, defenderLeaderDRM: 2) };
+
+            // Elites (max 2 each)
+            yield return new object[] { CreateBattle(5, 5, attackerElites: 1) };
+            yield return new object[] { CreateBattle(5, 5, attackerElites: 2) };
+            yield return new object[] { CreateBattle(5, 5, defenderElites: 1) };
+            yield return new object[] { CreateBattle(5, 5, defenderElites: 2) };
+            yield return new object[] { CreateBattle(5, 5, attackerElites: 2, defenderElites: 2) };
+
+            // ===== TERRAIN MODIFIERS =====
+            yield return new object[] { CreateBattle(5, 5, fortPresent: true) };
+            yield return new object[] { CreateBattle(5, 5, isInterception: true) };
+            yield return new object[] { CreateBattle(5, 5, fortPresent: true, isInterception: true) };
+
+            // Fort prevents overrun
+            yield return new object[] { CreateBattle(10, 1, fortPresent: true) }; // Would be overrun without fort
+
+            // ===== SUPPLY STATUS =====
+            yield return new object[] { CreateBattle(5, 5, attackerOOS: true) };
+            yield return new object[] { CreateBattle(5, 5, defenderOOS: true) };
+            yield return new object[] { CreateBattle(5, 5, attackerOOS: true, defenderOOS: true) };
+
+            // ===== RESOURCE/CAPITAL (affects star results) =====
+            yield return new object[] { CreateBattle(5, 5, resourceOrCapital: true) };
+            yield return new object[] { CreateBattle(10, 10, resourceOrCapital: true) };
+            yield return new object[] { CreateBattle(5, 5, resourceOrCapital: false) }; // Star possible
+
+            // ===== COMPLEX COMBINATIONS =====
+            // High attacker advantage
+            yield return new object[] { CreateBattle(8, 5, attackerLeaderDRM: 3, attackerElites: 2, defenderOOS: true) };
+
+            // High defender advantage
+            yield return new object[] { CreateBattle(5, 8, defenderLeaderDRM: 3, defenderElites: 2, fortPresent: true, isInterception: true) };
+
+            // Balanced with many modifiers
+            yield return new object[] { CreateBattle(8, 6, attackerLeaderDRM: 2, defenderLeaderDRM: 1, attackerElites: 1, fortPresent: true) };
+            yield return new object[] { CreateBattle(6, 8, defenderLeaderDRM: 3, isInterception: true, attackerOOS: true) };
+            yield return new object[] { CreateBattle(10, 10, attackerLeaderDRM: 2, defenderLeaderDRM: 2, attackerElites: 1, defenderElites: 1) };
+
+            // Maximum DRMs stacked
+            yield return new object[] { CreateBattle(5, 5, defenderLeaderDRM: 3, defenderElites: 2, fortPresent: true, isInterception: true, attackerOOS: true) };
+        }
+
+        [Theory]
+        [MemberData(nameof(ComprehensiveBattleScenarios))]
+        public void ExactStats_And_MonteCarlo_ProduceSimilarResults(FtpBattle battle)
+        {
+            // Both ExactStats and MonteCarlo now use the same full battle rules,
+            // so all statistics should be close.
+
+            // Arrange
+            int trialsExponent = 17; // 131,072 trials for good convergence
+
+            // Act
+            FtpStats exactStats = battle.ExactStats();
+            (int trials, FtpStats monteCarloStats) = FtpMonteCarlo.Run(battle, trialsExponent);
+
+            // Assert - battle size should match exactly
+            Assert.Equal(exactStats.BattleSize, monteCarloStats.BattleSize);
+
+            // All statistics should be close (5% tolerance for Monte Carlo variance)
+            double tolerance = 0.05;
+
+            // Win probabilities
+            Assert.Equal(exactStats.AttackerWinProbability, monteCarloStats.AttackerWinProbability, tolerance);
+            Assert.Equal(exactStats.DefenderWinProbability, monteCarloStats.DefenderWinProbability, tolerance);
+
+            // Hit statistics
+            Assert.Equal(exactStats.HitsStats.MeanHtoA, monteCarloStats.HitsStats.MeanHtoA, tolerance);
+            Assert.Equal(exactStats.HitsStats.MeanHtoD, monteCarloStats.HitsStats.MeanHtoD, tolerance);
+            Assert.Equal(exactStats.HitsStats.StdDevHtoA, monteCarloStats.HitsStats.StdDevHtoA, tolerance);
+            Assert.Equal(exactStats.HitsStats.StdDevHtoD, monteCarloStats.HitsStats.StdDevHtoD, tolerance);
+
+            // Star result probability
+            Assert.Equal(exactStats.StarResultProbability, monteCarloStats.StarResultProbability, tolerance);
+
+            // Leader death probabilities
+            Assert.Equal(exactStats.AttackerLeaderDeathProbability, monteCarloStats.AttackerLeaderDeathProbability, tolerance);
+            Assert.Equal(exactStats.DefenderLeaderDeathProbability, monteCarloStats.DefenderLeaderDeathProbability, tolerance);
+
+            // Distribution probabilities should be close for each bucket
+            foreach (int key in exactStats.HitsStats.HitsToA_Prblty.Keys)
+            {
+                if (monteCarloStats.HitsStats.HitsToA_Prblty.TryGetValue(key, out double mcValue))
+                {
+                    Assert.Equal(exactStats.HitsStats.HitsToA_Prblty[key], mcValue, tolerance);
+                }
+            }
+            foreach (int key in exactStats.HitsStats.HitsToD_Prblty.Keys)
+            {
+                if (monteCarloStats.HitsStats.HitsToD_Prblty.TryGetValue(key, out double mcValue))
+                {
+                    Assert.Equal(exactStats.HitsStats.HitsToD_Prblty[key], mcValue, tolerance);
+                }
+            }
+        }
+
+        #endregion
+
+        #region ExactStats Regression Tests (Golden Values)
+
+        /// <summary>
+        /// Regression test to ensure ExactStats calculations remain consistent.
+        /// These expected values are FROZEN golden values.
+        /// Only update these if the calculation logic intentionally changes.
+        /// </summary>
+        [Theory]
+        [MemberData(nameof(ExactStatsGoldenTestCases))]
+        public void ExactStats_RegressionTest_MatchesGoldenValues(
+            FtpBattle battle,
+            BattleSize expectedBattleSize,
+            double expectedAttackerWinProb,
+            double expectedDefenderWinProb,
+            double expectedMeanHtoA,
+            double expectedMeanHtoD,
+            double expectedStdDevHtoA,
+            double expectedStdDevHtoD,
+            double expectedStarProb)
+        {
+            // Act
+            FtpStats stats = battle.ExactStats();
+
+            // Assert - exact match for battle size
+            Assert.Equal(expectedBattleSize, stats.BattleSize);
+
+            // Assert - close match for probabilities (within 0.0001 for regression)
+            double tolerance = 0.0001;
+            Assert.Equal(expectedAttackerWinProb, stats.AttackerWinProbability, tolerance);
+            Assert.Equal(expectedDefenderWinProb, stats.DefenderWinProbability, tolerance);
+            Assert.Equal(expectedMeanHtoA, stats.HitsStats.MeanHtoA, tolerance);
+            Assert.Equal(expectedMeanHtoD, stats.HitsStats.MeanHtoD, tolerance);
+            Assert.Equal(expectedStdDevHtoA, stats.HitsStats.StdDevHtoA, tolerance);
+            Assert.Equal(expectedStdDevHtoD, stats.HitsStats.StdDevHtoD, tolerance);
+            Assert.Equal(expectedStarProb, stats.StarResultProbability, tolerance);
+        }
+
+        /// <summary>
+        /// FROZEN golden values for ExactStats regression tests.
+        /// These values were captured from the implementation and should NOT be recalculated.
+        /// Only update these values when intentionally changing the calculation logic.
+        /// To regenerate: run the battle through ExactStats and copy the output values.
+        /// </summary>
+        public static IEnumerable<object[]> ExactStatsGoldenTestCases()
+        {
+            // Format: battle, expectedBattleSize, attackerWinProb, defenderWinProb, 
+            //         meanHtoA, meanHtoD, stdDevHtoA, stdDevHtoD, starProb
+
+            // Small battle 2v2 (verified)
+            yield return new object[] { 
+                CreateBattle(2, 2), 
+                BattleSize.Small, 
+                0.083333333333333329, 0.91666666666666663,
+                0.83333333333333337, 0.5,
+                0.37267799624996495, 0.5,
+                0.0 
+            };
+
+            // Medium battle 5v5 (verified)
+            yield return new object[] { 
+                CreateBattle(5, 5), 
+                BattleSize.Medium, 
+                0.16666666666666666, 0.83333333333333337,
+                1.0, 1.0,
+                0.0, 0.57735026918962573,
+                0.0 
+            };
+
+            // Large battle 10v10 (verified)
+            yield return new object[] { 
+                CreateBattle(10, 10), 
+                BattleSize.Large, 
+                0.22222222222222221, 0.77777777777777779,
+                2.6666666666666665, 2.3333333333333335,
+                0.94280904158206336, 0.74535599249992989,
+                0.0 
+            };
+
+            // Medium 5v5 at resource/capital - no star results (verified)
+            yield return new object[] { 
+                CreateBattle(5, 5, resourceOrCapital: true), 
+                BattleSize.Medium, 
+                0.16666666666666666, 0.83333333333333337,
+                1.0, 1.0,
+                0.0, 0.57735026918962573,
+                0.0 
+            };
+
+            // Medium 5v5 with elites (attacker +2, defender +1) (verified)
+            yield return new object[] { 
+                CreateBattle(5, 5, attackerElites: 2, defenderElites: 1), 
+                BattleSize.Medium, 
+                0.47222222222222221, 0.52777777777777779,
+                1.1666666666666667, 1.5,
+                0.37267799624996495, 0.5,
+                0.33333333333333331 
+            };
+
+            // Medium 5v5 with defender OOS (attacker +2 DRM) (verified)
+            yield return new object[] { 
+                CreateBattle(5, 5, defenderOOS: true), 
+                BattleSize.Medium, 
+                0.5, 0.5,
+                1.0, 1.5,
+                0.0, 0.5,
+                0.33333333333333331 
+            };
+
+            // Complex: 8v6, attacker DRM +2, defender DRM +1, attacker elite +1, fort (verified)
+            yield return new object[] { 
+                CreateBattle(8, 6, attackerLeaderDRM: 2, defenderLeaderDRM: 1, attackerElites: 1, fortPresent: true), 
+                BattleSize.Medium, 
+                0.41666666666666669, 0.58333333333333337,
+                1.8333333333333333, 1.6666666666666667,
+                0.89752746785575113, 0.47140452079103168,
+                0.5 
+            };
+        }
+
+        #endregion
     }
 }
