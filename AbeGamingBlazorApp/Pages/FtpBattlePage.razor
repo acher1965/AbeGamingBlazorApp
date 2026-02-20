@@ -1,466 +1,345 @@
 @page "/ftpbattle"
 @using AbeGaming.GameLogic
 @using AbeGaming.GameLogic.FtP
+@inject IJSRuntime JS
 
 <PageTitle>FtP Battle Calculator</PageTitle>
 
-<h1>For The People - Battle Calculator</h1>
-<div class="row">
-    <div class="col-md-6">
-        <h4>Battle Location</h4>
-        <div class="form-check mb-2">
-            <input class="form-check-input" type="checkbox" id="resourceOrCapital" @bind="ResourceOrCapital" />
-            <label class="form-check-label" for="resourceOrCapital">Resource or Capital</label>
-        </div>
-        <div class="form-check mb-2">
-            <input class="form-check-input" type="checkbox" id="fortPresent" @bind="FortPresent" />
-            <label class="form-check-label" for="fortPresent">Fort Present</label>
-        </div>
-        <div class="form-check mb-2">
-            <input class="form-check-input" type="checkbox" id="isInterception" @bind="IsInterception" />
-            <label class="form-check-label" for="isInterception">Is Interception</label>
-        </div>
-        <div class="form-check mb-2">
-            <input class="form-check-input" type="checkbox" id="isDefenderLeaderPresent" @bind="IsDefenderLeaderPresent" />
-            <label class="form-check-label" for="isDefenderLeaderPresent">Defender Leader Present</label>
+<h1 class="h3 mb-3">For The People - Battle Calculator</h1>
+
+@* Compact Battle Location *@
+<div class="card mb-2">
+    <div class="card-body py-2">
+        <div class="d-flex flex-wrap gap-3">
+            <div class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" id="resourceOrCapital" @bind="ResourceOrCapital" />
+                <label class="form-check-label small" for="resourceOrCapital">
+                    Resource/Capital
+                    <InfoTip Text="No Star results when attacking a Resource or Capital" />
+                </label>
+            </div>
+            <div class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" id="fortPresent" @bind="FortPresent" />
+                <label class="form-check-label small" for="fortPresent">
+                    Fort
+                    <InfoTip Text="Defender gets +2 DRM. Prevents Overrun." />
+                </label>
+            </div>
+            <div class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" id="isInterception" @bind="IsInterception" />
+                <label class="form-check-label small" for="isInterception">
+                    Interception
+                    <InfoTip Text="Defender gets +1 DRM when intercepting" />
+                </label>
+            </div>
+            <div class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" id="isDefenderLeaderPresent" @bind="IsDefenderLeaderPresent" />
+                <label class="form-check-label small" for="isDefenderLeaderPresent">
+                    Def. Leader
+                    <InfoTip Text="Used to calculate if winning attacker can continue moving" />
+                </label>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="row mt-4">
-    <div class="col-md-6">
-        <h4>Attacker</h4>
-        <div class="mb-3">
-            <label for="attackerSize" class="form-label">Attacker Size: <strong>@AttackerSize</strong> SP</label>
-            <input type="range" class="form-range" id="attackerSize" @bind="AttackerSize" @bind:event="oninput" min="1" max="15" />
-        </div>
-        <div class="mb-3">
-            <label for="attackerLeaderDRM" class="form-label">Attacker Leader DRM: <strong>@AttackerLeadersDRMIncludingCavalryIntelligence</strong></label>
-            <input type="range" class="form-range" id="attackerLeaderDRM" @bind="AttackerLeadersDRMIncludingCavalryIntelligence" @bind:event="oninput" min="0" max="9" />
-        </div>
-        <div class="mb-3">
-            <label for="attackerElites" class="form-label">Attacker Elites Committed: <strong>@AttackerElitesCommitted</strong></label>
-            <input type="range" class="form-range" id="attackerElites" @bind="AttackerElitesCommitted" @bind:event="oninput" min="0" max="2" />
-        </div>
-        <div class="form-check mb-2">
-            <input class="form-check-input" type="checkbox" id="attackerOOS" @bind="AttackerOOS" />
-            <label class="form-check-label" for="attackerOOS">Attacker Out of Supply</label>
+@* Compact Attacker/Defender side-by-side *@
+<div class="row g-2 mb-2">
+    <div class="col-6">
+        <div class="card h-100">
+            <div class="card-header py-1 bg-primary text-white">
+                <strong class="small">⚔️ Attacker</strong>
+            </div>
+            <div class="card-body py-2">
+                <div class="row g-1 mb-1">
+                    <label class="col-5 col-form-label col-form-label-sm">
+                        SP <InfoTip Text="Strength Points committed to battle" />
+                    </label>
+                    <div class="col-7">
+                        <input type="number" class="form-control form-control-sm" @bind="AttackerSize" min="1" max="15" />
+                    </div>
+                </div>
+                <div class="row g-1 mb-1">
+                    <label class="col-5 col-form-label col-form-label-sm">
+                        DRM <InfoTip Text="Die Roll Modifier from Leaders and Cards" />
+                    </label>
+                    <div class="col-7">
+                        <input type="number" class="form-control form-control-sm" @bind="AttackerLeadersDRMIncludingCavalryIntelligence" min="0" max="9" />
+                    </div>
+                </div>
+                <div class="row g-1 mb-1">
+                    <label class="col-5 col-form-label col-form-label-sm">
+                        Elites <InfoTip Text="Elite units committed (max 2). Each gives +1 DRM." />
+                    </label>
+                    <div class="col-7">
+                        <input type="number" class="form-control form-control-sm" @bind="AttackerElitesCommitted" min="0" max="2" />
+                    </div>
+                </div>
+                <div class="form-check form-check-inline mb-0">
+                    <input class="form-check-input" type="checkbox" id="attackerOOS" @bind="AttackerOOS" />
+                    <label class="form-check-label small" for="attackerOOS">
+                        OOS <InfoTip Text="Out of Supply: Defender gets +2 DRM" />
+                    </label>
+                </div>
+            </div>
         </div>
     </div>
-
-    <div class="col-md-6">
-        <h4>Defender</h4>
-        <div class="mb-3">
-            <label for="defenderSize" class="form-label">Defender Size: <strong>@DefenderSize</strong> SP</label>
-            <input type="range" class="form-range" id="defenderSize" @bind="DefenderSize" @bind:event="oninput" min="@(IsAmphibious ? 0 : 1)" max="30" />
-        </div>
-        <div class="mb-3">
-            <label for="defenderLeaderDRM" class="form-label">Defender Leader DRM: <strong>@DefenderLeadersDRMIncludingCavalryIntelligence</strong></label>
-            <input type="range" class="form-range" id="defenderLeaderDRM" @bind="DefenderLeadersDRMIncludingCavalryIntelligence" @bind:event="oninput" min="0" max="9" />
-        </div>
-        <div class="mb-3">
-            <label for="defenderElites" class="form-label">Defender Elites Committed: <strong>@DefenderElitesCommitted</strong></label>
-            <input type="range" class="form-range" id="defenderElites" @bind="DefenderElitesCommitted" @bind:event="oninput" min="0" max="2" />
-        </div>
-        <div class="form-check mb-2">
-            <input class="form-check-input" type="checkbox" id="defenderOOS" @bind="DefenderOOS" />
-            <label class="form-check-label" for="defenderOOS">Defender Out of Supply</label>
+    <div class="col-6">
+        <div class="card h-100">
+            <div class="card-header py-1 bg-danger text-white">
+                <strong class="small">🛡️ Defender</strong>
+            </div>
+            <div class="card-body py-2">
+                <div class="row g-1 mb-1">
+                    <label class="col-5 col-form-label col-form-label-sm">
+                        SP <InfoTip Text="Strength Points defending" />
+                    </label>
+                    <div class="col-7">
+                        <input type="number" class="form-control form-control-sm" @bind="DefenderSize" min="@(IsAmphibious ? 0 : 1)" max="30" />
+                    </div>
+                </div>
+                <div class="row g-1 mb-1">
+                    <label class="col-5 col-form-label col-form-label-sm">
+                        DRM <InfoTip Text="Die Roll Modifier from Leaders and Cards" />
+                    </label>
+                    <div class="col-7">
+                        <input type="number" class="form-control form-control-sm" @bind="DefenderLeadersDRMIncludingCavalryIntelligence" min="0" max="9" />
+                    </div>
+                </div>
+                <div class="row g-1 mb-1">
+                    <label class="col-5 col-form-label col-form-label-sm">
+                        Elites <InfoTip Text="Elite units committed (max 2). Each gives +1 DRM." />
+                    </label>
+                    <div class="col-7">
+                        <input type="number" class="form-control form-control-sm" @bind="DefenderElitesCommitted" min="0" max="2" />
+                    </div>
+                </div>
+                <div class="form-check form-check-inline mb-0">
+                    <input class="form-check-input" type="checkbox" id="defenderOOS" @bind="DefenderOOS" />
+                    <label class="form-check-label small" for="defenderOOS">
+                        OOS <InfoTip Text="Out of Supply: Attacker gets +2 DRM" />
+                    </label>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="row mt-4">
-    <div class="col">
-        <button class="btn btn-primary btn-lg me-2" @onclick="CalculateBattleResult">Get Single Battle Result</button>
-        <button class="btn btn-outline-secondary btn-lg" @onclick="RunMonteCarloTrials" disabled="@IsRunning">
+@* Action Buttons - Exact Stats is primary *@
+<div class="d-grid gap-2 mb-3">
+    <button class="btn btn-primary btn-lg" @onclick="CalculateExactStats">
+        📈 Calculate Exact Stats
+    </button>
+    <div class="btn-group" role="group">
+        <button class="btn btn-outline-secondary" @onclick="CalculateBattleResult">
+            🎲 Single Roll
+        </button>
+        <button class="btn btn-outline-secondary" @onclick="RunMonteCarloTrials" disabled="@IsRunning">
             @if (IsRunning)
             {
-                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
                 <span>Running...</span>
             }
             else
             {
-                <span>📊 Run @Trials.ToString("N0") Trials</span>
+                <span>📊 MC @Trials.ToString("N0")</span>
             }
         </button>
-        <button class="btn btn-outline-info btn-lg" @onclick="CalculateExactStats">
-            📈 Calculate Exact Stats
-        </button>
     </div>
 </div>
 
-<div class="row mt-2">
-    <div class="col-md-6">
-        <label for="trials" class="form-label">Trials: <strong>2<sup>@TrialsExponent</sup> = @Trials.ToString("N0")</strong></label>
-        <input type="range" class="form-range" id="trials" @bind="TrialsExponent" @bind:event="oninput" min="13" max="20" />
-        <small class="text-muted">8,192 to 1,048,576 (powers of 2 for better performance)</small>
-    </div>
+@* Results Section *@
+<div id="resultsSection">
+    @if (ExactStats != null)
+    {
+        <div class="card border-primary mb-3">
+            <div class="card-header bg-primary text-white py-2">
+                <strong>📈 Exact Stats (@ExactStats.BattleSize)</strong>
+            </div>
+            <div class="card-body py-2">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="d-flex justify-content-between small">
+                            <span>⚔️ Wins:</span>
+                            <strong class="text-success">@(ExactStats.AttackerWinProbability.ToString("P1"))</strong>
+                        </div>
+                        <div class="progress mb-1" style="height: 8px;">
+                            <div class="progress-bar bg-success" style="width: @(ExactStats.AttackerWinProbability * 100)%"></div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex justify-content-between small">
+                            <span>🛡️ Wins:</span>
+                            <strong class="text-danger">@(ExactStats.DefenderWinProbability.ToString("P1"))</strong>
+                        </div>
+                        <div class="progress mb-1" style="height: 8px;">
+                            <div class="progress-bar bg-danger" style="width: @(ExactStats.DefenderWinProbability * 100)%"></div>
+                        </div>
+                    </div>
+                </div>
+                <hr class="my-2" />
+                <div class="row small">
+                    <div class="col-6">
+                        <strong>⚔️ Losses:</strong> @(ExactStats.HitsStats.MeanHtoA.ToString("F1")) <span class="text-muted">(±@(ExactStats.HitsStats.StdDevHtoA.ToString("F1")))</span>
+                    </div>
+                    <div class="col-6">
+                        <strong>🛡️ Losses:</strong> @(ExactStats.HitsStats.MeanHtoD.ToString("F1")) <span class="text-muted">(±@(ExactStats.HitsStats.StdDevHtoD.ToString("F1")))</span>
+                    </div>
+                </div>
+                @if (ExactStats.StarResultProbability > 0 || ExactStats.AttackerLeaderDeathProbability > 0 || ExactStats.DefenderLeaderDeathProbability > 0)
+                {
+                    <hr class="my-2" />
+                    <div class="small">
+                        @if (ExactStats.StarResultProbability > 0)
+                        {
+                            <span class="me-2">⭐ @(ExactStats.StarResultProbability.ToString("P1"))</span>
+                        }
+                        @if (ExactStats.AttackerLeaderDeathProbability > 0)
+                        {
+                            <span class="me-2">☠️⚔️ @(ExactStats.AttackerLeaderDeathProbability.ToString("P1"))</span>
+                        }
+                        @if (ExactStats.DefenderLeaderDeathProbability > 0)
+                        {
+                            <span>☠️🛡️ @(ExactStats.DefenderLeaderDeathProbability.ToString("P1"))</span>
+                        }
+                    </div>
+                }
+                @* Compact distribution tables *@
+                <hr class="my-2" />
+                <div class="row">
+                    <div class="col-12 col-md-6 mb-2">
+                        <div class="small text-muted mb-1">⚔️ Attacker Losses</div>
+                        <div class="d-flex flex-wrap gap-1">
+                            @foreach (var kvp in ExactStats.HitsStats.HitsToA_Prblty.OrderBy(x => x.Key))
+                            {
+                                <span class="badge bg-light text-dark border" style="font-size: 0.7em;">@kvp.Key: @(kvp.Value.ToString("P0"))</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="small text-muted mb-1">🛡️ Defender Losses</div>
+                        <div class="d-flex flex-wrap gap-1">
+                            @foreach (var kvp in ExactStats.HitsStats.HitsToD_Prblty.OrderBy(x => x.Key))
+                            {
+                                <span class="badge bg-light text-dark border" style="font-size: 0.7em;">@kvp.Key: @(kvp.Value.ToString("P0"))</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (MonteCarloResult != null)
+    {
+        <div class="card border-info mb-3">
+            <div class="card-header bg-info text-white py-2">
+                <strong>📊 Monte Carlo (@MonteCarloResult.Value.trials.ToString("N0") trials)</strong>
+            </div>
+            <div class="card-body py-2">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="d-flex justify-content-between small">
+                            <span>⚔️ Wins:</span>
+                            <strong class="text-success">@(MonteCarloResult.Value.result.AttackerWinProbability.ToString("P1"))</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex justify-content-between small">
+                            <span>🛡️ Wins:</span>
+                            <strong class="text-danger">@(MonteCarloResult.Value.result.DefenderWinProbability.ToString("P1"))</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="row small mt-1">
+                    <div class="col-6">
+                        <strong>⚔️ Losses:</strong> @(MonteCarloResult.Value.result.HitsStats.MeanHtoA.ToString("F1"))
+                    </div>
+                    <div class="col-6">
+                        <strong>🛡️ Losses:</strong> @(MonteCarloResult.Value.result.HitsStats.MeanHtoD.ToString("F1"))
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (BattleResult != null)
+    {
+        <div class="card @GetResultCardClass() mb-3">
+            <div class="card-header py-2">
+                <strong>🎲 Battle Result</strong>
+            </div>
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-6">
+                        <p class="fs-5 fw-bold mb-1">
+                            @if (BattleResult.Winner == Winner.Attacker)
+                            {
+                                <span class="text-success">🏆 Attacker!</span>
+                            }
+                            else
+                            {
+                                <span class="text-danger">🛡️ Defender!</span>
+                            }
+                        </p>
+                        @if (BattleResult.Overrun)
+                        {
+                            <span class="badge bg-danger">Overrun!</span>
+                        }
+                        @if (BattleResult.Star)
+                        {
+                            <span class="badge bg-warning text-dark">⭐ Star</span>
+                        }
+                    </div>
+                    <div class="col-6 small">
+                        <div>🎲 Atk: @BattleResult.AttackerDieRoll | Def: @BattleResult.DefenderDieRoll</div>
+                        <div>
+                            ⚔️ -@BattleResult.DamageToAttacker SP
+                            @if (BattleResult.DamageToAttacker >= LastAttackerSize)
+                            {
+                                <span class="text-danger">(Wiped!)</span>
+                            }
+                        </div>
+                        <div>
+                            🛡️ -@BattleResult.DamageToDefender SP
+                            @if (LastDefenderSize > 0 && BattleResult.DamageToDefender >= LastDefenderSize)
+                            {
+                                <span class="text-danger">(Wiped!)</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+                @if (BattleResult.AttackerLeaderDeathDieRoll.HasValue || BattleResult.DefenderLeaderDeathDieRoll.HasValue)
+                {
+                    <hr class="my-1" />
+                    <div class="small">
+                        @if (BattleResult.AttackerLeaderDeathDieRoll.HasValue)
+                        {
+                            <span class="me-2">
+                                ⚔️ Leader: @(BattleResult.AttackerLeaderDeath ? "☠️" : "✓") (🎲@BattleResult.AttackerLeaderDeathDieRoll)
+                            </span>
+                        }
+                        @if (BattleResult.DefenderLeaderDeathDieRoll.HasValue)
+                        {
+                            <span>
+                                🛡️ Leader: @(BattleResult.DefenderLeaderDeath ? "☠️" : "✓") (🎲@BattleResult.DefenderLeaderDeathDieRoll)
+                            </span>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
 </div>
 
-@if (ExactStats != null)
-{
-    <div class="row mt-4">
-        <div class="col">
-            <div class="card border-primary">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">📈 Exact Statistics (@ExactStats.BattleSize battle)</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <h5>Win Probabilities</h5>
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between">
-                                    <span>Attacker Wins:</span>
-                                    <strong class="text-success">@(ExactStats.AttackerWinProbability.ToString("P1"))</strong>
-                                </div>
-                                <div class="progress" style="height: 20px;">
-                                    <div class="progress-bar bg-success" role="progressbar"
-                                         style="width: @(ExactStats.AttackerWinProbability * 100)%"></div>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between">
-                                    <span>Defender Wins:</span>
-                                    <strong class="text-danger">@(ExactStats.DefenderWinProbability.ToString("P1"))</strong>
-                                </div>
-                                <div class="progress" style="height: 20px;">
-                                    <div class="progress-bar bg-danger" role="progressbar"
-                                         style="width: @(ExactStats.DefenderWinProbability * 100)%"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <h5>Expected Casualties</h5>
-                            <p>
-                                <strong>Attacker:</strong>
-                                @(ExactStats.HitsStats.MeanHtoA.ToString("F1")) SP
-                                <small class="text-muted">(±@(ExactStats.HitsStats.StdDevHtoA.ToString("F1")))</small>
-                            </p>
-                            <p>
-                                <strong>Defender:</strong>
-                                @(ExactStats.HitsStats.MeanHtoD.ToString("F1")) SP
-                                <small class="text-muted">(±@(ExactStats.HitsStats.StdDevHtoD.ToString("F1")))</small>
-                            </p>
-                        </div>
-                        <div class="col-md-4">
-                            <h5>Special Outcomes</h5>
-                            <p>
-                                <strong>⭐ Star Result:</strong>
-                                @(ExactStats.StarResultProbability.ToString("P1"))
-                            </p>
-                            @if (ExactStats.AttackerLeaderDeathProbability > 0 || ExactStats.DefenderLeaderDeathProbability > 0)
-                            {
-                                <p>
-                                    <strong>☠️ Attacker Leader Death:</strong>
-                                    @(ExactStats.AttackerLeaderDeathProbability.ToString("P1"))
-                                </p>
-                                <p>
-                                    <strong>☠️ Defender Leader Death:</strong>
-                                    @(ExactStats.DefenderLeaderDeathProbability.ToString("P1"))
-                                </p>
-                            }
-                        </div>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            <h6>Attacker Losses Distribution</h6>
-                            <table class="table table-sm table-bordered mb-0" style="font-size: 0.85em;">
-                                <thead class="table-light">
-                                    <tr>
-                                        @foreach (var kvp in ExactStats.HitsStats.HitsToA_Prblty.OrderBy(x => x.Key))
-                                        {
-                                            <th class="text-center px-1">@kvp.Key</th>
-                                        }
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        @foreach (var kvp in ExactStats.HitsStats.HitsToA_Prblty.OrderBy(x => x.Key))
-                                        {
-                                            <td class="text-center px-1">@(kvp.Value.ToString("P1"))</td>
-                                        }
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Defender Losses Distribution</h6>
-                            <table class="table table-sm table-bordered mb-0" style="font-size: 0.85em;">
-                                <thead class="table-light">
-                                    <tr>
-                                        @foreach (var kvp in ExactStats.HitsStats.HitsToD_Prblty.OrderBy(x => x.Key))
-                                        {
-                                            <th class="text-center px-1">@kvp.Key</th>
-                                        }
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        @foreach (var kvp in ExactStats.HitsStats.HitsToD_Prblty.OrderBy(x => x.Key))
-                                        {
-                                            <td class="text-center px-1">@(kvp.Value.ToString("P1"))</td>
-                                        }
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+@* Trials slider in a collapsible section *@
+<details class="mt-3">
+    <summary class="text-muted small">Monte Carlo Settings</summary>
+    <div class="mt-2">
+        <label class="form-label small">Trials: 2<sup>@TrialsExponent</sup> = @Trials.ToString("N0")</label>
+        <input type="range" class="form-range" @bind="TrialsExponent" @bind:event="oninput" min="13" max="20" />
     </div>
-}
-
-@if (MonteCarloResult != null)
-{
-    <div class="row mt-4">
-        <div class="col">
-            <div class="card border-info">
-                <div class="card-header bg-info text-white">
-                    <h4 class="mb-0">📊 Monte Carlo Results (@MonteCarloResult.Value.trials.ToString("N0") trials, @MonteCarloResult.Value.result.BattleSize battle)</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <h5>Win Probabilities</h5>
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between">
-                                    <span>Attacker Wins:</span>
-                                    <strong class="text-success">@(MonteCarloResult.Value.result.AttackerWinProbability.ToString("P1"))</strong>
-                                </div>
-                                <div class="progress" style="height: 20px;">
-                                    <div class="progress-bar bg-success" role="progressbar"
-                                         style="width: @(MonteCarloResult.Value.result.AttackerWinProbability * 100)%"></div>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between">
-                                    <span>Defender Wins:</span>
-                                    <strong class="text-danger">@(MonteCarloResult.Value.result.DefenderWinProbability.ToString("P1"))</strong>
-                                </div>
-                                <div class="progress" style="height: 20px;">
-                                    <div class="progress-bar bg-danger" role="progressbar"
-                                         style="width: @(MonteCarloResult.Value.result.DefenderWinProbability * 100)%"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <h5>Expected Casualties</h5>
-                            <p>
-                                <strong>Attacker:</strong>
-                                @(MonteCarloResult.Value.result.HitsStats.MeanHtoA.ToString("F1")) SP
-                                <small class="text-muted">(±@(MonteCarloResult.Value.result.HitsStats.StdDevHtoA.ToString("F1")))</small>
-                            </p>
-                            <p>
-                                <strong>Defender:</strong>
-                                @(MonteCarloResult.Value.result.HitsStats.MeanHtoD.ToString("F1")) SP
-                                <small class="text-muted">(±@(MonteCarloResult.Value.result.HitsStats.StdDevHtoD.ToString("F1")))</small>
-                            </p>
-                        </div>
-                        <div class="col-md-4">
-                            <h5>Special Outcomes</h5>
-                            <p>
-                                <strong>⭐ Star Result:</strong>
-                                @(MonteCarloResult.Value.result.StarResultProbability.ToString("P1"))
-                            </p>
-                            @if (MonteCarloResult.Value.result.AttackerLeaderDeathProbability > 0 || MonteCarloResult.Value.result.DefenderLeaderDeathProbability > 0)
-                            {
-                                <p>
-                                    <strong>☠️ Attacker Leader Death:</strong>
-                                    @(MonteCarloResult.Value.result.AttackerLeaderDeathProbability.ToString("P1"))
-                                </p>
-                                <p>
-                                    <strong>☠️ Defender Leader Death:</strong>
-                                    @(MonteCarloResult.Value.result.DefenderLeaderDeathProbability.ToString("P1"))
-                                </p>
-                            }
-                        </div>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            <h6>Attacker Losses Distribution</h6>
-                            <table class="table table-sm table-bordered mb-0" style="font-size: 0.85em;">
-                                <thead class="table-light">
-                                    <tr>
-                                        @foreach (var kv in MonteCarloResult.Value.result.HitsStats.HitsToA_Prblty)
-                                        {
-                                            <th class="text-center px-1">@kv.Key</th>
-                                        }
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        @foreach (var kv in MonteCarloResult.Value.result.HitsStats.HitsToA_Prblty)
-                                        {
-                                            <td class="text-center px-1">@(kv.Value.ToString("P1"))</td>
-                                        }
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Defender Losses Distribution</h6>
-                            <table class="table table-sm table-bordered mb-0" style="font-size: 0.85em;">
-                                <thead class="table-light">
-                                    <tr>
-                                        @foreach (var kv in MonteCarloResult.Value.result.HitsStats.HitsToD_Prblty)
-                                        {
-                                            <th class="text-center px-1">@kv.Key</th>
-                                        }
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        @foreach (var kv in MonteCarloResult.Value.result.HitsStats.HitsToD_Prblty)
-                                        {
-                                            <td class="text-center px-1">@(kv.Value.ToString("P1"))</td>
-                                        }
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
-@if (BattleResult != null)
-{
-    <div class="row mt-4">
-        <div class="col">
-            <div class="card @GetResultCardClass()">
-                <div class="card-header">
-                    <h4 class="mb-0">Battle Result</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h5>Outcome</h5>
-                            <p class="fs-4 fw-bold">
-                                @if (BattleResult.Winner == Winner.Attacker)
-                                {
-                                    <span class="text-success">🏆 Attacker Wins!</span>
-                                    @if (BattleResult.Overrun)
-                                    {
-                                        <br />
-                                        <span class="text-danger">Overrun!</span>
-                                    }
-                                }
-                                else if (BattleResult.Winner == Winner.Defender)
-                                {
-                                    <span class="text-danger">🛡️ Defender Wins!</span>
-                                }
-                                else
-                                {
-                                    <span class="text-warning">⚖️ Draw</span>
-                                }
-                            </p>
-                            <p><strong>Battle Size:</strong> @BattleResult.BattleSize</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>Dice Rolled</h5>
-                            <p><strong>Attacker Die:</strong> 🎲 @BattleResult.AttackerDieRoll</p>
-                            <p><strong>Defender Die:</strong> 🎲 @BattleResult.DefenderDieRoll</p>
-                            <p>
-                                <strong>Star Result:</strong>
-                                @if (BattleResult.Star)
-                                {
-                                    <span class="text-warning">⭐ Yes</span>
-                                }
-                                else
-                                {
-                                    <span>No</span>
-                                }
-                            </p>
-                        </div>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            <h5>Casualties</h5>
-                            <p>
-                                <strong>Damage to Attacker:</strong>
-                                @if (BattleResult.DamageToAttacker >= LastAttackerSize)
-                                {
-                                    <span class="text-danger fw-bold">Wiped Out!</span>
-                                }
-                                else
-                                {
-                                    <span>@BattleResult.DamageToAttacker SP</span>
-                                }
-                            </p>
-                            <p>
-                                <strong>Damage to Defender:</strong>
-                                @if (LastDefenderSize > 0 && BattleResult.DamageToDefender >= LastDefenderSize)
-                                {
-                                    <span class="text-danger fw-bold">Wiped Out!</span>
-                                }
-                                else
-                                {
-                                    <span>@BattleResult.DamageToDefender SP</span>
-                                }
-                            </p>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>Leader Casualties</h5>
-                            <p>
-                                <strong>Attacker Leader:</strong>
-                                @if (BattleResult.AttackerLeaderDeathDieRoll.HasValue)
-                                {
-                                    if (BattleResult.AttackerLeaderDeath)
-                                    {
-                                        <span class="text-danger">☠️ Killed (rolled 🎲 @BattleResult.AttackerLeaderDeathDieRoll)</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-success">✓ Survived (rolled 🎲 @BattleResult.AttackerLeaderDeathDieRoll)</span>
-                                    }
-                                }
-                                else
-                                {
-                                    <span class="text-muted">No risk</span>
-                                }
-                            </p>
-                            <p>
-                                <strong>Defender Leader:</strong>
-                                @if (BattleResult.DefenderLeaderDeathDieRoll.HasValue)
-                                {
-                                    if (BattleResult.DefenderLeaderDeath)
-                                    {
-                                        <span class="text-danger">☠️ Killed (rolled 🎲 @BattleResult.DefenderLeaderDeathDieRoll)</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-success">✓ Survived (rolled 🎲 @BattleResult.DefenderLeaderDeathDieRoll)</span>
-                                    }
-                                }
-                                else
-                                {
-                                    <span class="text-muted">No risk</span>
-                                }
-                            </p>
-                        </div>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="col">
-                            <h5>Movement</h5>
-                            <p>
-                                <strong>Attacker Can Stay:</strong>
-                                @(BattleResult.AttackerCanStay ? "Yes ✓" : "No ✗")
-                            </p>
-                            <p>
-                                <strong>Attacker Can Continue Moving:</strong>
-                                @(BattleResult.AttackerCanContinueMoving ? "Yes ✓" : "No ✗")
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-}
+</details>
 
 @code {
     // Battle Location
@@ -513,13 +392,17 @@
         DefenderOOS,
         IsAmphibious);
 
-    private void CalculateBattleResult()
+    private async Task ScrollToResults()
     {
-        // Range sliders automatically enforce min/max, no clamping needed
+        await JS.InvokeVoidAsync("eval", "document.getElementById('resultsSection')?.scrollIntoView({behavior: 'smooth'})");
+    }
+
+    private async Task CalculateBattleResult()
+    {
         LastAttackerSize = AttackerSize;
         LastDefenderSize = DefenderSize;
-
         BattleResult = CreateBattle().BattleResult(Dice.RollOneDieRepeatedly(4));
+        await ScrollToResults();
     }
 
     private async Task RunMonteCarloTrials()
@@ -527,17 +410,18 @@
         IsRunning = true;
         StateHasChanged();
 
-        // Run trials on a background thread to keep UI responsive
         FtpBattle battle = CreateBattle();
         MonteCarloResult = await Task.Run(() => FtpMonteCarlo.Run(battle, TrialsExponent));
 
         IsRunning = false;
         StateHasChanged();
+        await ScrollToResults();
     }
 
-    private void CalculateExactStats()
+    private async Task CalculateExactStats()
     {
         ExactStats = CreateBattle().ExactStats();
+        await ScrollToResults();
     }
 
     private string GetResultCardClass()
