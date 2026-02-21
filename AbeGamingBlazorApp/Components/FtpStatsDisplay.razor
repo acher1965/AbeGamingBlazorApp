@@ -1,0 +1,130 @@
+@* FtpStatsDisplay.razor - Shared component for displaying FtpStats (Exact or Monte Carlo) *@
+@using AbeGaming.GameLogic.FtP
+
+<div class="card border-@BorderColor mb-3">
+    <div class="card-header bg-@HeaderBgColor text-white py-2">
+        <strong>@Title</strong>
+    </div>
+    <div class="card-body py-2">
+        @* Win Probabilities with Progress Bars *@
+        <div class="row g-2">
+            <div class="col-6">
+                <div class="d-flex justify-content-between small">
+                    <span>🗡️Attacker Wins:</span>
+                    <strong class="text-success">@(Stats.AttackerWinProbability.ToString("P1"))</strong>
+                </div>
+                <div class="progress mb-1" style="height: 8px;">
+                    <div class="progress-bar bg-success" style="width: @(Stats.AttackerWinProbability * 100)%"></div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="d-flex justify-content-between small">
+                    <span>🛡️Defender Wins:</span>
+                    <strong class="text-danger">@(Stats.DefenderWinProbability.ToString("P1"))</strong>
+                </div>
+                <div class="progress mb-1" style="height: 8px;">
+                    <div class="progress-bar bg-danger" style="width: @(Stats.DefenderWinProbability * 100)%"></div>
+                </div>
+            </div>
+        </div>
+
+        @* Losses Section *@
+        <hr class="my-2" />
+        <div class="row small">
+            <div class="col-6">
+                <strong>Att. Losses:</strong> @(Stats.HitsStats.MeanHtoA.ToString("F1"))
+                @if (ShowStdDev)
+                {
+                    <span class="text-muted">(+/-@(Stats.HitsStats.StdDevHtoA.ToString("F1")))</span>
+                }
+                @if (AttackerElitesCommitted > 0)
+                {
+                    <br />
+                    <span>🎖️Elite Loss: @(Stats.AttackerEliteLossProbability.ToString("P1"))</span>
+                }
+            </div>
+            <div class="col-6">
+                <strong>Def. Losses:</strong> @(Stats.HitsStats.MeanHtoD.ToString("F1"))
+                @if (ShowStdDev)
+                {
+                    <span class="text-muted">(+/-@(Stats.HitsStats.StdDevHtoD.ToString("F1")))</span>
+                }
+                @if (DefenderElitesCommitted > 0)
+                {
+                    <br />
+                    <span>🎖️Elite Loss: @(Stats.DefenderEliteLossProbability.ToString("P1"))</span>
+                }
+            </div>
+        </div>
+
+        @* Star and Leader Death Section *@
+        @if (Stats.StarResultProbability > 0 || Stats.AttackerLeaderDeathProbability > 0 || Stats.DefenderLeaderDeathProbability > 0)
+        {
+            <hr class="my-2" />
+            <div class="row small">
+                <div class="col-6">
+                    @if (Stats.StarResultProbability > 0)
+                    {
+                        <span class="me-2" style="white-space: nowrap;">⭐Star: @(Stats.StarResultProbability.ToString("P1"))</span>
+                    }
+                    @if (Stats.AttackerLeaderDeathProbability > 0)
+                    {
+                        <span style="white-space: nowrap;">Att.Leader💀: @(Stats.AttackerLeaderDeathProbability.ToString("P1"))</span>
+                    }
+                </div>
+                <div class="col-6">
+                    @if (Stats.DefenderLeaderDeathProbability > 0)
+                    {
+                        <span style="white-space: nowrap;">Def.Leader💀: @(Stats.DefenderLeaderDeathProbability.ToString("P1"))</span>
+                    }
+                </div>
+            </div>
+        }
+
+        @* Distribution Tables *@
+        <hr class="my-2" />
+        <div class="row">
+            <div class="col-12 col-md-6 mb-2">
+                <div class="small text-muted mb-1">Attacker Losses Distribution📊</div>
+                <div class="d-flex flex-wrap gap-1">
+                    @foreach (var kvp in Stats.HitsStats.HitsToA_Prblty.OrderBy(x => x.Key))
+                    {
+                        <span class="badge dist-badge"><span class="dist-hits">@kvp.Key</span>: <span class="dist-prob">@(kvp.Value.ToString("P0"))</span></span>
+                    }
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="small text-muted mb-1">Defender Losses Distribution📊</div>
+                <div class="d-flex flex-wrap gap-1">
+                    @foreach (var kvp in Stats.HitsStats.HitsToD_Prblty.OrderBy(x => x.Key))
+                    {
+                        <span class="badge dist-badge"><span class="dist-hits">@kvp.Key</span>: <span class="dist-prob">@(kvp.Value.ToString("P0"))</span></span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public FtpStats Stats { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = "";
+
+    [Parameter]
+    public string BorderColor { get; set; } = "primary";
+
+    [Parameter]
+    public string HeaderBgColor { get; set; } = "primary";
+
+    [Parameter]
+    public bool ShowStdDev { get; set; } = true;
+
+    [Parameter]
+    public int AttackerElitesCommitted { get; set; }
+
+    [Parameter]
+    public int DefenderElitesCommitted { get; set; }
+}
