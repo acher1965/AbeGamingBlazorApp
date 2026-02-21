@@ -1,10 +1,15 @@
 @* InfoTip.razor - A small info icon with tooltip that works on desktop (hover) and mobile (tap) *@
 
-<span class="info-tip" @onclick="TogglePopover" @onclick:stopPropagation="true">
+@if (showPopover)
+{
+    <div class="info-tip-backdrop" @onclick="ClosePopover" @ontouchend="ClosePopover"></div>
+}
+
+<span class="info-tip" @onclick="TogglePopover" @onclick:stopPropagation="true" @ontouchend:stopPropagation="true">
     <span class="info-icon" title="@Text">ⓘ</span>
     @if (showPopover)
     {
-        <span class="info-popover">@Text</span>
+        <span class="info-popover" @onclick:stopPropagation="true">@Text</span>
     }
 </span>
 
@@ -17,5 +22,10 @@
     private void TogglePopover()
     {
         showPopover = !showPopover;
+    }
+
+    private void ClosePopover()
+    {
+        showPopover = false;
     }
 }

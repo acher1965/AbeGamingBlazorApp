@@ -215,13 +215,13 @@
                             }
                             @if (ExactStats.AttackerLeaderDeathProbability > 0)
                             {
-                                <span>💀Att. Leader Death: @(ExactStats.AttackerLeaderDeathProbability.ToString("P1"))</span>
+                                <span>Att.Leader💀: @(ExactStats.AttackerLeaderDeathProbability.ToString("P1"))</span>
                             }
                         </div>
                         <div class="col-6">
                             @if (ExactStats.DefenderLeaderDeathProbability > 0)
                             {
-                                <span>💀Def. Leader Death: @(ExactStats.DefenderLeaderDeathProbability.ToString("P1"))</span>
+                                <span>Def.Leader💀: @(ExactStats.DefenderLeaderDeathProbability.ToString("P1"))</span>
                             }
                         </div>
                     </div>
@@ -307,13 +307,13 @@
                             }
                             @if (MonteCarloResult.Value.result.AttackerLeaderDeathProbability > 0)
                             {
-                                <span>💀Att. Leader Death: @(MonteCarloResult.Value.result.AttackerLeaderDeathProbability.ToString("P1"))</span>
+                                <span>Att.Leader💀: @(MonteCarloResult.Value.result.AttackerLeaderDeathProbability.ToString("P1"))</span>
                             }
                         </div>
                         <div class="col-6">
                             @if (MonteCarloResult.Value.result.DefenderLeaderDeathProbability > 0)
                             {
-                                <span>💀Def. Leader Death: @(MonteCarloResult.Value.result.DefenderLeaderDeathProbability.ToString("P1"))</span>
+                                <span>Def.Leader💀: @(MonteCarloResult.Value.result.DefenderLeaderDeathProbability.ToString("P1"))</span>
                             }
                         </div>
                     </div>
@@ -348,7 +348,7 @@
     {
         <div class="card @GetResultCardClass() mb-3">
             <div class="card-header py-2">
-                <strong>Battle Result</strong>
+                <strong>Single Battle Result</strong>
             </div>
             <div class="card-body py-2">
                 <div class="row">
@@ -373,9 +373,9 @@
                         }
                     </div>
                     <div class="col-6 small">
-                        <div>Dice: Atk @BattleResult.AttackerDieRoll | Def @BattleResult.DefenderDieRoll</div>
+                        <div>🎲Att. @BattleResult.AttackerDieRoll | 🎲Def. @BattleResult.DefenderDieRoll</div>
                         <div>
-                            Att. -@BattleResult.DamageToAttacker SP
+                            🗡️Att. -@BattleResult.DamageToAttacker SP
                             @if (BattleResult.DamageToAttacker >= LastAttackerSize)
                             {
                                 <span class="text-danger">(Wiped out!)</span>
@@ -386,7 +386,7 @@
                             }
                         </div>
                         <div>
-                            Def. -@BattleResult.DamageToDefender SP
+                            🛡️Def. -@BattleResult.DamageToDefender SP
                             @if (LastDefenderSize > 0 && BattleResult.DamageToDefender >= LastDefenderSize)
                             {
                                 <span class="text-danger">(Wiped out!)</span>
@@ -405,13 +405,13 @@
                         @if (BattleResult.AttackerLeaderDeathDieRoll.HasValue)
                         {
                             <span class="me-2">
-                                ☠️Att. Leader: @(BattleResult.AttackerLeaderDeath ? "Dead" : "Safe") (rolled @BattleResult.AttackerLeaderDeathDieRoll)
+                                Att.Leader💀: @(BattleResult.AttackerLeaderDeath ? "Dead" : "Safe") (rolled @BattleResult.AttackerLeaderDeathDieRoll)
                             </span>
                         }
                         @if (BattleResult.DefenderLeaderDeathDieRoll.HasValue)
                         {
                             <span>
-                                ☠️Def. Leader: @(BattleResult.DefenderLeaderDeath ? "Dead" : "Safe") (rolled @BattleResult.DefenderLeaderDeathDieRoll)
+                                Def.Leader💀: @(BattleResult.DefenderLeaderDeath ? "Dead" : "Safe") (rolled @BattleResult.DefenderLeaderDeathDieRoll)
                             </span>
                         }
                     </div>
