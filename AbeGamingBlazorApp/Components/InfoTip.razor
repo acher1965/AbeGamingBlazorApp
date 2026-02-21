@@ -1,6 +1,8 @@
 @* InfoTip.razor - A small info icon with tooltip that works on desktop (hover) and mobile (tap) *@
+@inject IJSRuntime JS
+@implements IDisposable
 
-<span class="info-tip" @onclick="TogglePopover" @onclick:stopPropagation="true">
+<span class="info-tip" @onclick="TogglePopover" @onclick:stopPropagation="true" @ref="tipElement">
     <span class="info-icon" title="@Text">ⓘ</span>
     @if (showPopover)
     {
@@ -13,9 +15,33 @@
     public string Text { get; set; } = "";
 
     private bool showPopover = false;
+    private ElementReference tipElement;
+    private DotNetObjectReference<InfoTip>? objRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            objRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("eval", @"
+                document.addEventListener('click', function(e) {
+                    document.querySelectorAll('.info-popover').forEach(p => {
+                        if (!p.parentElement.contains(e.target)) {
+                            p.style.display = 'none';
+                        }
+                    });
+                });
+            ");
+        }
+    }
 
     private void TogglePopover()
     {
         showPopover = !showPopover;
+    }
+
+    public void Dispose()
+    {
+        objRef?.Dispose();
     }
 }

@@ -7,5 +7,7 @@ namespace AbeGaming.GameLogic.FtP
     HitStats HitsStats,
     double AttackerLeaderDeathProbability,
     double DefenderLeaderDeathProbability,
-    double StarResultProbability);
+    double StarResultProbability,
+    double AttackerEliteLossProbability,
+    double DefenderEliteLossProbability);
 }

@@ -29,6 +29,8 @@ namespace AbeGaming.GameLogic.FtP
             int[] defenderLeaderDeaths = new int[trials];
             int[] attackerCasualties = new int[trials];
             int[] defenderCasualties = new int[trials];
+            int[] attackerEliteLosses = new int[trials];
+            int[] defenderEliteLosses = new int[trials];
 
             // Pre-roll all random numbers (SIMD-optimized in RollDice)
             Span<int> randoms = Dice.RollOneDieRepeatedly(trials << 2);
@@ -46,6 +48,8 @@ namespace AbeGaming.GameLogic.FtP
                 defenderLeaderDeaths[i] = result.DefenderLeaderDeath ? 1 : 0;
                 attackerCasualties[i] = result.DamageToAttacker;
                 defenderCasualties[i] = result.DamageToDefender;
+                attackerEliteLosses[i] = result.AttackerEliteLoss ? 1 : 0;
+                defenderEliteLosses[i] = result.DefenderEliteLoss ? 1 : 0;
             }
 
             // SIMD-accelerated summation
@@ -54,6 +58,8 @@ namespace AbeGaming.GameLogic.FtP
             int totalStars = IntArrayStatHelpers.SumVectorised(stars);
             int totalAttackerLeaderDeaths = IntArrayStatHelpers.SumVectorised(attackerLeaderDeaths);
             int totalDefenderLeaderDeaths = IntArrayStatHelpers.SumVectorised(defenderLeaderDeaths);
+            int totalAttackerEliteLosses = IntArrayStatHelpers.SumVectorised(attackerEliteLosses);
+            int totalDefenderEliteLosses = IntArrayStatHelpers.SumVectorised(defenderEliteLosses);
 
             // SIMD-accelerated mean and stddev directly from int arrays (no double[] allocation)
             (double avgAttackerCasualties, double stdAttackerCasualties) = IntArrayStatHelpers.MeanAndStdDevVectorised(attackerCasualties);
@@ -81,7 +87,9 @@ namespace AbeGaming.GameLogic.FtP
                 hitsStats,
                 (double)totalAttackerLeaderDeaths / trials,
                 (double)totalDefenderLeaderDeaths / trials,
-                (double)totalStars / trials));
+                (double)totalStars / trials,
+                (double)totalAttackerEliteLosses / trials,
+                (double)totalDefenderEliteLosses / trials));
         }
     }
 }

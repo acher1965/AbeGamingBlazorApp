@@ -1,0 +1,57 @@
+/* FtpBattlePage styles */
+
+/* Vertical separator between attacker and defender columns */
+.results-separator {
+    border-left: 1px solid #dee2e6;
+    padding-left: 0.75rem !important;
+}
+
+/* Apply separator to second column in results rows */
+.card-body .row > .col-6:last-child,
+.card-body .row > .col-12.col-md-6:last-child {
+    border-left: 1px solid #e9ecef;
+    padding-left: 0.75rem;
+}
+
+/* Distribution badges - highlight the hit count */
+.dist-badge {
+    font-size: 0.7em;
+    background-color: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+.dist-badge .dist-hits {
+    font-weight: bold;
+    color: #0d6efd;
+}
+
+.dist-badge .dist-prob {
+    color: #6c757d;
+    font-weight: normal;
+}
+
+/* Mobile: select all text on focus for number inputs */
+input[type="number"]:focus {
+    /* This helps on some browsers but full selection requires JS */
+}
+
+/* Prevent zoom on mobile input focus */
+@media (max-width: 768px) {
+    input[type="number"],
+    input[type="text"],
+    select {
+        font-size: 16px !important;
+    }
+
+    /* On mobile, no left border separator - use top border instead */
+    .card-body .row > .col-6:last-child {
+        border-left: none;
+    }
+}
+
+/* Fix viewport zoom issues on orientation change */
+@media screen and (orientation: landscape) {
+    html {
+        touch-action: manipulation;
+    }
+}
