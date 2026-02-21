@@ -504,7 +504,7 @@
     private async Task RunMonteCarloTrials()
     {
         FtpBattle battle = CreateBattle();
-
+        BattleResult = null;
         // Clear stale ExactStats only if battle has changed
         if (LastExactStatsBattle != null && LastExactStatsBattle != battle)
         {
@@ -526,6 +526,7 @@
     private async Task CalculateExactStats()
     {
         FtpBattle battle = CreateBattle();
+        BattleResult = null;
 
         // Clear stale MonteCarloResult only if battle has changed
         if (LastMonteCarloBattle != null && LastMonteCarloBattle != battle)
