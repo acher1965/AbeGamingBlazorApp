@@ -140,7 +140,9 @@ namespace AbeGaming.GameLogic.FtP
                                        star,
                                        attackerLeaderDeathDieRoll,
                                        defenderLeaderDeathDieRoll,
-                                       battle.IsOverrun());
+                                       battle.IsOverrun(), 
+                                       battle.AttackerElitesCommitted > 0 && hitsToAttacker > 1, 
+                                       battle.DefenderElitesCommitted > 0 && hitsToDefender > 1);
         }
 
         public static FtpStats ExactStats(this FtpBattle battle)
@@ -154,6 +156,8 @@ namespace AbeGaming.GameLogic.FtP
             int totalStars = 0;
             int totalAttackerLeaderDeaths = 0;
             int totalDefenderLeaderDeaths = 0;
+            int totalAEliteLosses = 0;
+            int totalDEliteLosses = 0;
             BattleSize size = battle.Size();
             int i = 0;
             foreach ((int black, int white) in Dice.TwoDice)
@@ -163,6 +167,8 @@ namespace AbeGaming.GameLogic.FtP
                 FTPBattleResult r = battle.BattleResult(fourDiceRolls);
                 hitsToAVector[i] = r.DamageToAttacker;
                 hitsToDVector[i] = r.DamageToDefender;
+                totalAEliteLosses += r.AttackerEliteLoss ? 1 : 0;
+                totalDEliteLosses += r.DefenderEliteLoss ? 1 : 0;
                 totalAttackerWins += r.Winner == Winner.Attacker ? 1 : 0;
                 totalDefenderWins += r.Winner == Winner.Defender ? 1 : 0;
                 totalStars += r.Star ? 1 : 0;
@@ -230,7 +236,9 @@ namespace AbeGaming.GameLogic.FtP
                 hitsStats,
                 AttackerLeaderDeathPrblty,
                 DefenderLeaderDeathPrblty,
-                (double)totalStars / 36);
+                (double)totalStars / 36,
+                (double)totalAEliteLosses / 36,
+                (double)totalDEliteLosses / 36);
         }
     }
 }
