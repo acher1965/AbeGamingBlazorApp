@@ -211,17 +211,17 @@
                         <div class="col-6">
                             @if (ExactStats.StarResultProbability > 0)
                             {
-                                <span class="me-2">⭐Star: @(ExactStats.StarResultProbability.ToString("P1"))</span>
+                                <span class="me-2" style="white-space: nowrap;">⭐Star: @(ExactStats.StarResultProbability.ToString("P1"))</span>
                             }
                             @if (ExactStats.AttackerLeaderDeathProbability > 0)
                             {
-                                <span>Att.Leader💀: @(ExactStats.AttackerLeaderDeathProbability.ToString("P1"))</span>
+                                <span style="white-space: nowrap;">Att.Leader💀: @(ExactStats.AttackerLeaderDeathProbability.ToString("P1"))</span>
                             }
                         </div>
                         <div class="col-6">
                             @if (ExactStats.DefenderLeaderDeathProbability > 0)
                             {
-                                <span>Def.Leader💀: @(ExactStats.DefenderLeaderDeathProbability.ToString("P1"))</span>
+                                <span style="white-space: nowrap;">Def.Leader💀: @(ExactStats.DefenderLeaderDeathProbability.ToString("P1"))</span>
                             }
                         </div>
                     </div>
@@ -303,17 +303,17 @@
                         <div class="col-6">
                             @if (MonteCarloResult.Value.result.StarResultProbability > 0)
                             {
-                                <span class="me-2">⭐Star: @(MonteCarloResult.Value.result.StarResultProbability.ToString("P1"))</span>
+                                <span class="me-2" style="white-space: nowrap;">⭐Star: @(MonteCarloResult.Value.result.StarResultProbability.ToString("P1"))</span>
                             }
                             @if (MonteCarloResult.Value.result.AttackerLeaderDeathProbability > 0)
                             {
-                                <span>Att.Leader💀: @(MonteCarloResult.Value.result.AttackerLeaderDeathProbability.ToString("P1"))</span>
+                                <span style="white-space: nowrap;">Att.Leader💀: @(MonteCarloResult.Value.result.AttackerLeaderDeathProbability.ToString("P1"))</span>
                             }
                         </div>
                         <div class="col-6">
                             @if (MonteCarloResult.Value.result.DefenderLeaderDeathProbability > 0)
                             {
-                                <span>Def.Leader💀: @(MonteCarloResult.Value.result.DefenderLeaderDeathProbability.ToString("P1"))</span>
+                                <span style="white-space: nowrap;">Def.Leader💀: @(MonteCarloResult.Value.result.DefenderLeaderDeathProbability.ToString("P1"))</span>
                             }
                         </div>
                     </div>
@@ -405,13 +405,13 @@
                         @if (BattleResult.AttackerLeaderDeathDieRoll.HasValue)
                         {
                             <span class="me-2">
-                                Att.Leader💀: @(BattleResult.AttackerLeaderDeath ? "Dead" : "Safe") (rolled @BattleResult.AttackerLeaderDeathDieRoll)
+                                Att.Leader💀: <span class="@(BattleResult.AttackerLeaderDeath ? "text-danger" : "text-success")">@(BattleResult.AttackerLeaderDeath ? "Dead" : "Safe")</span> (rolled @BattleResult.AttackerLeaderDeathDieRoll)
                             </span>
                         }
                         @if (BattleResult.DefenderLeaderDeathDieRoll.HasValue)
                         {
                             <span>
-                                Def.Leader💀: @(BattleResult.DefenderLeaderDeath ? "Dead" : "Safe") (rolled @BattleResult.DefenderLeaderDeathDieRoll)
+                                Def.Leader💀: <span class="@(BattleResult.DefenderLeaderDeath ? "text-danger" : "text-success")">@(BattleResult.DefenderLeaderDeath ? "Dead" : "Safe")</span> (rolled @BattleResult.DefenderLeaderDeathDieRoll)
                             </span>
                         }
                     </div>
@@ -438,19 +438,55 @@
     private bool IsDefenderLeaderPresent;
     private bool IsAmphibious = false;
 
-    // Attacker
-    private int AttackerSize = 5;
-    private int AttackerLeadersDRMIncludingCavalryIntelligence = 0;
-    private int AttackerElitesCommitted = 0;
+    // Attacker (with clamped setters)
+    private int _attackerSize = 5;
+    private int AttackerSize
+    {
+        get => _attackerSize;
+        set => _attackerSize = Math.Clamp(value, 1, 15);
+    }
+
+    private int _attackerDRM = 0;
+    private int AttackerLeadersDRMIncludingCavalryIntelligence
+    {
+        get => _attackerDRM;
+        set => _attackerDRM = Math.Clamp(value, 0, 9);
+    }
+
+    private int _attackerElites = 0;
+    private int AttackerElitesCommitted
+    {
+        get => _attackerElites;
+        set => _attackerElites = Math.Clamp(value, 0, 2);
+    }
+
     private bool AttackerOOS;
 
-    // Defender
-    private int DefenderSize = 5;
-    private int DefenderLeadersDRMIncludingCavalryIntelligence = 0;
-    private int DefenderElitesCommitted = 0;
+    // Defender (with clamped setters)
+    private int _defenderSize = 5;
+    private int DefenderSize
+    {
+        get => _defenderSize;
+        set => _defenderSize = Math.Clamp(value, IsAmphibious ? 0 : 1, 30);
+    }
+
+    private int _defenderDRM = 0;
+    private int DefenderLeadersDRMIncludingCavalryIntelligence
+    {
+        get => _defenderDRM;
+        set => _defenderDRM = Math.Clamp(value, 0, 9);
+    }
+
+    private int _defenderElites = 0;
+    private int DefenderElitesCommitted
+    {
+        get => _defenderElites;
+        set => _defenderElites = Math.Clamp(value, 0, 2);
+    }
+
     private bool DefenderOOS;
 
-    // Result
+    // Single Battle Result
     private FTPBattleResult? BattleResult;
 
     // Monte Carlo
