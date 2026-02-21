@@ -1,0 +1,32 @@
+/* FtpStatsDisplay component styles */
+
+/* Distribution badges - highlight the hit count */
+.dist-badge {
+    font-size: 0.7em;
+    background-color: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+.dist-badge .dist-hits {
+    font-weight: bold;
+    color: #0d6efd;
+}
+
+.dist-badge .dist-prob {
+    color: #6c757d;
+    font-weight: normal;
+}
+
+/* Vertical separator between attacker and defender columns */
+.card-body .row > .col-6:last-child,
+.card-body .row > .col-12.col-md-6:last-child {
+    border-left: 1px solid #e9ecef;
+    padding-left: 0.75rem;
+}
+
+/* On mobile, no left border separator */
+@media (max-width: 768px) {
+    .card-body .row > .col-6:last-child {
+        border-left: none;
+    }
+}

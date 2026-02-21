@@ -1,0 +1,144 @@
+@* FtpSideInput.razor - Reusable input card for Attacker or Defender side *@
+@* Demonstrates two-way binding pattern with EventCallback *@
+
+<div class="card h-100">
+    <div class="card-header py-1 bg-@HeaderColor text-white">
+        <strong class="small">@Icon@SideName</strong>
+    </div>
+    <div class="card-body py-2">
+        @* SP Input *@
+        <div class="row g-1 mb-1">
+            <label class="col-5 col-form-label col-form-label-sm">
+                SP <InfoTip Text="@SpInfoTip" />
+            </label>
+            <div class="col-7">
+                <input type="number" 
+                       class="form-control form-control-sm" 
+                       value="@Size"
+                       @onchange="OnSizeChanged"
+                       min="@MinSize" 
+                       max="@MaxSize" />
+            </div>
+        </div>
+
+        @* DRM Input *@
+        <div class="row g-1 mb-1">
+            <label class="col-5 col-form-label col-form-label-sm">
+                DRM <InfoTip Text="Die Roll Modifier from Leaders and Cards. Leader death risk shown in results." />
+            </label>
+            <div class="col-7">
+                <input type="number" 
+                       class="form-control form-control-sm" 
+                       value="@DRM"
+                       @onchange="OnDRMChanged"
+                       min="0" 
+                       max="9" />
+            </div>
+        </div>
+
+        @* Elites Input *@
+        <div class="row g-1 mb-1">
+            <label class="col-5 col-form-label col-form-label-sm">
+                Elites <InfoTip Text="Elite units committed (max 2). Each gives +1 DRM. Elite loss risk shown in results." />
+            </label>
+            <div class="col-7">
+                <input type="number" 
+                       class="form-control form-control-sm" 
+                       value="@Elites"
+                       @onchange="OnElitesChanged"
+                       min="0" 
+                       max="2" />
+            </div>
+        </div>
+
+        @* OOS Checkbox *@
+        <div class="form-check form-check-inline mb-0">
+            <input class="form-check-input" 
+                   type="checkbox" 
+                   id="@OosCheckboxId"
+                   checked="@OOS"
+                   @onchange="OnOOSChanged" />
+            <label class="form-check-label small" for="@OosCheckboxId">
+                OOS <InfoTip Text="@OosInfoTip" />
+            </label>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Display parameters (one-way)
+    [Parameter] public string SideName { get; set; } = "Attacker";
+    [Parameter] public string Icon { get; set; } = "🗡️";
+    [Parameter] public string HeaderColor { get; set; } = "primary";
+    [Parameter] public string SpInfoTip { get; set; } = "Strength Points";
+    [Parameter] public string OosInfoTip { get; set; } = "Out of Supply";
+    [Parameter] public int MinSize { get; set; } = 1;
+    [Parameter] public int MaxSize { get; set; } = 15;
+
+    // Unique ID for checkbox (needed because we have two instances on the page)
+    [Parameter] public string OosCheckboxId { get; set; } = "oos";
+
+    // ============================================================
+    // TWO-WAY BINDING PATTERN:
+    // For each property that needs two-way binding, you need:
+    //   1. [Parameter] T PropertyName { get; set; }
+    //   2. [Parameter] EventCallback<T> PropertyNameChanged { get; set; }
+    // 
+    // Parent uses: @bind-PropertyName="parentVariable"
+    // This automatically wires up both the value and the callback.
+    // ============================================================
+
+    // Size (SP) - Two-way binding
+    [Parameter] public int Size { get; set; }
+    [Parameter] public EventCallback<int> SizeChanged { get; set; }
+
+    // DRM - Two-way binding
+    [Parameter] public int DRM { get; set; }
+    [Parameter] public EventCallback<int> DRMChanged { get; set; }
+
+    // Elites - Two-way binding
+    [Parameter] public int Elites { get; set; }
+    [Parameter] public EventCallback<int> ElitesChanged { get; set; }
+
+    // OOS - Two-way binding
+    [Parameter] public bool OOS { get; set; }
+    [Parameter] public EventCallback<bool> OOSChanged { get; set; }
+
+    // ============================================================
+    // Event handlers that invoke the callbacks
+    // These are called when the user changes the input values
+    // ============================================================
+
+    private async Task OnSizeChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int value))
+        {
+            int clampedValue = Math.Clamp(value, MinSize, MaxSize);
+            await SizeChanged.InvokeAsync(clampedValue);
+        }
+    }
+
+    private async Task OnDRMChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int value))
+        {
+            int clampedValue = Math.Clamp(value, 0, 9);
+            await DRMChanged.InvokeAsync(clampedValue);
+        }
+    }
+
+    private async Task OnElitesChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int value))
+        {
+            int clampedValue = Math.Clamp(value, 0, 2);
+            await ElitesChanged.InvokeAsync(clampedValue);
+        }
+    }
+
+    private async Task OnOOSChanged(ChangeEventArgs e)
+    {
+        bool value = (bool)(e.Value ?? false);
+        await OOSChanged.InvokeAsync(value);
+    }
+}
