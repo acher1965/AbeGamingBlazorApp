@@ -1,0 +1,126 @@
+@* FtpAmphibiousInput.razor - Input component for Amphibious battle settings *@
+@using AbeGaming.GameLogic.FtP
+
+<div class="card mb-2 border-info">
+    <div class="card-header py-1 bg-info text-white">
+        <strong class="small">⚓ Amphibious Assault</strong>
+    </div>
+    <div class="card-body py-2">
+        <div class="row g-2">
+            @* Left column: Booleans *@
+            <div class="col-6">
+                <div class="form-check mb-1">
+                    <input class="form-check-input" type="checkbox" id="isArmyMove" 
+                           checked="@IsArmyMove" @onchange="OnIsArmyMoveChanged" />
+                    <label class="form-check-label small" for="isArmyMove">
+                        Army Move
+                        <InfoTip Text="Army moving by water (max 9 SP), otherwise naval assault (max 3 SP)" />
+                    </label>
+                </div>
+                <div class="form-check mb-1">
+                    <input class="form-check-input" type="checkbox" id="admiral" 
+                           checked="@Admiral" @onchange="OnAdmiralChanged" />
+                    <label class="form-check-label small" for="admiral">
+                        Admiral
+                        <InfoTip Text="Admiral Foote or Porter present" />
+                    </label>
+                </div>
+                <div class="form-check mb-1">
+                    <input class="form-check-input" type="checkbox" id="hunley" 
+                           checked="@Hunley" @onchange="OnHunleyChanged" />
+                    <label class="form-check-label small" for="hunley">
+                        Hunley
+                        <InfoTip Text="CSS Hunley submarine present" />
+                    </label>
+                </div>
+            </div>
+            @* Right column: More booleans and int *@
+            <div class="col-6">
+                <div class="form-check mb-1">
+                    <input class="form-check-input" type="checkbox" id="ironclad" 
+                           checked="@Ironclad" @onchange="OnIroncladChanged" />
+                    <label class="form-check-label small" for="ironclad">
+                        Ironclad
+                        <InfoTip Text="Ironclad present" />
+                    </label>
+                </div>
+                <div class="form-check mb-1">
+                    <input class="form-check-input" type="checkbox" id="torpedoes" 
+                           checked="@Torpedoes" @onchange="OnTorpedoesChanged" />
+                    <label class="form-check-label small" for="torpedoes">
+                        Torpedoes
+                        <InfoTip Text="Defender has torpedoes" />
+                    </label>
+                </div>
+                <div class="row g-1 mt-1">
+                    <label class="col-7 col-form-label col-form-label-sm">
+                        Assault Level
+                        <InfoTip Text="Amphibious Assault Modifier (0-5)" />
+                    </label>
+                    <div class="col-5">
+                        <input type="number" class="form-control form-control-sm" 
+                               value="@AmphibiousAssaultLevel"
+                               @onchange="OnAmphibiousAssaultLevelChanged"
+                               min="0" max="5" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Two-way binding for each property
+    [Parameter] public bool IsArmyMove { get; set; }
+    [Parameter] public EventCallback<bool> IsArmyMoveChanged { get; set; }
+
+    [Parameter] public bool Admiral { get; set; }
+    [Parameter] public EventCallback<bool> AdmiralChanged { get; set; }
+
+    [Parameter] public bool Hunley { get; set; }
+    [Parameter] public EventCallback<bool> HunleyChanged { get; set; }
+
+    [Parameter] public bool Ironclad { get; set; }
+    [Parameter] public EventCallback<bool> IroncladChanged { get; set; }
+
+    [Parameter] public bool Torpedoes { get; set; }
+    [Parameter] public EventCallback<bool> TorpedoesChanged { get; set; }
+
+    [Parameter] public int AmphibiousAssaultLevel { get; set; }
+    [Parameter] public EventCallback<int> AmphibiousAssaultLevelChanged { get; set; }
+
+    // Event handlers
+    private async Task OnIsArmyMoveChanged(ChangeEventArgs e)
+    {
+        await IsArmyMoveChanged.InvokeAsync((bool)(e.Value ?? false));
+    }
+
+    private async Task OnAdmiralChanged(ChangeEventArgs e)
+    {
+        await AdmiralChanged.InvokeAsync((bool)(e.Value ?? false));
+    }
+
+    private async Task OnHunleyChanged(ChangeEventArgs e)
+    {
+        await HunleyChanged.InvokeAsync((bool)(e.Value ?? false));
+    }
+
+    private async Task OnIroncladChanged(ChangeEventArgs e)
+    {
+        await IroncladChanged.InvokeAsync((bool)(e.Value ?? false));
+    }
+
+    private async Task OnTorpedoesChanged(ChangeEventArgs e)
+    {
+        await TorpedoesChanged.InvokeAsync((bool)(e.Value ?? false));
+    }
+
+    private async Task OnAmphibiousAssaultLevelChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int value))
+        {
+            int clampedValue = Math.Clamp(value, 0, 5);
+            await AmphibiousAssaultLevelChanged.InvokeAsync(clampedValue);
+        }
+    }
+}

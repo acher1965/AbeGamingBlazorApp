@@ -17,7 +17,7 @@
                        value="@Size"
                        @onchange="OnSizeChanged"
                        min="@MinSize" 
-                       max="@MaxSize" />
+                       max="@EffectiveMaxSize" />
             </div>
         </div>
 
@@ -75,6 +75,15 @@
     [Parameter] public int MinSize { get; set; } = 1;
     [Parameter] public int MaxSize { get; set; } = 15;
 
+    // Amphibious constraints (only affects Attacker side)
+    [Parameter] public bool IsAmphibious { get; set; } = false;
+    [Parameter] public bool IsArmyMove { get; set; } = false;
+
+    // Computed effective max size: if amphibious attacker, constrain to 9 (army move) or 3 (naval)
+    private int EffectiveMaxSize => IsAmphibious && SideName == "Attacker"
+        ? (IsArmyMove ? 9 : 3)
+        : MaxSize;
+
     // Unique ID for checkbox (needed because we have two instances on the page)
     [Parameter] public string OosCheckboxId { get; set; } = "oos";
 
@@ -113,7 +122,7 @@
     {
         if (int.TryParse(e.Value?.ToString(), out int value))
         {
-            int clampedValue = Math.Clamp(value, MinSize, MaxSize);
+            int clampedValue = Math.Clamp(value, MinSize, EffectiveMaxSize);
             await SizeChanged.InvokeAsync(clampedValue);
         }
     }

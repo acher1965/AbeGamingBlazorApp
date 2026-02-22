@@ -41,6 +41,9 @@ namespace AbeGaming.GameLogic.FtP
 
         public static bool IsOverrun(this FtpBattle battle)
         {
+            if (battle.Amphibious is null)
+                return false;
+
             (Ratio ratio, bool inAttackerFavour) = battle.BattleRatio();
             return ratio == Ratio.TenToOnePlus && inAttackerFavour && !battle.FortPresent;
         }
@@ -62,6 +65,8 @@ namespace AbeGaming.GameLogic.FtP
             if (FourDiceRolls.Length < 4)
                 throw new ArgumentException($"{nameof(FtpBattleMethods)}.{BattleResult}(): 4 random numbers must be passed in",
                     nameof(FourDiceRolls));
+            bool isAmphibious = battle.Amphibious is not null;
+
             int attackerDieRoll = FourDiceRolls[0];
             int defenderDieRoll = FourDiceRolls[1];
 
@@ -79,8 +84,9 @@ namespace AbeGaming.GameLogic.FtP
             }
 
             //final hits logic
-            int finalHitsToDefender =Math.Min(battle.DefenderSize, Math.Min(hitsToDefender, 2 * battle.AttackerSize));
-            int finalHitsToAttacker = Math.Min(battle.AttackerSize, Math.Min(hitsToAttacker, 2 * battle.DefenderSize));
+            int finalHitsToDefender = Math.Min(battle.DefenderSize, Math.Min(hitsToDefender, 2 * battle.AttackerSize));
+            int finalHitsToAttacker = Math.Min(battle.AttackerSize,
+                Math.Min(hitsToAttacker, ((isAmphibious && battle.DefenderSize == 0) ? 1 : 2 * battle.DefenderSize)));
 
             bool defenderWipedOut = finalHitsToDefender >= battle.DefenderSize;
             bool attackerWipedOut = finalHitsToAttacker >= battle.AttackerSize;
@@ -99,15 +105,25 @@ namespace AbeGaming.GameLogic.FtP
                 }
             }
 
-            //continue moving logic
+            //continue moving logic, corrections to attacker can stay logic
             bool attackerCanContinueMoving = false;
-            if (defenderWipedOut && winner == Winner.Defender && !battle.FortPresent)
+            if (defenderWipedOut && winner == Winner.Defender)
             {
-                attackerCanStay = true;
-                if (battle.AttackerSize >= 2 * battle.DefenderSize)
-                    attackerCanContinueMoving = true;
+                if (isAmphibious)
+                {
+                    if (battle.FortPresent && battle.DefenderSize == 0)
+                        attackerCanStay = true;
+                }
+                else if (!battle.FortPresent)
+                {
+                    attackerCanStay = true;
+                    if (battle.AttackerSize >= 2 * battle.DefenderSize)
+                        attackerCanContinueMoving = true;
+                }
             }
-            if (winner == Winner.Attacker && (battle.AttackerSize >= 2 * battle.DefenderSize))
+            if (winner == Winner.Attacker
+                && (battle.AttackerSize >= 2 * battle.DefenderSize)
+                && !isAmphibious)
                 attackerCanContinueMoving = true;
 
             //leader death logic            
@@ -140,8 +156,8 @@ namespace AbeGaming.GameLogic.FtP
                                        star,
                                        attackerLeaderDeathDieRoll,
                                        defenderLeaderDeathDieRoll,
-                                       battle.IsOverrun(), 
-                                       battle.AttackerElitesCommitted > 0 && hitsToAttacker > 1, 
+                                       battle.IsOverrun(),
+                                       battle.AttackerElitesCommitted > 0 && hitsToAttacker > 1,
                                        battle.DefenderElitesCommitted > 0 && hitsToDefender > 1);
         }
 
@@ -158,6 +174,8 @@ namespace AbeGaming.GameLogic.FtP
             int totalDefenderLeaderDeaths = 0;
             int totalAEliteLosses = 0;
             int totalDEliteLosses = 0;
+            int totalAttackerCanStay = 0;
+            int totalAttackerCanContinue = 0;
             BattleSize size = battle.Size();
             int i = 0;
             foreach ((int black, int white) in Dice.TwoDice)
@@ -174,6 +192,8 @@ namespace AbeGaming.GameLogic.FtP
                 totalStars += r.Star ? 1 : 0;
                 totalAttackerLeaderDeaths += r.AttackerLeaderDeath ? 1 : 0;
                 totalDefenderLeaderDeaths += r.DefenderLeaderDeath ? 1 : 0;
+                totalAttackerCanStay += r.AttackerCanStay ? 1 : 0;
+                totalAttackerCanContinue += r.AttackerCanContinueMoving ? 1 : 0;
                 results.Add(r);
                 i++;
             }
@@ -210,12 +230,12 @@ namespace AbeGaming.GameLogic.FtP
             }
             double AttackerLeaderDeathPrblty = 0;
             double DefenderLeaderDeathPrblty = 0;
-            if(deadlyCases > 0)
+            if (deadlyCases > 0)
             {
                 double conditionalOnDeathPossible = ((double)deadlyCases / 36);
-                AttackerLeaderDeathPrblty = (double)totalAttackerLeaderDeaths /  36 /deadlyCases
+                AttackerLeaderDeathPrblty = (double)totalAttackerLeaderDeaths / 36 / deadlyCases
                     * conditionalOnDeathPossible;
-                DefenderLeaderDeathPrblty = (double)totalDefenderLeaderDeaths / 36 /deadlyCases
+                DefenderLeaderDeathPrblty = (double)totalDefenderLeaderDeaths / 36 / deadlyCases
                     * conditionalOnDeathPossible;
             }
 
@@ -238,7 +258,9 @@ namespace AbeGaming.GameLogic.FtP
                 DefenderLeaderDeathPrblty,
                 (double)totalStars / 36,
                 (double)totalAEliteLosses / 36,
-                (double)totalDEliteLosses / 36);
+                (double)totalDEliteLosses / 36,
+                (double)totalAttackerCanStay / 36,
+                (double)totalAttackerCanContinue / 36);
         }
     }
 }

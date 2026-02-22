@@ -32,7 +32,7 @@
         <hr class="my-2" />
         <div class="row small">
             <div class="col-6">
-                <strong>Att. Losses:</strong> @(Stats.HitsStats.MeanHtoA.ToString("F1"))
+                Losses: <strong>@(Stats.HitsStats.MeanHtoA.ToString("F1"))</strong>
                 @if (ShowStdDev)
                 {
                     <span class="text-muted">(+/-@(Stats.HitsStats.StdDevHtoA.ToString("F1")))</span>
@@ -44,7 +44,7 @@
                 }
             </div>
             <div class="col-6">
-                <strong>Def. Losses:</strong> @(Stats.HitsStats.MeanHtoD.ToString("F1"))
+                Losses: <strong>@(Stats.HitsStats.MeanHtoD.ToString("F1"))</strong>
                 @if (ShowStdDev)
                 {
                     <span class="text-muted">(+/-@(Stats.HitsStats.StdDevHtoD.ToString("F1")))</span>
@@ -57,25 +57,33 @@
             </div>
         </div>
 
-        @* Star and Leader Death Section *@
-        @if (Stats.StarResultProbability > 0 || Stats.AttackerLeaderDeathProbability > 0 || Stats.DefenderLeaderDeathProbability > 0)
+        @* Star, Leader Death, Can Stay, Can Continue Section *@
+        @if (Stats.StarResultProbability > 0 || Stats.AttackerLeaderDeathProbability > 0 || Stats.DefenderLeaderDeathProbability > 0 || Stats.AttackerCanStayProbability > 0 || Stats.AttackerCanContinueProbability > 0)
         {
             <hr class="my-2" />
             <div class="row small">
                 <div class="col-6">
                     @if (Stats.StarResultProbability > 0)
                     {
-                        <span class="me-2" style="white-space: nowrap;">⭐Star: @(Stats.StarResultProbability.ToString("P1"))</span>
+                        <span class="me-2" style="white-space: nowrap;">⭐: @(Stats.StarResultProbability.ToString("P1"))</span>
                     }
-                    @if (Stats.AttackerLeaderDeathProbability > 0)
+                    @if (Stats.AttackerCanStayProbability > 0)
                     {
-                        <span style="white-space: nowrap;">Att.Leader💀: @(Stats.AttackerLeaderDeathProbability.ToString("P1"))</span>
+                        <span class="me-2" style="white-space: nowrap;">🏠: @(Stats.AttackerCanStayProbability.ToString("P1"))</span>
+                    }
+                    @if (Stats.AttackerCanContinueProbability > 0)
+                    {
+                        <span style="white-space: nowrap;">🚶: @(Stats.AttackerCanContinueProbability.ToString("P1"))</span>
                     }
                 </div>
                 <div class="col-6">
+                    @if (Stats.AttackerLeaderDeathProbability > 0)
+                    {
+                        <span class="me-2" style="white-space: nowrap;">🗡️💀: @(Stats.AttackerLeaderDeathProbability.ToString("P1"))</span>
+                    }
                     @if (Stats.DefenderLeaderDeathProbability > 0)
                     {
-                        <span style="white-space: nowrap;">Def.Leader💀: @(Stats.DefenderLeaderDeathProbability.ToString("P1"))</span>
+                        <span style="white-space: nowrap;">🛡️💀: @(Stats.DefenderLeaderDeathProbability.ToString("P1"))</span>
                     }
                 </div>
             </div>
@@ -83,22 +91,28 @@
 
         @* Distribution Tables *@
         <hr class="my-2" />
+        @{
+            double maxAttackerProb = Stats.HitsStats.HitsToA_Prblty.Values.Max();
+            double maxDefenderProb = Stats.HitsStats.HitsToD_Prblty.Values.Max();
+        }
         <div class="row">
             <div class="col-12 col-md-6 mb-2">
-                <div class="small text-muted mb-1">Attacker Losses Distribution📊</div>
+                <div class="small text-muted mb-1">Loss Distribution📊</div>
                 <div class="d-flex flex-wrap gap-1">
                     @foreach (var kvp in Stats.HitsStats.HitsToA_Prblty.OrderBy(x => x.Key))
                     {
-                        <span class="badge dist-badge"><span class="dist-hits">@kvp.Key</span>: <span class="dist-prob">@(kvp.Value.ToString("P0"))</span></span>
+                        bool isMax = kvp.Value == maxAttackerProb;
+                        <span class="badge dist-badge"><span class="dist-hits">@kvp.Key</span>: <span class="dist-prob @(isMax ? "fw-bold" : "")">@(kvp.Value.ToString("P0"))</span></span>
                     }
                 </div>
             </div>
             <div class="col-12 col-md-6">
-                <div class="small text-muted mb-1">Defender Losses Distribution📊</div>
+                <div class="small text-muted mb-1">Loss Distribution📊</div>
                 <div class="d-flex flex-wrap gap-1">
                     @foreach (var kvp in Stats.HitsStats.HitsToD_Prblty.OrderBy(x => x.Key))
                     {
-                        <span class="badge dist-badge"><span class="dist-hits">@kvp.Key</span>: <span class="dist-prob">@(kvp.Value.ToString("P0"))</span></span>
+                        bool isMax = kvp.Value == maxDefenderProb;
+                        <span class="badge dist-badge"><span class="dist-hits">@kvp.Key</span>: <span class="dist-prob @(isMax ? "fw-bold" : "")">@(kvp.Value.ToString("P0"))</span></span>
                     }
                 </div>
             </div>

@@ -24,6 +24,8 @@ namespace AbeGaming.GameLogic.FtP
             (int aDRM, int dDRM, Ratio ratio, bool inAttackerFavour, BattleSize size) = Extract(battle);
             int modifiedRollA = attackerDieRoll + aDRM;
             int modifiedRollD = defenderDieRoll + dDRM;
+            bool isAmphibious = battle.Amphibious is not null;
+            FtpAmphibious amphibious = battle.Amphibious ?? FtpAmphibious.Empty;
 
             // Leaders death changes: determine leader death roll threshold
             // Rolled modified 10 or greater: Leader killed on 1-3
@@ -57,16 +59,35 @@ namespace AbeGaming.GameLogic.FtP
         private static (int aDRM, int dDRM, Ratio ratio, bool inAttackerFavour, BattleSize size) Extract(FtpBattle battle)
         {
             (Ratio ratio, bool inAttackerFavour) = battle.BattleRatio();
-            int aDRM = (inAttackerFavour ? ratio.DRM_fromRatio() : 0)
-                 + battle.AttackerLeadersDRMIncludingCavalryIntelligence
-                 + battle.AttackerElitesCommitted
-                 + (battle.DefenderOOS ? 2 : 0);
-            int dDRM = (inAttackerFavour ? 0 : ratio.DRM_fromRatio())
-                 + battle.DefenderLeadersDRMIncludingCavalryIntelligence
-                 + battle.DefenderElitesCommitted
-                 + (battle.IsInterception ? 2 : 0)
-                 + (battle.FortPresent ? 2 : 0)
-                 + (battle.AttackerOOS ? 2 : 0);
+            int amphDRM = 0;
+            if (battle.Amphibious is not null)
+            {
+                FtpAmphibious A = battle.Amphibious ?? FtpAmphibious.Empty;
+
+                //Defense amphibious DRM:
+                int dAmphDRM = (battle.FortPresent ? 2 : 0)
+                    + (A.Hunley ? 1 : 0)
+                    + (A.Ironclad ? 2 : 0)
+                    + (A.Torpedoes ? 1 : 0);
+                //Attack amphibious DRM:
+                int aAmphDRM = (A.Admiral ? 2 : 0)
+                    + A.AmphibiousAssaultLevel;
+                //Final amphibious DRM: cap to 3, and give to the correct side
+                amphDRM = Math.Clamp(aAmphDRM - dAmphDRM, -3, 3);
+            }
+            int aDRM = (amphDRM > 0 ? amphDRM : 0)
+                + (inAttackerFavour ? ratio.DRM_fromRatio() : 0)
+                + battle.AttackerLeadersDRMIncludingCavalryIntelligence
+                + battle.AttackerElitesCommitted
+                + (battle.DefenderOOS ? 2 : 0);
+            int dDRM = (amphDRM > 0 ? -amphDRM : 0)
+                + (inAttackerFavour ? 0 : ratio.DRM_fromRatio())
+                + battle.DefenderLeadersDRMIncludingCavalryIntelligence
+                + battle.DefenderElitesCommitted
+                + (battle.IsInterception ? 2 : 0)
+                + (battle.FortPresent && battle.Amphibious is null ? 2 : 0)
+                + (battle.AttackerOOS ? 2 : 0);
+
             return (aDRM, dDRM, ratio, inAttackerFavour, battle.Size());
         }
         #endregion

@@ -39,9 +39,27 @@
                     <InfoTip Text="For attacker continuation logic. Leader death is always calculated assuming leaders are present." />
                 </label>
             </div>
+            <div class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" id="isAmphibious" @bind="IsAmphibious" />
+                <label class="form-check-label small" for="isAmphibious">
+                    ⚓Amphibious
+                    <InfoTip Text="Amphibious assault - allows 0 defender SP" />
+                </label>
+            </div>
         </div>
     </div>
 </div>
+
+@* Amphibious settings (shown when IsAmphibious is checked) *@
+@if (IsAmphibious)
+{
+    <FtpAmphibiousInput @bind-IsArmyMove="AmphibiousIsArmyMove"
+                        @bind-Admiral="AmphibiousAdmiral"
+                        @bind-Hunley="AmphibiousHunley"
+                        @bind-Ironclad="AmphibiousIronclad"
+                        @bind-Torpedoes="AmphibiousTorpedoes"
+                        @bind-AmphibiousAssaultLevel="AmphibiousAssaultLevel" />
+}
 
 @* Compact Attacker/Defender side-by-side *@
 <div class="row g-2 mb-2">
@@ -54,6 +72,8 @@
                       OosCheckboxId="attackerOOS"
                       MinSize="1"
                       MaxSize="15"
+                      IsAmphibious="IsAmphibious"
+                      IsArmyMove="AmphibiousIsArmyMove"
                       @bind-Size="AttackerSize"
                       @bind-DRM="AttackerLeadersDRMIncludingCavalryIntelligence"
                       @bind-Elites="AttackerElitesCommitted"
@@ -66,7 +86,7 @@
                       SpInfoTip="Strength Points defending"
                       OosInfoTip="Out of Supply: Attacker gets +2 DRM"
                       OosCheckboxId="defenderOOS"
-                      MinSize="@(IsAmphibious ? 0 : 1)"
+                      MinSize="@(IsAmphibious && FortPresent ? 0 : 1)"
                       MaxSize="30"
                       @bind-Size="DefenderSize"
                       @bind-DRM="DefenderLeadersDRMIncludingCavalryIntelligence"
@@ -157,11 +177,19 @@
                         {
                             <span class="badge bg-warning text-dark">⭐Star</span>
                         }
+                        @if (BattleResult.AttackerCanStay)
+                        {
+                            <span class="badge bg-success">🗡️🏠Can Stay</span>
+                        }
+                        @if (BattleResult.AttackerCanContinueMoving)
+                        {
+                            <span class="badge bg-info">🗡️🚶Can Continue</span>
+                        }
                     </div>
                     <div class="col-6 small">
                         <div>🎲Att. @BattleResult.AttackerDieRoll | 🎲Def. @BattleResult.DefenderDieRoll</div>
                         <div>
-                            🗡️Att. -@BattleResult.DamageToAttacker SP
+                            🗡️Att. <strong>-@BattleResult.DamageToAttacker</strong> SP
                             @if (BattleResult.DamageToAttacker >= LastAttackerSize)
                             {
                                 <span class="text-danger">(Wiped out!)</span>
@@ -172,7 +200,7 @@
                             }
                         </div>
                         <div>
-                            🛡️Def. -@BattleResult.DamageToDefender SP
+                            🛡️Def. <strong>-@BattleResult.DamageToDefender</strong> SP
                             @if (LastDefenderSize > 0 && BattleResult.DamageToDefender >= LastDefenderSize)
                             {
                                 <span class="text-danger">(Wiped out!)</span>
@@ -222,10 +250,24 @@
     private bool FortPresent;
     private bool IsInterception;
     private bool IsDefenderLeaderPresent;
-    private bool IsAmphibious = false;
+
+    // Amphibious settings
+    private bool IsAmphibious;
+    private bool AmphibiousIsArmyMove;
+    private bool AmphibiousAdmiral;
+    private bool AmphibiousHunley;
+    private bool AmphibiousIronclad;
+    private bool AmphibiousTorpedoes;
+    private int AmphibiousAssaultLevel;
+
+    // Computed property that creates FtpAmphibious when IsAmphibious is true
+    private FtpAmphibious? Amphibious => IsAmphibious
+        ? new FtpAmphibious(AmphibiousIsArmyMove, AmphibiousAdmiral, AmphibiousHunley, 
+                           AmphibiousIronclad, AmphibiousTorpedoes, AmphibiousAssaultLevel)
+        : null;
 
     // Attacker (with clamped setters)
-    private int _attackerSize = 5;
+    private int _attackerSize = 3;
     private int AttackerSize
     {
         get => _attackerSize;
@@ -249,11 +291,11 @@
     private bool AttackerOOS;
 
     // Defender (with clamped setters)
-    private int _defenderSize = 5;
+    private int _defenderSize = 3;
     private int DefenderSize
     {
         get => _defenderSize;
-        set => _defenderSize = Math.Clamp(value, IsAmphibious ? 0 : 1, 30);
+        set => _defenderSize = Math.Clamp(value, IsAmphibious && FortPresent ? 0 : 1, 30);
     }
 
     private int _defenderDRM = 0;
@@ -306,7 +348,7 @@
         DefenderElitesCommitted,
         AttackerOOS,
         DefenderOOS,
-        IsAmphibious);
+        Amphibious);
 
     private async Task ScrollToResults()
     {
