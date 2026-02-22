@@ -1,0 +1,41 @@
+name: Create Release Tag
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master, main]
+
+jobs:
+  create-tag:
+    # Only run if PR was merged (not just closed)
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from csproj
+        id: get_version
+        run: |
+          VERSION=$(grep -oP '(?<=<Version>)[^<]+' AbeGamingBlazorApp/AbeGamingBlazorApp.csproj | head -1)
+          echo "Current version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create and push tag
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          
+          # Check if tag already exists
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "ℹ️ Tag v$VERSION already exists, skipping"
+          else
+            echo "Creating tag v$VERSION"
+            git tag "v$VERSION"
+            git push origin "v$VERSION"
+            echo "✅ Created and pushed tag v$VERSION"
+          fi
