@@ -13,5 +13,5 @@ namespace AbeGaming.GameLogic.FtP
         int DefenderElitesCommitted,
         bool AttackerOOS,
         bool DefenderOOS,
-        bool IsAmphibious);
+        FtpAmphibious? Amphibious);
 }

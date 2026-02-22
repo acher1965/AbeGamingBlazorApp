@@ -9,5 +9,7 @@ namespace AbeGaming.GameLogic.FtP
     double DefenderLeaderDeathProbability,
     double StarResultProbability,
     double AttackerEliteLossProbability,
-    double DefenderEliteLossProbability);
+    double DefenderEliteLossProbability,
+    double AttackerCanStayProbability,
+    double AttackerCanContinueProbability);
 }
