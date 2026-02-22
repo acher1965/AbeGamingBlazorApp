@@ -41,7 +41,8 @@ namespace AbeGaming.GameLogic.FtP
 
         public static bool IsOverrun(this FtpBattle battle)
         {
-            if (battle.Amphibious is null)
+            // Overrun only applies to non-amphibious battles
+            if (battle.Amphibious is not null)
                 return false;
 
             (Ratio ratio, bool inAttackerFavour) = battle.BattleRatio();

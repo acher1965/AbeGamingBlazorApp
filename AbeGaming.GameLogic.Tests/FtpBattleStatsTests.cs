@@ -27,7 +27,7 @@ namespace AbeGaming.GameLogic.Tests
                 DefenderElitesCommitted: 0,
                 AttackerOOS: false,
                 DefenderOOS: false,
-                IsAmphibious: false);
+                Amphibious: null);
         }
 
         #region Exact Stats (ExactStats) Tests
@@ -331,7 +331,7 @@ namespace AbeGaming.GameLogic.Tests
             int attackerLeaderDRM = 0, int defenderLeaderDRM = 0,
             int attackerElites = 0, int defenderElites = 0,
             bool attackerOOS = false, bool defenderOOS = false,
-            bool isAmphibious = false)
+            FtpAmphibious? amphibious = null)
         {
             return new FtpBattle(
                 ResourceOrCapital: resourceOrCapital,
@@ -346,7 +346,7 @@ namespace AbeGaming.GameLogic.Tests
                 DefenderElitesCommitted: defenderElites,
                 AttackerOOS: attackerOOS,
                 DefenderOOS: defenderOOS,
-                IsAmphibious: isAmphibious);
+                Amphibious: amphibious);
         }
 
         public static IEnumerable<object[]> ComprehensiveBattleScenarios()

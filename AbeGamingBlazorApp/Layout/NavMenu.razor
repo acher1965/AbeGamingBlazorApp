@@ -45,12 +45,17 @@
             </NavLink>
         </div>
     </nav>
+    <div class="nav-item px-3 mt-auto">
+        <small class="text-muted">v@(AppVersion)</small>
+    </div>
 </div>
 
 @code {
     private bool collapseNavMenu = true;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private static string AppVersion => typeof(NavMenu).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
 
     private void ToggleNavMenu()
     {
