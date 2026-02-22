@@ -74,16 +74,31 @@ namespace AbeGaming.GameLogic.FtP
             (int hitsToDefender, int hitsToAttacker, bool star, int defenderLeaderDeathTop, int attackerLeaderDeathTop) =
                battle.Outcome(attackerDieRoll, defenderDieRoll);
 
+            /* Special rules for Amphibious Assault:
+             *  An ungarrisoned fort or coastal fort attacked by Amphibious Assault has a nominal 
+             *  strength of 0 SPs for combat calculation purposes,
+             *  and automatically loses all ties in combat if the attacker has any surviving SPs 
+             *  after losses are taken.
+             *  
+             *  An ungarrisoned coastal fort can cause a maximum of 1 SP of damage
+             *  even though it counts as zero SPs.
+             *  
+             *  When a Union Amphibious Assault against a space with no fort loses the battle
+             *  and the Confederate force is eliminated,
+             *  the Union force still retreats and does not capture the space (6.42). 
+             */
             Winner winner = Winner.Defender;
             bool attackerCanStay = false;
 
             if (hitsToDefender > hitsToAttacker
-             || (hitsToDefender == hitsToAttacker && star))
+             || (hitsToDefender == hitsToAttacker && star)
+             || (isAmphibious && battle.FortPresent && battle.DefenderSize == 0
+                    && hitsToDefender == hitsToAttacker
+                    && hitsToAttacker < battle.AttackerSize))
             {
                 winner = Winner.Attacker;
                 attackerCanStay = true;
             }
-
             //final hits logic
             int finalHitsToDefender = Math.Min(battle.DefenderSize, Math.Min(hitsToDefender, 2 * battle.AttackerSize));
             int finalHitsToAttacker = Math.Min(battle.AttackerSize,
@@ -101,26 +116,20 @@ namespace AbeGaming.GameLogic.FtP
                 }
                 else if (winner == Winner.Defender)
                 {
-                    finalHitsToDefender = battle.DefenderSize - 1;
+                    finalHitsToDefender = Math.Max(0, battle.DefenderSize - 1);
                     defenderWipedOut = false;
                 }
             }
 
-            //continue moving logic, corrections to attacker can stay logic
+            //corrections to attacker can stay logic
+            // and continue moving logic 
             bool attackerCanContinueMoving = false;
-            if (defenderWipedOut && winner == Winner.Defender)
+            if (defenderWipedOut && winner == Winner.Defender && !battle.FortPresent)
             {
-                if (isAmphibious)
-                {
-                    if (battle.FortPresent && battle.DefenderSize == 0)
-                        attackerCanStay = true;
-                }
-                else if (!battle.FortPresent)
-                {
-                    attackerCanStay = true;
-                    if (battle.AttackerSize >= 2 * battle.DefenderSize)
-                        attackerCanContinueMoving = true;
-                }
+                attackerCanStay = true;
+                if (!battle.IsDefenderLeaderPresent
+                    && battle.AttackerSize >= 2 * battle.DefenderSize)
+                    attackerCanContinueMoving = true;
             }
             if (winner == Winner.Attacker
                 && (battle.AttackerSize >= 2 * battle.DefenderSize)
