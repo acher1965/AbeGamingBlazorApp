@@ -80,6 +80,27 @@ This is a personal hobby project, but suggestions and feedback are welcome! Feel
 - Open an issue for bug reports or feature requests
 - Fork the repository and submit pull requests
 
+### Versioning
+
+This project uses [Semantic Versioning](https://semver.org/):
+- **MAJOR** (x.0.0): Breaking changes or major rewrites
+- **MINOR** (0.x.0): New features (e.g., new game calculator)
+- **PATCH** (0.0.x): Bug fixes, small improvements
+
+**To release a new version:**
+
+1. Update the version in `AbeGamingBlazorApp/AbeGamingBlazorApp.csproj`:
+   ```xml
+   <Version>1.1.0</Version>
+   <AssemblyVersion>1.1.0</AssemblyVersion>
+   <FileVersion>1.1.0</FileVersion>
+   ```
+2. Commit and push to `develop` branch
+3. Create a PR from `develop` → `master`
+4. When merged, a git tag `v1.1.0` is automatically created
+
+The version is displayed in the app's navigation menu.
+
 ## Useful Links
 
 - [GMT Games](https://www.gmtgames.com/) - Publisher of "For The People"
