@@ -15,6 +15,7 @@
             <div class="col-7">
                 <input type="number" 
                        class="form-control form-control-sm" 
+                      id="@SpInputId"
                        value="@Size"
                        @onchange="OnSizeChanged"
                        min="@MinSize" 
@@ -75,6 +76,7 @@
     [Parameter] public string OosInfoTip { get; set; } = "Out of Supply";
     [Parameter] public int MinSize { get; set; } = 1;
     [Parameter] public int MaxSize { get; set; } = 15;
+    [Parameter] public string SpInputId { get; set; } = string.Empty;
 
     // Amphibious constraints (only affects Attacker side)
     [Parameter] public bool IsAmphibious { get; set; } = false;
