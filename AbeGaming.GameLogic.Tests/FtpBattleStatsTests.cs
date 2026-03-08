@@ -140,6 +140,146 @@ namespace AbeGaming.GameLogic.Tests
             Assert.Equal(2.667, hitStats.MeanHtoA, precision: 2);
         }
 
+        [Theory]
+        [InlineData(5, 4, 0.16666666666666666)]
+        [InlineData(6, 4, 0.16666666666666666)]
+        [InlineData(6, 2, 0.5)]
+        [InlineData(8, 2, 0.66666666666666663)]
+        [InlineData(10, 2, 0.83333333333333337)]
+        [InlineData(10, 1, 1.0)]
+        public void ExactStats_LandBattle_StrongerAttacker_ExpectedWinProbability(
+            int attackerSize,
+            int defenderSize,
+            double expectedAttackerWinProbability)
+        {
+            FtpBattle battle = CreateBattle(attackerSize, defenderSize);
+
+            FtpStats stats = battle.ExactStats();
+
+            Assert.Equal(expectedAttackerWinProbability, stats.AttackerWinProbability, 0.0001);
+            Assert.Equal(1.0 - expectedAttackerWinProbability, stats.DefenderWinProbability, 0.0001);
+        }
+
+        [Theory]
+        // 9v3 amphibious (army move), no admiral/assault/hunley, non-resource/capital
+        [InlineData(3, false, false, false, 0.500000000)]
+        [InlineData(3, false, false, true,  0.388888889)]
+        [InlineData(3, false, true,  false, 0.472222222)]
+        [InlineData(3, false, true,  true,  0.305555556)]
+        [InlineData(3, true,  false, false, 0.388888889)]
+        [InlineData(3, true,  false, true,  0.305555556)]
+        [InlineData(3, true,  true,  false, 0.305555556)]
+        [InlineData(3, true,  true,  true,  0.305555556)]
+        // 9v2 amphibious (army move), no admiral/assault/hunley, non-resource/capital
+        [InlineData(2, false, false, false, 0.666666667)]
+        [InlineData(2, false, false, true,  0.527777778)]
+        [InlineData(2, false, true,  false, 0.638888889)]
+        [InlineData(2, false, true,  true,  0.416666667)]
+        [InlineData(2, true,  false, false, 0.527777778)]
+        [InlineData(2, true,  false, true,  0.416666667)]
+        [InlineData(2, true,  true,  false, 0.416666667)]
+        [InlineData(2, true,  true,  true,  0.416666667)]
+        public void ExactStats_Amphibious_9vX_Matrix_ExpectedWinProbability(
+            int defenderSize,
+            bool fortPresent,
+            bool torpedoes,
+            bool ironclad,
+            double expectedAttackerWinProbability)
+        {
+            FtpBattle battle = CreateBattle(
+                attackerSize: 9,
+                defenderSize: defenderSize,
+                resourceOrCapital: false,
+                fortPresent: fortPresent,
+                amphibious: new FtpAmphibious(
+                    IsArmyMove: true,
+                    Admiral: false,
+                    Hunley: false,
+                    Ironclad: ironclad,
+                    Torpedoes: torpedoes,
+                    AmphibiousAssaultLevel: 0));
+
+            FtpStats stats = battle.ExactStats();
+
+            Assert.Equal(expectedAttackerWinProbability, stats.AttackerWinProbability, 0.0001);
+            Assert.Equal(1.0 - expectedAttackerWinProbability, stats.DefenderWinProbability, 0.0001);
+        }
+
+        [Fact]
+        public void Outcome_Amphibious_DefenderFavoredNetDrm_IsAppliedToDefenderRoll()
+        {
+            // Amphibious defense modifiers exceed assault modifiers:
+            // fort +2, ironclad +2, Hunley +1, torpedoes +1 = 6
+            // attacker assault modifiers = 0, so net = -6 clamped to -3.
+            FtpBattle battle = CreateBattle(
+                attackerSize: 6,
+                defenderSize: 6,
+                fortPresent: true,
+                amphibious: new FtpAmphibious(
+                    IsArmyMove: false,
+                    Admiral: false,
+                    Hunley: true,
+                    Ironclad: true,
+                    Torpedoes: true,
+                    AmphibiousAssaultLevel: 0));
+
+            (int hitsToD, int hitsToA, _, _, _) = battle.Outcome(attackerDieRoll: 6, defenderDieRoll: 6);
+
+            // Medium table with defender roll effectively 9 should yield 3 hits to attacker.
+            Assert.Equal(2, hitsToD);
+            Assert.Equal(3, hitsToA);
+        }
+
+        [Fact]
+        public void Outcome_Amphibious_AttackerFavoredNetDrm_DoesNotAlsoPenalizeDefenderRoll()
+        {
+            // Amphibious assault modifiers exceed defense modifiers:
+            // assault +5 and admiral +2 => 7, defense 0, net = +7 clamped to +3.
+            FtpBattle battle = CreateBattle(
+                attackerSize: 6,
+                defenderSize: 6,
+                fortPresent: false,
+                amphibious: new FtpAmphibious(
+                    IsArmyMove: false,
+                    Admiral: true,
+                    Hunley: false,
+                    Ironclad: false,
+                    Torpedoes: false,
+                    AmphibiousAssaultLevel: 5));
+
+            (int hitsToD, int hitsToA, _, _, _) = battle.Outcome(attackerDieRoll: 6, defenderDieRoll: 8);
+
+            // Attacker roll 6 with +3 -> 9 on Medium table => 2 hits to defender.
+            // Defender roll remains 8 (not reduced) => 3 hits to attacker.
+            Assert.Equal(2, hitsToD);
+            Assert.Equal(3, hitsToA);
+        }
+
+        [Fact]
+        public void BattleResult_AmphibiousNoFort_DefenderWinsAndDefenderEliminated_AttackerCannotStayOrContinue()
+        {
+            // Rule 6.42: In amphibious assault with no fort, if defender "wins"
+            // but is eliminated, attacker still retreats and does not capture/stay.
+            FtpBattle battle = CreateBattle(
+                attackerSize: 3,
+                defenderSize: 1,
+                fortPresent: false,
+                amphibious: new FtpAmphibious(
+                    IsArmyMove: true,
+                    Admiral: false,
+                    Hunley: false,
+                    Ironclad: false,
+                    Torpedoes: false,
+                    AmphibiousAssaultLevel: 0));
+
+            FTPBattleResult result = battle.BattleResult([2, 2, 1, 1]);
+
+            Assert.Equal(Winner.Defender, result.Winner);
+            Assert.Equal(1, result.DamageToDefender);
+            Assert.False(result.AttackerCanStay);
+            Assert.False(result.AttackerCanContinueMoving);
+        }
+
         #endregion
 
         #region Monte Carlo Tests

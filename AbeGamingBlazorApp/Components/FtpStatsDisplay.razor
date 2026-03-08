@@ -73,14 +73,14 @@
                     }
                     @if (Stats.AttackerCanContinueProbability > 0)
                     {
-                        <span style="white-space: nowrap;">🚶: @(Stats.AttackerCanContinueProbability.ToString("P1"))</span>
+                        <span class="me-2" style="white-space: nowrap;">🚶: @(Stats.AttackerCanContinueProbability.ToString("P1"))</span>
+                    }
+                    @if (Stats.AttackerLeaderDeathProbability > 0)
+                    {
+                        <span style="white-space: nowrap;">🗡️💀: @(Stats.AttackerLeaderDeathProbability.ToString("P1"))</span>
                     }
                 </div>
                 <div class="col-6">
-                    @if (Stats.AttackerLeaderDeathProbability > 0)
-                    {
-                        <span class="me-2" style="white-space: nowrap;">🗡️💀: @(Stats.AttackerLeaderDeathProbability.ToString("P1"))</span>
-                    }
                     @if (Stats.DefenderLeaderDeathProbability > 0)
                     {
                         <span style="white-space: nowrap;">🛡️💀: @(Stats.DefenderLeaderDeathProbability.ToString("P1"))</span>
@@ -96,7 +96,7 @@
             double maxDefenderProb = Stats.HitsStats.HitsToD_Prblty.Values.Max();
         }
         <div class="row">
-            <div class="col-12 col-md-6 mb-2">
+            <div class="col-6 mb-2">
                 <div class="small text-muted mb-1">Loss Distribution📊</div>
                 <div class="d-flex flex-wrap gap-1">
                     @foreach (var kvp in Stats.HitsStats.HitsToA_Prblty.OrderBy(x => x.Key))
@@ -106,7 +106,7 @@
                     }
                 </div>
             </div>
-            <div class="col-12 col-md-6">
+            <div class="col-6">
                 <div class="small text-muted mb-1">Loss Distribution📊</div>
                 <div class="d-flex flex-wrap gap-1">
                     @foreach (var kvp in Stats.HitsStats.HitsToD_Prblty.OrderBy(x => x.Key))

@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Blazor WASM (HTTPS)",
+      "type": "blazorwasm",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "url": "https://localhost:7060",
+      "webRoot": "${workspaceFolder}/wwwroot",
+      "browser": "edge",
+      "timeout": 60000,
+      "preLaunchTask": "build"
+    },
+    {
+      "name": "Blazor WASM (HTTP)",
+      "type": "blazorwasm",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "url": "http://localhost:5098",
+      "webRoot": "${workspaceFolder}/wwwroot",
+      "browser": "edge",
+      "timeout": 60000,
+      "preLaunchTask": "build"
+    }
+  ]
+}

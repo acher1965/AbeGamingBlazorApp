@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Blazor WASM Debug (F5)",
+      "type": "blazorwasm",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/AbeGamingBlazorApp",
+      "url": "http://localhost:5098",
+      "webRoot": "${workspaceFolder}/AbeGamingBlazorApp/wwwroot",
+      "browser": "edge",
+      "timeout": 120000,
+      "preLaunchTask": "watch-blazor-app"
+    }
+  ]
+}

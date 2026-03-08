@@ -80,7 +80,7 @@ namespace AbeGaming.GameLogic.FtP
                 + battle.AttackerLeadersDRMIncludingCavalryIntelligence
                 + battle.AttackerElitesCommitted
                 + (battle.DefenderOOS ? 2 : 0);
-            int dDRM = (amphDRM > 0 ? -amphDRM : 0)
+            int dDRM = (amphDRM < 0 ? -amphDRM : 0)
                 + (inAttackerFavour ? 0 : ratio.DRM_fromRatio())
                 + battle.DefenderLeadersDRMIncludingCavalryIntelligence
                 + battle.DefenderElitesCommitted
