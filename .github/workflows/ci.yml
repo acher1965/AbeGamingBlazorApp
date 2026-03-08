@@ -26,7 +26,12 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Build Tests (Debug)
-        run: dotnet build --no-restore --configuration Debug AbeGaming.GameLogic.Tests/AbeGaming.GameLogic.Tests.csproj
+        run: |
+          dotnet build --no-restore --configuration Debug AbeGaming.GameLogic.Tests/AbeGaming.GameLogic.Tests.csproj
+          dotnet build --no-restore --configuration Debug AbeGaming.BlazorApp.Component.Tests/AbeGaming.BlazorApp.Component.Tests.csproj
 
-      - name: Test
-        run: dotnet test --no-build --configuration Debug --verbosity normal
+      - name: Test GameLogic
+        run: dotnet test --no-build --configuration Debug --verbosity normal AbeGaming.GameLogic.Tests/AbeGaming.GameLogic.Tests.csproj
+
+      - name: Test Components (bUnit)
+        run: dotnet test --no-build --configuration Debug --verbosity normal AbeGaming.BlazorApp.Component.Tests/AbeGaming.BlazorApp.Component.Tests.csproj
