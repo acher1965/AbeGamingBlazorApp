@@ -126,10 +126,15 @@ namespace AbeGaming.GameLogic.FtP
             bool attackerCanContinueMoving = false;
             if (defenderWipedOut && winner == Winner.Defender && !battle.FortPresent)
             {
-                attackerCanStay = true;
-                if (!battle.IsDefenderLeaderPresent
-                    && battle.AttackerSize >= 2 * battle.DefenderSize)
-                    attackerCanContinueMoving = true;
+                // In amphibious no-fort battles, attacker still retreats if defender "wins"
+                // even when defender SPs are eliminated (rule 6.42).
+                if (!isAmphibious)
+                {
+                    attackerCanStay = true;
+                    if (!battle.IsDefenderLeaderPresent
+                        && battle.AttackerSize >= 2 * battle.DefenderSize)
+                        attackerCanContinueMoving = true;
+                }
             }
             if (winner == Winner.Attacker
                 && (battle.AttackerSize >= 2 * battle.DefenderSize)

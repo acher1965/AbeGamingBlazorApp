@@ -247,13 +247,52 @@
 @code {
     // Battle Location
     private bool ResourceOrCapital;
-    private bool FortPresent;
+    private bool _fortPresent;
+    private bool FortPresent
+    {
+        get => _fortPresent;
+        set
+        {
+            if (_fortPresent == value)
+                return;
+
+            _fortPresent = value;
+            ClampSizesToRules();
+        }
+    }
+
     private bool IsInterception;
     private bool IsDefenderLeaderPresent;
 
     // Amphibious settings
-    private bool IsAmphibious;
-    private bool AmphibiousIsArmyMove;
+    private bool _isAmphibious;
+    private bool IsAmphibious
+    {
+        get => _isAmphibious;
+        set
+        {
+            if (_isAmphibious == value)
+                return;
+
+            _isAmphibious = value;
+            ClampSizesToRules();
+        }
+    }
+
+    private bool _amphibiousIsArmyMove;
+    private bool AmphibiousIsArmyMove
+    {
+        get => _amphibiousIsArmyMove;
+        set
+        {
+            if (_amphibiousIsArmyMove == value)
+                return;
+
+            _amphibiousIsArmyMove = value;
+            ClampSizesToRules();
+        }
+    }
+
     private bool AmphibiousAdmiral;
     private bool AmphibiousHunley;
     private bool AmphibiousIronclad;
@@ -266,12 +305,21 @@
                            AmphibiousIronclad, AmphibiousTorpedoes, AmphibiousAssaultLevel)
         : null;
 
+    private int AttackerMaxSize => IsAmphibious ? (AmphibiousIsArmyMove ? 9 : 3) : 15;
+    private int DefenderMinSize => IsAmphibious && FortPresent ? 0 : 1;
+
+    private void ClampSizesToRules()
+    {
+        AttackerSize = _attackerSize;
+        DefenderSize = _defenderSize;
+    }
+
     // Attacker (with clamped setters)
     private int _attackerSize = 3;
     private int AttackerSize
     {
         get => _attackerSize;
-        set => _attackerSize = Math.Clamp(value, 1, 15);
+        set => _attackerSize = Math.Clamp(value, 1, AttackerMaxSize);
     }
 
     private int _attackerDRM = 0;
@@ -295,7 +343,7 @@
     private int DefenderSize
     {
         get => _defenderSize;
-        set => _defenderSize = Math.Clamp(value, IsAmphibious && FortPresent ? 0 : 1, 30);
+        set => _defenderSize = Math.Clamp(value, DefenderMinSize, 30);
     }
 
     private int _defenderDRM = 0;
