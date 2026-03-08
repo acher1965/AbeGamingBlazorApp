@@ -1,0 +1,46 @@
+name: Sync Develop From Master
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-develop:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync develop with master
+        run: |
+          git fetch origin master develop
+
+          MASTER_SHA="$(git rev-parse origin/master)"
+          DEVELOP_SHA="$(git rev-parse origin/develop)"
+
+          echo "origin/master: $MASTER_SHA"
+          echo "origin/develop: $DEVELOP_SHA"
+
+          if [ "$MASTER_SHA" = "$DEVELOP_SHA" ]; then
+            echo "develop is already up to date with master"
+            exit 0
+          fi
+
+          git checkout -B develop origin/develop
+
+          # This creates a merge commit only when needed; fast-forward happens automatically when possible.
+          git merge --no-edit origin/master
+
+          git push origin develop

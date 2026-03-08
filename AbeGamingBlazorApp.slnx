@@ -1,4 +1,10 @@
 <Solution>
+  <Project Path="AbeGaming.BlazorApp.Component.Tests/AbeGaming.BlazorApp.Component.Tests.csproj">
+    <Build Solution="Release|*" Project="false" />
+  </Project>
+  <Project Path="AbeGaming.BlazorApp.E2E.Tests/AbeGaming.BlazorApp.E2E.Tests.csproj">
+    <Build Solution="Release|*" Project="false" />
+  </Project>
   <Project Path="AbeGaming.GameLogic.Tests/AbeGaming.GameLogic.Tests.csproj">
     <Build Solution="Release|*" Project="false" />
   </Project>
