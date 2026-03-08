@@ -92,27 +92,32 @@
     // Event handlers
     private async Task OnIsArmyMoveChanged(ChangeEventArgs e)
     {
-        await IsArmyMoveChanged.InvokeAsync((bool)(e.Value ?? false));
+        await IsArmyMoveChanged.InvokeAsync(ParseCheckboxValue(e.Value));
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task OnAdmiralChanged(ChangeEventArgs e)
     {
-        await AdmiralChanged.InvokeAsync((bool)(e.Value ?? false));
+        await AdmiralChanged.InvokeAsync(ParseCheckboxValue(e.Value));
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task OnHunleyChanged(ChangeEventArgs e)
     {
-        await HunleyChanged.InvokeAsync((bool)(e.Value ?? false));
+        await HunleyChanged.InvokeAsync(ParseCheckboxValue(e.Value));
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task OnIroncladChanged(ChangeEventArgs e)
     {
-        await IroncladChanged.InvokeAsync((bool)(e.Value ?? false));
+        await IroncladChanged.InvokeAsync(ParseCheckboxValue(e.Value));
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task OnTorpedoesChanged(ChangeEventArgs e)
     {
-        await TorpedoesChanged.InvokeAsync((bool)(e.Value ?? false));
+        await TorpedoesChanged.InvokeAsync(ParseCheckboxValue(e.Value));
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task OnAmphibiousAssaultLevelChanged(ChangeEventArgs e)
@@ -121,6 +126,25 @@
         {
             int clampedValue = Math.Clamp(value, 0, 5);
             await AmphibiousAssaultLevelChanged.InvokeAsync(clampedValue);
+            await InvokeAsync(StateHasChanged);
         }
+    }
+
+    // Blazor checkbox events can surface bool or string values depending on the render path.
+    private static bool ParseCheckboxValue(object? value)
+    {
+        if (value is bool boolValue)
+            return boolValue;
+
+        if (value is string str)
+        {
+            if (bool.TryParse(str, out bool parsed))
+                return parsed;
+
+            if (string.Equals(str, "on", StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
     }
 }

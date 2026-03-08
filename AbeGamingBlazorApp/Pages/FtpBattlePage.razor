@@ -305,8 +305,8 @@
                            AmphibiousIronclad, AmphibiousTorpedoes, AmphibiousAssaultLevel)
         : null;
 
-    private int AttackerMaxSize => IsAmphibious ? (AmphibiousIsArmyMove ? 9 : 3) : 15;
-    private int DefenderMinSize => IsAmphibious && FortPresent ? 0 : 1;
+    private int AttackerMaxSize => FtpBattleInputRules.AttackerMaxSize(IsAmphibious, AmphibiousIsArmyMove);
+    private int DefenderMinSize => FtpBattleInputRules.DefenderMinSize(IsAmphibious, FortPresent);
 
     private void ClampSizesToRules()
     {
@@ -314,26 +314,37 @@
         DefenderSize = _defenderSize;
     }
 
+    private void NormalizeBattleInputs()
+    {
+        // Keep dynamic constraints and numeric bounds consistent before building a battle.
+        ClampSizesToRules();
+        AttackerLeadersDRMIncludingCavalryIntelligence = FtpBattleInputRules.ClampDrm(_attackerDRM);
+        DefenderLeadersDRMIncludingCavalryIntelligence = FtpBattleInputRules.ClampDrm(_defenderDRM);
+        AttackerElitesCommitted = FtpBattleInputRules.ClampElites(_attackerElites);
+        DefenderElitesCommitted = FtpBattleInputRules.ClampElites(_defenderElites);
+        AmphibiousAssaultLevel = FtpBattleInputRules.ClampAmphibiousAssaultLevel(AmphibiousAssaultLevel);
+    }
+
     // Attacker (with clamped setters)
     private int _attackerSize = 3;
     private int AttackerSize
     {
         get => _attackerSize;
-        set => _attackerSize = Math.Clamp(value, 1, AttackerMaxSize);
+        set => _attackerSize = FtpBattleInputRules.ClampAttackerSize(value, IsAmphibious, AmphibiousIsArmyMove);
     }
 
     private int _attackerDRM = 0;
     private int AttackerLeadersDRMIncludingCavalryIntelligence
     {
         get => _attackerDRM;
-        set => _attackerDRM = Math.Clamp(value, 0, 9);
+        set => _attackerDRM = FtpBattleInputRules.ClampDrm(value);
     }
 
     private int _attackerElites = 0;
     private int AttackerElitesCommitted
     {
         get => _attackerElites;
-        set => _attackerElites = Math.Clamp(value, 0, 2);
+        set => _attackerElites = FtpBattleInputRules.ClampElites(value);
     }
 
     private bool AttackerOOS;
@@ -343,21 +354,21 @@
     private int DefenderSize
     {
         get => _defenderSize;
-        set => _defenderSize = Math.Clamp(value, DefenderMinSize, 30);
+        set => _defenderSize = FtpBattleInputRules.ClampDefenderSize(value, IsAmphibious, FortPresent);
     }
 
     private int _defenderDRM = 0;
     private int DefenderLeadersDRMIncludingCavalryIntelligence
     {
         get => _defenderDRM;
-        set => _defenderDRM = Math.Clamp(value, 0, 9);
+        set => _defenderDRM = FtpBattleInputRules.ClampDrm(value);
     }
 
     private int _defenderElites = 0;
     private int DefenderElitesCommitted
     {
         get => _defenderElites;
-        set => _defenderElites = Math.Clamp(value, 0, 2);
+        set => _defenderElites = FtpBattleInputRules.ClampElites(value);
     }
 
     private bool DefenderOOS;
@@ -383,20 +394,25 @@
     // Current battle for live calculations (e.g., IsOverrun check)
     private FtpBattle CurrentBattle => CreateBattle();
 
-    private FtpBattle CreateBattle() => new FtpBattle(
-        ResourceOrCapital,
-        FortPresent,
-        IsInterception,
-        IsDefenderLeaderPresent,
-        AttackerSize,
-        DefenderSize,
-        AttackerLeadersDRMIncludingCavalryIntelligence,
-        DefenderLeadersDRMIncludingCavalryIntelligence,
-        AttackerElitesCommitted,
-        DefenderElitesCommitted,
-        AttackerOOS,
-        DefenderOOS,
-        Amphibious);
+    private FtpBattle CreateBattle()
+    {
+        NormalizeBattleInputs();
+
+        return new FtpBattle(
+            ResourceOrCapital,
+            FortPresent,
+            IsInterception,
+            IsDefenderLeaderPresent,
+            AttackerSize,
+            DefenderSize,
+            AttackerLeadersDRMIncludingCavalryIntelligence,
+            DefenderLeadersDRMIncludingCavalryIntelligence,
+            AttackerElitesCommitted,
+            DefenderElitesCommitted,
+            AttackerOOS,
+            DefenderOOS,
+            Amphibious);
+    }
 
     private async Task ScrollToResults()
     {
