@@ -1,5 +1,6 @@
 @* FtpSideInput.razor - Reusable input card for Attacker or Defender side *@
 @* Demonstrates two-way binding pattern with EventCallback *@
+@using AbeGaming.GameLogic.FtP
 
 <div class="card h-100">
     <div class="card-header py-1 bg-@HeaderColor text-white">
@@ -81,7 +82,7 @@
 
     // Computed effective max size: if amphibious attacker, constrain to 9 (army move) or 3 (naval)
     private int EffectiveMaxSize => IsAmphibious && SideName == "Attacker"
-        ? (IsArmyMove ? 9 : 3)
+        ? FtpBattleInputRules.AttackerMaxSize(IsAmphibious, IsArmyMove)
         : MaxSize;
 
     // Unique ID for checkbox (needed because we have two instances on the page)
@@ -124,6 +125,7 @@
         {
             int clampedValue = Math.Clamp(value, MinSize, EffectiveMaxSize);
             await SizeChanged.InvokeAsync(clampedValue);
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -133,6 +135,7 @@
         {
             int clampedValue = Math.Clamp(value, 0, 9);
             await DRMChanged.InvokeAsync(clampedValue);
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -142,12 +145,31 @@
         {
             int clampedValue = Math.Clamp(value, 0, 2);
             await ElitesChanged.InvokeAsync(clampedValue);
+            await InvokeAsync(StateHasChanged);
         }
     }
 
     private async Task OnOOSChanged(ChangeEventArgs e)
     {
-        bool value = (bool)(e.Value ?? false);
+        bool value = ParseCheckboxValue(e.Value);
         await OOSChanged.InvokeAsync(value);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private static bool ParseCheckboxValue(object? value)
+    {
+        if (value is bool boolValue)
+            return boolValue;
+
+        if (value is string str)
+        {
+            if (bool.TryParse(str, out bool parsed))
+                return parsed;
+
+            if (string.Equals(str, "on", StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
     }
 }
