@@ -119,7 +119,7 @@
 </div>
 
 <div id="resultsSection">
-    @if (ExactStats is not null)
+    @if (ExactStats is not null && LastExactStatsBattle == CurrentBattle)
     {
         <PoGStatsDisplay Stats="ExactStats"
                          Title="📈Exact Stats"
@@ -127,7 +127,7 @@
                          HeaderBgColor="primary" />
     }
 
-    @if (BattleResult is not null)
+    @if (BattleResult is not null && LastBattleResultBattle == CurrentBattle)
     {
         <div class="card @GetResultCardClass() mb-3">
             <div class="card-header py-2">
@@ -163,7 +163,20 @@
                     </div>
                     <div class="col-12 col-md-6 small">
                         <div>🎲Attacker die: @BattleResult.AttackerDieRoll (@BattleResult.AttackerModifiedDieRoll mod)</div>
-                        <div>🎲Defender die: @BattleResult.DefenderDieRoll (@BattleResult.DefenderModifiedDieRoll mod)</div>
+                        <div>
+                            🎲Attacker die: @BattleResult.AttackerDieRoll
+                            @if (BattleResult.AttackerModifiedDieRoll != BattleResult.AttackerDieRoll)
+                            {
+                                <span> (@BattleResult.AttackerModifiedDieRoll mod)</span>
+                            }
+                        </div>
+                        <div>
+                            🎲Defender die: @BattleResult.DefenderDieRoll
+                            @if (BattleResult.DefenderModifiedDieRoll != BattleResult.DefenderDieRoll)
+                            {
+                                <span> (@BattleResult.DefenderModifiedDieRoll mod)</span>
+                            }
+                        </div>
                         <div>🗡️Hits to Defender: <strong>@BattleResult.HitsByAttacker</strong></div>
                         <div>🛡️Hits to Attacker: <strong>@BattleResult.HitsByDefender</strong></div>
                         @if (BattleResult.FlankAttackAttempted)
@@ -257,6 +270,8 @@
 
     private PoGBattleResult? BattleResult;
     private PoGStats? ExactStats;
+    private PoGBattleModel? LastExactStatsBattle;
+    private PoGBattleModel? LastBattleResultBattle;
     private string? ErrorMessage;
 
     private void EnforceFlankBlockingRules()
@@ -290,7 +305,6 @@
     private async Task CalculateBattleResult()
     {
         ErrorMessage = null;
-        ExactStats = null;
 
         try
         {
@@ -300,11 +314,13 @@
                 attackerDieRoll: dice[0],
                 defenderDieRoll: dice[1],
                 flankAttackDieRoll: AttemptFlankAttack ? dice[2] : null);
+            LastBattleResultBattle = battle;
             await ScrollToResults();
         }
         catch (Exception ex)
         {
             BattleResult = null;
+            LastBattleResultBattle = null;
             ErrorMessage = ex.Message;
         }
     }
@@ -313,15 +329,19 @@
     {
         ErrorMessage = null;
         BattleResult = null;
+        LastBattleResultBattle = null;
 
         try
         {
-            ExactStats = PoGExactStats.Calculate(CreateBattle());
+            PoGBattleModel battle = CreateBattle();
+            ExactStats = PoGExactStats.Calculate(battle);
+            LastExactStatsBattle = battle;
             await ScrollToResults();
         }
         catch (Exception ex)
         {
             ExactStats = null;
+            LastExactStatsBattle = null;
             ErrorMessage = ex.Message;
         }
     }
