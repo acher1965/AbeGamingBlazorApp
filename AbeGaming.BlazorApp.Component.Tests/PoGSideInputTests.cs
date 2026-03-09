@@ -21,7 +21,7 @@ public class PoGSideInputTests : BunitContext
 
         cut.Find("#testFactors").Change("999");
 
-        Assert.Equal(50, emittedFactors);
+        Assert.Equal(16, emittedFactors);
     }
 
     [Fact]
@@ -35,9 +35,9 @@ public class PoGSideInputTests : BunitContext
             .Add(p => p.DRM, 0)
             .Add(p => p.DRMChanged, EventCallback.Factory.Create<int>(this, value => emittedDrm = value)));
 
-        cut.Find("input[min='-9']").Change("-99");
+        cut.FindAll("input[type='number']")[1].Change("-99");
 
-        Assert.Equal(-9, emittedDrm);
+        Assert.Equal(0, emittedDrm);
     }
 
     [Fact]

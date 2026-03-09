@@ -47,9 +47,11 @@ namespace AbeGaming.GameLogic.PoG
                 .Select((probability, hits) => new { hits, probability })
                 .ToDictionary(x => x.hits, x => x.probability);
 
-            double meanRetreat = total == 0
+            double meanRetreatGivenDefenderLoses = attackerWins == 0
                 ? 0
-                : results.Average(r => r.DefenderRetreatLength);
+                : results
+                    .Where(r => r.Winner == Winner.Attacker)
+                    .Average(r => r.DefenderRetreatLength);
 
             return new PoGStats(
                 AttackerWinProbability: (double)attackerWins / total,
@@ -63,7 +65,7 @@ namespace AbeGaming.GameLogic.PoG
                     hitsToDDistribution,
                     hitsToADistribution),
                 DefenderRetreatProbability: (double)retreats / total,
-                MeanDefenderRetreatLength: meanRetreat,
+                MeanDefenderRetreatLengthGivenDefenderLoses: meanRetreatGivenDefenderLoses,
                 FlankAttackSuccessProbability: battle.AttemptFlankAttack
                     ? (double)flankSuccesses / total
                     : 0);

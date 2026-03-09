@@ -1,3 +1,4 @@
+using AbeGaming.GameLogic;
 using AbeGaming.GameLogic.PoG;
 
 namespace AbeGaming.GameLogic.Tests
@@ -61,7 +62,7 @@ namespace AbeGaming.GameLogic.Tests
         }
 
         [Fact]
-        public void Outcome_TrenchBlocksFlank_WhenNotNegated_Throws()
+        public void Outcome_TrenchBlocksFlank_Throws()
         {
             PoGBattle battle = new(
                 new BattleSideInfo(FireTable.Army, StrengthFactors: 10, DRM: 0),
@@ -91,6 +92,30 @@ namespace AbeGaming.GameLogic.Tests
 
             double total = stats.AttackerWinProbability + stats.DefenderWinProbability + stats.DrawProbability;
             Assert.InRange(total, 0.999999, 1.000001);
+        }
+
+        [Fact]
+        public void ExactStats_MeanDefenderRetreatLengthGivenDefenderLoses_IsConditionalMean()
+        {
+            PoGBattle battle = new(
+                new BattleSideInfo(FireTable.Army, StrengthFactors: 6, DRM: 0),
+                new BattleSideInfo(FireTable.Corps, StrengthFactors: 4, DRM: 0),
+                Terrain.Clear,
+                FortressLevel.None,
+                Trench: 0);
+
+            PoGStats stats = PoGExactStats.Calculate(battle);
+            List<PoGBattleResult> attackerWinResults = new();
+            foreach ((int attackerDie, int defenderDie) in Dice.TwoDice)
+            {
+                PoGBattleResult result = battle.Outcome(attackerDie, defenderDie);
+                if (result.Winner == Winner.Attacker)
+                    attackerWinResults.Add(result);
+            }
+
+            double expectedConditionalMean = attackerWinResults.Average(r => r.DefenderRetreatLength);
+            Assert.Equal(expectedConditionalMean, stats.MeanDefenderRetreatLengthGivenDefenderLoses, precision: 10);
+            Assert.True(stats.MeanDefenderRetreatLengthGivenDefenderLoses >= 1.0);
         }
     }
 }

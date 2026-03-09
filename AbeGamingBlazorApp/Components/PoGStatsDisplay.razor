@@ -51,7 +51,10 @@
         <div class="row small">
             <div class="col-6">
                 Defender Retreat: <strong>@Stats.DefenderRetreatProbability.ToString("P1")</strong>
-                <span class="text-muted ms-1">(avg @Stats.MeanDefenderRetreatLength.ToString("F2") spaces)</span>
+                @if (Stats.DefenderRetreatProbability > 0)
+                {
+                    <span class="text-muted ms-1">(avg when defender loses: @Stats.MeanDefenderRetreatLengthGivenDefenderLoses.ToString("F2") spaces)</span>
+                }
             </div>
             @if (Stats.FlankAttackSuccessProbability > 0)
             {

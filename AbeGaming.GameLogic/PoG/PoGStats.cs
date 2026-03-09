@@ -6,6 +6,6 @@ namespace AbeGaming.GameLogic.PoG
         double DrawProbability,
         HitStats HitsStats,
         double DefenderRetreatProbability,
-        double MeanDefenderRetreatLength,
+        double MeanDefenderRetreatLengthGivenDefenderLoses,
         double FlankAttackSuccessProbability);
 }
