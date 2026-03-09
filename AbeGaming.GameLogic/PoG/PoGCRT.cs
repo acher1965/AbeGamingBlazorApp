@@ -4,8 +4,8 @@ namespace AbeGaming.GameLogic.PoG
     {
         public static PoGBattleResult Outcome(this PoGBattle battle, int attackerDieRoll, int defenderDieRoll, int? flankAttackDieRoll = null)
         {
-            if (battle.Attacker.OOS)
-                throw new InvalidOperationException("OOS units may not attack in PoG.");
+            if (!PoGBattleInputRules.IsBattleDefinitionConsistent(battle, out string? errorMessage))
+                throw new InvalidOperationException(errorMessage);
 
             int normalizedTrench = PoGBattleInputRules.ClampTrench(battle.Trench);
             int attackerBaseFactors = PoGBattleInputRules.ClampFactors(battle.Attacker.StrengthFactors);
@@ -24,18 +24,17 @@ namespace AbeGaming.GameLogic.PoG
             int attackerFireColumnIndex = FireColumnIndex(
                 battle.Attacker.FireTable,
                 attackerBaseFactors,
-                OffensiveColumnShift(battle.Terrain, normalizedTrench, battle.NegateTrench));
+                OffensiveColumnShift(battle.Terrain, normalizedTrench));
 
             int defenderFireColumnIndex = FireColumnIndex(
                 battle.Defender.FireTable,
                 defenderBaseFactors,
-                DefensiveColumnShift(normalizedTrench, battle.NegateTrench));
+                DefensiveColumnShift(normalizedTrench));
 
             bool flankAttempted = battle.AttemptFlankAttack;
             int? flankRoll = null;
             int? flankModifiedRoll = null;
             bool flankSucceeded = false;
-            bool flankEligible = IsFlankAttackEligible(battle, normalizedTrench);
 
             if (flankAttempted)
             {
@@ -46,12 +45,12 @@ namespace AbeGaming.GameLogic.PoG
                 flankModifiedRoll = PoGBattleInputRules.ClampModifiedDieRoll(
                     flankRoll.Value + PoGBattleInputRules.ClampFlankAttackDrm(battle.FlankAttackDrm));
 
-                flankSucceeded = flankEligible && flankModifiedRoll.Value >= 4;
+                flankSucceeded = flankModifiedRoll.Value >= 4;
             }
 
             int hitsByAttacker;
             int hitsByDefender;
-            bool useFlankSequencing = flankAttempted && flankEligible;
+            bool useFlankSequencing = flankAttempted;
 
             if (!useFlankSequencing)
             {
@@ -65,7 +64,7 @@ namespace AbeGaming.GameLogic.PoG
                 int defenderColumnAfterLosses = FireColumnIndex(
                     battle.Defender.FireTable,
                     defenderFactorsAfterLosses,
-                    DefensiveColumnShift(normalizedTrench, battle.NegateTrench));
+                    DefensiveColumnShift(normalizedTrench));
                 hitsByDefender = HitsFromColumn(battle.Defender.FireTable, defenderColumnAfterLosses, defenderModifiedDieRoll);
             }
             else
@@ -75,7 +74,7 @@ namespace AbeGaming.GameLogic.PoG
                 int attackerColumnAfterLosses = FireColumnIndex(
                     battle.Attacker.FireTable,
                     attackerFactorsAfterLosses,
-                    OffensiveColumnShift(battle.Terrain, normalizedTrench, battle.NegateTrench));
+                    OffensiveColumnShift(battle.Terrain, normalizedTrench));
                 hitsByAttacker = HitsFromColumn(battle.Attacker.FireTable, attackerColumnAfterLosses, attackerModifiedDieRoll);
             }
 
@@ -116,22 +115,6 @@ namespace AbeGaming.GameLogic.PoG
                 flankModifiedRoll);
         }
 
-        public static bool IsFlankAttackEligible(this PoGBattle battle) => IsFlankAttackEligible(battle, PoGBattleInputRules.ClampTrench(battle.Trench));
-
-        private static bool IsFlankAttackEligible(PoGBattle battle, int normalizedTrench)
-        {
-            bool terrainAllowsFlank = battle.Terrain != Terrain.Marsh && battle.Terrain != Terrain.Mountain;
-            bool trenchBlocksFlank = normalizedTrench > 0 && !battle.NegateTrench;
-            bool unoccupiedFortBlocksFlank = battle.Defender.StrengthFactors <= 0
-                && FortressCombatFactors(battle.FortressLevel) > 0;
-
-            return battle.Attacker.FireTable == FireTable.Army
-                && terrainAllowsFlank
-                && battle.AttackFromMultipleSpaces
-                && !trenchBlocksFlank
-                && !unoccupiedFortBlocksFlank;
-        }
-
         private static bool CanIgnoreRetreat(Terrain terrain, int trench) =>
             trench > 0
             || terrain == Terrain.Forest
@@ -150,7 +133,7 @@ namespace AbeGaming.GameLogic.PoG
             _ => 0
         };
 
-        private static int OffensiveColumnShift(Terrain terrain, int trench, bool negateTrench)
+        private static int OffensiveColumnShift(Terrain terrain, int trench)
         {
             int terrainShift = terrain switch
             {
@@ -158,9 +141,6 @@ namespace AbeGaming.GameLogic.PoG
                 Terrain.Marsh => -1,
                 _ => 0
             };
-
-            if (negateTrench)
-                return terrainShift;
 
             int trenchShift = trench switch
             {
@@ -172,11 +152,8 @@ namespace AbeGaming.GameLogic.PoG
             return terrainShift + trenchShift;
         }
 
-        private static int DefensiveColumnShift(int trench, bool negateTrench)
+        private static int DefensiveColumnShift(int trench)
         {
-            if (negateTrench)
-                return 0;
-
             return trench switch
             {
                 1 => 1,

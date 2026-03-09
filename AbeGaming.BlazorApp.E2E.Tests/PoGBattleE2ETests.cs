@@ -35,7 +35,7 @@ namespace AbeGaming.BlazorApp.E2E.Tests
         }
 
         [Fact]
-        public async Task AttackerOos_DisablesCalculationButtons()
+        public async Task AttemptFlank_DisabledWhenTrenchPresent_EnabledWhenCleared()
         {
             using IPlaywright playwright = await Playwright.CreateAsync();
             await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
@@ -50,15 +50,18 @@ namespace AbeGaming.BlazorApp.E2E.Tests
                 Timeout = 30000,
             });
 
-            await page.CheckAsync("#pogAttackerOOS");
+            bool initiallyDisabled = await page.IsDisabledAsync("#pogAttemptFlank");
+            Assert.False(initiallyDisabled);
 
-            bool exactDisabled = await page.IsDisabledAsync("#pogCalculateExactStats");
-            bool rollDisabled = await page.IsDisabledAsync("#pogRollSingleBattle");
-            string warningText = await page.TextContentAsync(".alert-warning") ?? string.Empty;
+            await page.FillAsync("#pogTrench", "1");
+            await page.PressAsync("#pogTrench", "Tab");
+            bool disabledWithTrench = await page.IsDisabledAsync("#pogAttemptFlank");
+            Assert.True(disabledWithTrench);
 
-            Assert.True(exactDisabled);
-            Assert.True(rollDisabled);
-            Assert.Contains("OOS units may not attack", warningText);
+            await page.FillAsync("#pogTrench", "0");
+            await page.PressAsync("#pogTrench", "Tab");
+            bool enabledAfterClearingTrench = await page.IsDisabledAsync("#pogAttemptFlank");
+            Assert.False(enabledAfterClearingTrench);
         }
 
         [Fact]

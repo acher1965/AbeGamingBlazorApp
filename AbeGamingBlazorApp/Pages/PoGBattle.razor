@@ -162,7 +162,6 @@
                         </div>
                     </div>
                     <div class="col-12 col-md-6 small">
-                        <div>🎲Attacker die: @BattleResult.AttackerDieRoll (@BattleResult.AttackerModifiedDieRoll mod)</div>
                         <div>
                             🎲Attacker die: @BattleResult.AttackerDieRoll
                             @if (BattleResult.AttackerModifiedDieRoll != BattleResult.AttackerDieRoll)
@@ -286,20 +285,18 @@
     private PoGBattleModel CurrentBattle => CreateBattle();
 
     private PoGBattleModel CreateBattle() => new(
-        new BattleSideInfo(AttackerFireTable, AttackerFactors, AttackerDrm, OOS: false),
-        new BattleSideInfo(DefenderFireTable, DefenderFactors, DefenderDrm, OOS: false),
+        new BattleSideInfo(AttackerFireTable, AttackerFactors, AttackerDrm),
+        new BattleSideInfo(DefenderFireTable, DefenderFactors, DefenderDrm),
         Terrain,
         FortressLevel,
         Trench,
         AttemptFlankAttack,
-        AttemptFlankAttack,
         FlankAttackDrm,
-        IsAllAttackersInSinai,
-        false);
+        IsAllAttackersInSinai);
 
     private async Task ScrollToResults()
     {
-        await JS.InvokeVoidAsync("eval", "document.getElementById('resultsSection')?.scrollIntoView({behavior: 'smooth'})");
+        await JS.InvokeVoidAsync("abegamingUi.scrollIntoViewById", "resultsSection");
     }
 
     private async Task CalculateBattleResult()

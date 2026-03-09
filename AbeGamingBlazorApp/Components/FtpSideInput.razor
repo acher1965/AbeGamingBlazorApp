@@ -19,6 +19,7 @@
                       id="@SpInputId"
                        value="@Size"
                        @onchange="OnSizeChanged"
+                       onfocus="this.select()"
                        min="@MinSize" 
                        max="@EffectiveMaxSize" />
             </div>
@@ -34,6 +35,7 @@
                        class="form-control form-control-sm" 
                        value="@DRM"
                        @onchange="OnDRMChanged"
+                       onfocus="this.select()"
                        min="0" 
                        max="9" />
             </div>
@@ -49,6 +51,7 @@
                        class="form-control form-control-sm" 
                        value="@Elites"
                        @onchange="OnElitesChanged"
+                       onfocus="this.select()"
                        min="0" 
                        max="2" />
             </div>

@@ -6,9 +6,7 @@ namespace AbeGaming.GameLogic.PoG
         Terrain Terrain,
         FortressLevel FortressLevel,
         int Trench,
-        bool AttackFromMultipleSpaces = false,
         bool AttemptFlankAttack = false,
         int FlankAttackDrm = 0,
-        bool IsAllAttackersInSinai = false,
-        bool NegateTrench = false);
+        bool IsAllAttackersInSinai = false);
 }

@@ -8,8 +8,8 @@ namespace AbeGaming.GameLogic.Tests
         public void Outcome_CorpsTableBaseline_UsesExpectedHitsAndRetreat()
         {
             PoGBattle battle = new(
-                new BattleSideInfo(FireTable.Corps, StrengthFactors: 3, DRM: 0, OOS: false),
-                new BattleSideInfo(FireTable.Corps, StrengthFactors: 3, DRM: 0, OOS: false),
+                new BattleSideInfo(FireTable.Corps, StrengthFactors: 3, DRM: 0),
+                new BattleSideInfo(FireTable.Corps, StrengthFactors: 3, DRM: 0),
                 Terrain.Clear,
                 FortressLevel.None,
                 Trench: 0);
@@ -27,8 +27,8 @@ namespace AbeGaming.GameLogic.Tests
         public void Outcome_TerrainAndTrenchShift_MoveAttackerLeftAndDefenderRight()
         {
             PoGBattle battle = new(
-                new BattleSideInfo(FireTable.Army, StrengthFactors: 12, DRM: 0, OOS: false),
-                new BattleSideInfo(FireTable.Army, StrengthFactors: 12, DRM: 0, OOS: false),
+                new BattleSideInfo(FireTable.Army, StrengthFactors: 12, DRM: 0),
+                new BattleSideInfo(FireTable.Army, StrengthFactors: 12, DRM: 0),
                 Terrain.Mountain,
                 FortressLevel.None,
                 Trench: 2);
@@ -44,12 +44,11 @@ namespace AbeGaming.GameLogic.Tests
         public void Outcome_SuccessfulFlank_ResolvesAttackerFireFirst()
         {
             PoGBattle battle = new(
-                new BattleSideInfo(FireTable.Army, StrengthFactors: 16, DRM: 0, OOS: false),
-                new BattleSideInfo(FireTable.Corps, StrengthFactors: 7, DRM: 0, OOS: false),
+                new BattleSideInfo(FireTable.Army, StrengthFactors: 16, DRM: 0),
+                new BattleSideInfo(FireTable.Corps, StrengthFactors: 7, DRM: 0),
                 Terrain.Clear,
                 FortressLevel.None,
                 Trench: 0,
-                AttackFromMultipleSpaces: true,
                 AttemptFlankAttack: true,
                 FlankAttackDrm: 2);
 
@@ -62,43 +61,28 @@ namespace AbeGaming.GameLogic.Tests
         }
 
         [Fact]
-        public void Outcome_TrenchBlocksFlank_WhenNotNegated()
+        public void Outcome_TrenchBlocksFlank_WhenNotNegated_Throws()
         {
             PoGBattle battle = new(
-                new BattleSideInfo(FireTable.Army, StrengthFactors: 10, DRM: 0, OOS: false),
-                new BattleSideInfo(FireTable.Corps, StrengthFactors: 4, DRM: 0, OOS: false),
+                new BattleSideInfo(FireTable.Army, StrengthFactors: 10, DRM: 0),
+                new BattleSideInfo(FireTable.Corps, StrengthFactors: 4, DRM: 0),
                 Terrain.Clear,
                 FortressLevel.None,
                 Trench: 1,
-                AttackFromMultipleSpaces: true,
                 AttemptFlankAttack: true,
                 FlankAttackDrm: 3);
 
-            PoGBattleResult result = battle.Outcome(attackerDieRoll: 5, defenderDieRoll: 5, flankAttackDieRoll: 6);
-
-            Assert.True(result.FlankAttackAttempted);
-            Assert.False(result.FlankAttackSucceeded);
-        }
-
-        [Fact]
-        public void Outcome_AttackerOos_Throws()
-        {
-            PoGBattle battle = new(
-                new BattleSideInfo(FireTable.Army, StrengthFactors: 8, DRM: 0, OOS: true),
-                new BattleSideInfo(FireTable.Corps, StrengthFactors: 3, DRM: 0, OOS: false),
-                Terrain.Clear,
-                FortressLevel.None,
-                Trench: 0);
-
-            Assert.Throws<InvalidOperationException>(() => battle.Outcome(3, 3));
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(
+                () => battle.Outcome(attackerDieRoll: 5, defenderDieRoll: 5, flankAttackDieRoll: 6));
+            Assert.Contains("trenches", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]
         public void ExactStats_ProbabilitiesSumToOne()
         {
             PoGBattle battle = new(
-                new BattleSideInfo(FireTable.Army, StrengthFactors: 6, DRM: 0, OOS: false),
-                new BattleSideInfo(FireTable.Corps, StrengthFactors: 4, DRM: 0, OOS: false),
+                new BattleSideInfo(FireTable.Army, StrengthFactors: 6, DRM: 0),
+                new BattleSideInfo(FireTable.Corps, StrengthFactors: 4, DRM: 0),
                 Terrain.Forest,
                 FortressLevel.None,
                 Trench: 0);

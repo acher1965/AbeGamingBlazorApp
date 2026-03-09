@@ -418,7 +418,7 @@
 
     private async Task ScrollToResults()
     {
-        await JS.InvokeVoidAsync("eval", "document.getElementById('resultsSection')?.scrollIntoView({behavior: 'smooth'})");
+        await JS.InvokeVoidAsync("abegamingUi.scrollIntoViewById", "resultsSection");
     }
 
     private async Task CalculateBattleResult()
@@ -481,16 +481,4 @@
         };
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            // Select all text in number inputs on focus (helps mobile users)
-            await JS.InvokeVoidAsync("eval", @"
-                document.querySelectorAll('input[type=""number""]').forEach(input => {
-                    input.addEventListener('focus', function() { this.select(); });
-                });
-            ");
-        }
-    }
 }
