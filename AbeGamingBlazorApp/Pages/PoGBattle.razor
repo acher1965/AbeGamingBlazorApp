@@ -1,13 +1,341 @@
 @page "/pogbattle"
+@using AbeGaming.GameLogic
+@using AbeGaming.GameLogic.PoG
+@using PoGBattleModel = AbeGaming.GameLogic.PoG.PoGBattle
+@inject IJSRuntime JS
 
 <PageTitle>PoG Battle Calculator</PageTitle>
 
-<h1>Paths of Glory - Battle Calculator</h1>
+<h1 class="h3 mb-3">Paths of Glory - Battle Calculator</h1>
 
-<div class="alert alert-warning" role="alert">
-    <h4 class="alert-heading">🚧 Work in Progress</h4>
-    <p>
-        This battle calculator for <strong>Paths of Glory</strong> is currently under development.
-    </p>
-    <hr />
+<div class="card mb-2">
+    <div class="card-body py-2">
+        <div class="row g-2">
+            <div class="col-12 col-md-4">
+                <label class="form-label form-label-sm mb-1">
+                    Terrain
+                    <InfoTip Text="Mountain/Swamp shift offensive fire 1L. Forest/Desert affect retreat/advance. Trench effects are cumulative." />
+                </label>
+                <select id="pogTerrain" class="form-select form-select-sm" @bind="Terrain">
+                    @foreach (Terrain option in Enum.GetValues<Terrain>())
+                    {
+                        <option value="@option">@option</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-4">
+                <label class="form-label form-label-sm mb-1">
+                    Trench
+                    <InfoTip Text="Trench 1: offensive fire 1L, defensive fire 1R. Trench 2: offensive fire 2L, defensive fire 1R." />
+                </label>
+                <input id="pogTrench" type="number" class="form-control form-control-sm" @bind="Trench" onfocus="this.select()" min="0" max="2" />
+            </div>
+            <div class="col-6 col-md-4">
+                <label class="form-label form-label-sm mb-1">
+                    Fortress
+                    <InfoTip Text="Fortress combat factor is added to defender factors in this calculator." />
+                </label>
+                <select id="pogFortressLevel" class="form-select form-select-sm" @bind="FortressLevel">
+                    @foreach (FortressLevel option in Enum.GetValues<FortressLevel>())
+                    {
+                        <option value="@option">@option</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-3 mt-2">
+            <div class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" id="pogAttemptFlank" @bind="AttemptFlankAttack" disabled="@(!CanConfigureFlank)" />
+                <label class="form-check-label small" for="pogAttemptFlank">
+                    Attempt flank
+                    <InfoTip Text="Requires attack from 2+ spaces. Flank succeeds on 4+ after flank DRM." />
+                </label>
+            </div>
+            <div class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" id="pogAllAttackersInSinai" @bind="IsAllAttackersInSinai" />
+                <label class="form-check-label small" for="pogAllAttackersInSinai">
+                    All attackers in Sinai
+                    <InfoTip Text="Applies -3 DRM to attacker per rule 12.2.7." />
+                </label>
+            </div>
+        </div>
+        @if (AttemptFlankAttack)
+        {
+            <div class="mt-2" style="max-width: 18rem;">
+                <label class="form-label form-label-sm mb-1">
+                    Flank DRM
+                    <InfoTip Text="+1 per eligible extra attacking space beyond the pinning space." />
+                </label>
+                <input id="pogFlankAttackDrm" type="number" class="form-control form-control-sm" @bind="FlankAttackDrm" onfocus="this.select()" min="0" max="5" />
+            </div>
+        }
+    </div>
 </div>
+
+<div class="row g-2 mb-2">
+    <div class="col-6">
+        <PoGSideInput SideName="Attacker"
+                      Icon="🗡️"
+                      HeaderColor="primary"
+                      FactorsInfoTip="Total attacking factors."
+                      OosInfoTip="OOS units may not attack."
+                      FactorsInputId="pogAttackerFactors"
+                      @bind-FireTable="AttackerFireTable"
+                      @bind-Factors="AttackerFactors"
+                      @bind-DRM="AttackerDrm" />
+    </div>
+    <div class="col-6">
+        <PoGSideInput SideName="Defender"
+                      Icon="🛡️"
+                      HeaderColor="danger"
+                      FactorsInfoTip="Total defending factors excluding fortress bonus."
+                      OosInfoTip="OOS defenders cannot benefit from combat cards."
+                      FactorsInputId="pogDefenderFactors"
+                      @bind-FireTable="DefenderFireTable"
+                      @bind-Factors="DefenderFactors"
+                      @bind-DRM="DefenderDrm" />
+    </div>
+</div>
+
+@if (!CanConfigureFlank)
+{
+    <div class="alert alert-info py-2 mb-2">
+        Flank attacks are not allowed into Mountain/Marsh or into Trenches.
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="alert alert-danger py-2 mb-2">@ErrorMessage</div>
+}
+
+<div class="d-grid gap-2 mb-3">
+    <button id="pogCalculateExactStats" class="btn btn-primary btn-lg" @onclick="CalculateExactStats">
+        📈Calculate Exact Stats
+    </button>
+    <button id="pogRollSingleBattle" class="btn btn-secondary" @onclick="CalculateBattleResult">
+        🎲Roll 1 Battle
+    </button>
+</div>
+
+<div id="resultsSection">
+    @if (ExactStats is not null)
+    {
+        <PoGStatsDisplay Stats="ExactStats"
+                         Title="📈Exact Stats"
+                         BorderColor="primary"
+                         HeaderBgColor="primary" />
+    }
+
+    @if (BattleResult is not null)
+    {
+        <div class="card @GetResultCardClass() mb-3">
+            <div class="card-header py-2">
+                <strong>Single Battle Result</strong>
+            </div>
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-12 col-md-6">
+                        <p class="fs-5 fw-bold mb-1">
+                            @if (BattleResult.Winner == Winner.Attacker)
+                            {
+                                <span class="text-success">🗡️Attacker Wins</span>
+                            }
+                            else if (BattleResult.Winner == Winner.Defender)
+                            {
+                                <span class="text-danger">🛡️Defender Wins</span>
+                            }
+                            else
+                            {
+                                <span class="text-secondary">🤝Draw</span>
+                            }
+                        </p>
+                        <div class="small">
+                            Defender retreat: <strong>@BattleResult.DefenderRetreatLength</strong>
+                            @if (BattleResult.DefenderCanIgnoreRetreat)
+                            {
+                                <span class="badge bg-warning text-dark ms-1">Can Ignore (extra step loss)</span>
+                            }
+                        </div>
+                        <div class="small">
+                            Max advance: <strong>@BattleResult.AdvanceMaxLength</strong>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6 small">
+                        <div>🎲Attacker die: @BattleResult.AttackerDieRoll (@BattleResult.AttackerModifiedDieRoll mod)</div>
+                        <div>🎲Defender die: @BattleResult.DefenderDieRoll (@BattleResult.DefenderModifiedDieRoll mod)</div>
+                        <div>🗡️Hits to Defender: <strong>@BattleResult.HitsByAttacker</strong></div>
+                        <div>🛡️Hits to Attacker: <strong>@BattleResult.HitsByDefender</strong></div>
+                        @if (BattleResult.FlankAttackAttempted)
+                        {
+                            <div>
+                                Flank: roll @BattleResult.FlankAttackDieRoll -> @BattleResult.FlankAttackModifiedDieRoll
+                                @if (BattleResult.FlankAttackSucceeded)
+                                {
+                                    <span class="badge bg-success ms-1">Succeeded</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary ms-1">Failed</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private Terrain _terrain = Terrain.Clear;
+    private Terrain Terrain
+    {
+        get => _terrain;
+        set
+        {
+            _terrain = value;
+            EnforceFlankBlockingRules();
+        }
+    }
+    private FortressLevel FortressLevel = FortressLevel.None;
+    private int _trench;
+    private int Trench
+    {
+        get => _trench;
+        set
+        {
+            _trench = PoGBattleInputRules.ClampTrench(value);
+            EnforceFlankBlockingRules();
+        }
+    }
+
+    private bool AttemptFlankAttack;
+    private int _flankAttackDrm;
+    private int FlankAttackDrm
+    {
+        get => _flankAttackDrm;
+        set => _flankAttackDrm = PoGBattleInputRules.ClampFlankAttackDrm(value);
+    }
+
+    private bool IsAllAttackersInSinai;
+
+    private bool IsFlankBlockedByTerrain => Terrain is Terrain.Mountain or Terrain.Marsh;
+    private bool IsFlankBlockedByTrench => Trench > 0;
+    private bool CanConfigureFlank => !IsFlankBlockedByTerrain && !IsFlankBlockedByTrench;
+
+    private FireTable AttackerFireTable = FireTable.Army;
+    private FireTable DefenderFireTable = FireTable.Army;
+
+    private int _attackerFactors = 6;
+    private int AttackerFactors
+    {
+        get => _attackerFactors;
+        set => _attackerFactors = PoGBattleInputRules.ClampFactors(value);
+    }
+
+    private int _defenderFactors = 6;
+    private int DefenderFactors
+    {
+        get => _defenderFactors;
+        set => _defenderFactors = PoGBattleInputRules.ClampFactors(value);
+    }
+
+    private int _attackerDrm;
+    private int AttackerDrm
+    {
+        get => _attackerDrm;
+        set => _attackerDrm = PoGBattleInputRules.ClampDrm(value);
+    }
+
+    private int _defenderDrm;
+    private int DefenderDrm
+    {
+        get => _defenderDrm;
+        set => _defenderDrm = PoGBattleInputRules.ClampDrm(value);
+    }
+
+    private PoGBattleResult? BattleResult;
+    private PoGStats? ExactStats;
+    private string? ErrorMessage;
+
+    private void EnforceFlankBlockingRules()
+    {
+        if (CanConfigureFlank)
+            return;
+
+        AttemptFlankAttack = false;
+        FlankAttackDrm = 0;
+    }
+
+    private PoGBattleModel CurrentBattle => CreateBattle();
+
+    private PoGBattleModel CreateBattle() => new(
+        new BattleSideInfo(AttackerFireTable, AttackerFactors, AttackerDrm, OOS: false),
+        new BattleSideInfo(DefenderFireTable, DefenderFactors, DefenderDrm, OOS: false),
+        Terrain,
+        FortressLevel,
+        Trench,
+        AttemptFlankAttack,
+        AttemptFlankAttack,
+        FlankAttackDrm,
+        IsAllAttackersInSinai,
+        false);
+
+    private async Task ScrollToResults()
+    {
+        await JS.InvokeVoidAsync("eval", "document.getElementById('resultsSection')?.scrollIntoView({behavior: 'smooth'})");
+    }
+
+    private async Task CalculateBattleResult()
+    {
+        ErrorMessage = null;
+        ExactStats = null;
+
+        try
+        {
+            PoGBattleModel battle = CreateBattle();
+            Span<int> dice = Dice.RollOneDieRepeatedly(AttemptFlankAttack ? 3 : 2);
+            BattleResult = battle.Outcome(
+                attackerDieRoll: dice[0],
+                defenderDieRoll: dice[1],
+                flankAttackDieRoll: AttemptFlankAttack ? dice[2] : null);
+            await ScrollToResults();
+        }
+        catch (Exception ex)
+        {
+            BattleResult = null;
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task CalculateExactStats()
+    {
+        ErrorMessage = null;
+        BattleResult = null;
+
+        try
+        {
+            ExactStats = PoGExactStats.Calculate(CreateBattle());
+            await ScrollToResults();
+        }
+        catch (Exception ex)
+        {
+            ExactStats = null;
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private string GetResultCardClass()
+    {
+        if (BattleResult is null)
+            return "";
+
+        return BattleResult.Winner switch
+        {
+            Winner.Attacker => "border-success",
+            Winner.Defender => "border-danger",
+            _ => "border-secondary"
+        };
+    }
+}

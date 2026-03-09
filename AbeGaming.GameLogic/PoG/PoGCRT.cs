@@ -2,89 +2,248 @@ namespace AbeGaming.GameLogic.PoG
 {
     public static class PoGCRT
     {
-        public static PoGBattleResult Outcome(this PoGBattle battle, int attackerDieRoll, int defenderDieRoll)
+        public static PoGBattleResult Outcome(this PoGBattle battle, int attackerDieRoll, int defenderDieRoll, int? flankAttackDieRoll = null)
         {
-            /* TODO: deal with 
-             * sieges (stopping advance if not 2 etc),
-             * trenches and other terrain column shifts,
-             * fortresses,
-             * flank attacks,
-             * what else
-            */
-            BattleSideInfo attacker = battle.Attacker;
-            BattleSideInfo defender = battle.Defender;
+            if (battle.Attacker.OOS)
+                throw new InvalidOperationException("OOS units may not attack in PoG.");
 
-            int attackerModifiedDieRoll = attackerDieRoll + attacker.DRM
-                + (defender.OOS ? 2 : 0);
-            int defenderModifiedDieRoll = defenderDieRoll + defender.DRM;
-            int hitsByAttacker = Lookup[attacker.FireTable](attacker.StrengthFactors, attackerModifiedDieRoll);
-            int hitsByDefender = Lookup[defender.FireTable](defender.StrengthFactors, defenderModifiedDieRoll);
+            int normalizedTrench = PoGBattleInputRules.ClampTrench(battle.Trench);
+            int attackerBaseFactors = PoGBattleInputRules.ClampFactors(battle.Attacker.StrengthFactors);
+            int defenderBaseFactors = PoGBattleInputRules.ClampFactors(
+                battle.Defender.StrengthFactors + FortressCombatFactors(battle.FortressLevel));
+
+            int attackerModifiedDieRoll = PoGBattleInputRules.ClampModifiedDieRoll(
+                PoGBattleInputRules.ClampDieRoll(attackerDieRoll)
+                + battle.Attacker.DRM
+                + (battle.IsAllAttackersInSinai ? -3 : 0));
+
+            int defenderModifiedDieRoll = PoGBattleInputRules.ClampModifiedDieRoll(
+                PoGBattleInputRules.ClampDieRoll(defenderDieRoll)
+                + battle.Defender.DRM);
+
+            int attackerFireColumnIndex = FireColumnIndex(
+                battle.Attacker.FireTable,
+                attackerBaseFactors,
+                OffensiveColumnShift(battle.Terrain, normalizedTrench, battle.NegateTrench));
+
+            int defenderFireColumnIndex = FireColumnIndex(
+                battle.Defender.FireTable,
+                defenderBaseFactors,
+                DefensiveColumnShift(normalizedTrench, battle.NegateTrench));
+
+            bool flankAttempted = battle.AttemptFlankAttack;
+            int? flankRoll = null;
+            int? flankModifiedRoll = null;
+            bool flankSucceeded = false;
+            bool flankEligible = IsFlankAttackEligible(battle, normalizedTrench);
+
+            if (flankAttempted)
+            {
+                if (flankAttackDieRoll is null)
+                    throw new ArgumentException("Flank attack die roll is required when AttemptFlankAttack is true.");
+
+                flankRoll = PoGBattleInputRules.ClampDieRoll(flankAttackDieRoll.Value);
+                flankModifiedRoll = PoGBattleInputRules.ClampModifiedDieRoll(
+                    flankRoll.Value + PoGBattleInputRules.ClampFlankAttackDrm(battle.FlankAttackDrm));
+
+                flankSucceeded = flankEligible && flankModifiedRoll.Value >= 4;
+            }
+
+            int hitsByAttacker;
+            int hitsByDefender;
+            bool useFlankSequencing = flankAttempted && flankEligible;
+
+            if (!useFlankSequencing)
+            {
+                hitsByAttacker = HitsFromColumn(battle.Attacker.FireTable, attackerFireColumnIndex, attackerModifiedDieRoll);
+                hitsByDefender = HitsFromColumn(battle.Defender.FireTable, defenderFireColumnIndex, defenderModifiedDieRoll);
+            }
+            else if (flankSucceeded)
+            {
+                hitsByAttacker = HitsFromColumn(battle.Attacker.FireTable, attackerFireColumnIndex, attackerModifiedDieRoll);
+                int defenderFactorsAfterLosses = Math.Max(0, defenderBaseFactors - hitsByAttacker);
+                int defenderColumnAfterLosses = FireColumnIndex(
+                    battle.Defender.FireTable,
+                    defenderFactorsAfterLosses,
+                    DefensiveColumnShift(normalizedTrench, battle.NegateTrench));
+                hitsByDefender = HitsFromColumn(battle.Defender.FireTable, defenderColumnAfterLosses, defenderModifiedDieRoll);
+            }
+            else
+            {
+                hitsByDefender = HitsFromColumn(battle.Defender.FireTable, defenderFireColumnIndex, defenderModifiedDieRoll);
+                int attackerFactorsAfterLosses = Math.Max(0, attackerBaseFactors - hitsByDefender);
+                int attackerColumnAfterLosses = FireColumnIndex(
+                    battle.Attacker.FireTable,
+                    attackerFactorsAfterLosses,
+                    OffensiveColumnShift(battle.Terrain, normalizedTrench, battle.NegateTrench));
+                hitsByAttacker = HitsFromColumn(battle.Attacker.FireTable, attackerColumnAfterLosses, attackerModifiedDieRoll);
+            }
 
             Winner winner = hitsByAttacker > hitsByDefender
                 ? Winner.Attacker
-                : Winner.Defender;
+                : hitsByAttacker < hitsByDefender
+                    ? Winner.Defender
+                    : Winner.Draw;
 
-            int hitsDifference = hitsByAttacker - hitsByDefender;
-            int defenderRetreatLength = winner == Winner.Defender
+            int defenderRetreatLength = winner == Winner.Attacker
+                ? (hitsByAttacker - hitsByDefender >= 2 ? 2 : 1)
+                : 0;
+
+            int advanceMaxLength = defenderRetreatLength == 0
                 ? 0
-                : hitsDifference >= 2 ? 2 : 1;
-            int advanceMaxLength = Math.Min(defenderRetreatLength, (battle.Terrain == Terrain.Clear ? 2 : 1));
+                : Math.Min(defenderRetreatLength, battle.Terrain == Terrain.Clear ? 2 : 1);
+
+            bool defenderCanIgnoreRetreat = defenderRetreatLength > 0
+                && CanIgnoreRetreat(battle.Terrain, normalizedTrench)
+                && (defenderBaseFactors - hitsByAttacker) >= 2;
 
             return new PoGBattleResult(
                 winner,
                 hitsByAttacker,
                 hitsByDefender,
-                hitsByAttacker,
-                attackerDieRoll,
-                defenderDieRoll,
+                defenderRetreatLength,
+                PoGBattleInputRules.ClampDieRoll(attackerDieRoll),
+                PoGBattleInputRules.ClampDieRoll(defenderDieRoll),
                 attackerModifiedDieRoll,
                 defenderModifiedDieRoll,
-                advanceMaxLength);
+                advanceMaxLength,
+                defenderCanIgnoreRetreat,
+                attackerFireColumnIndex,
+                defenderFireColumnIndex,
+                flankAttempted,
+                flankSucceeded,
+                flankRoll,
+                flankModifiedRoll);
         }
 
+        public static bool IsFlankAttackEligible(this PoGBattle battle) => IsFlankAttackEligible(battle, PoGBattleInputRules.ClampTrench(battle.Trench));
 
-        private static readonly Dictionary<FireTable, int[][]> FireTables = new Dictionary<FireTable, int[][]>
+        private static bool IsFlankAttackEligible(PoGBattle battle, int normalizedTrench)
         {
-            [FireTable.Corps] =
-                [
-                    [0, 0, 0, 0, 1, 1], // 0 factors
-                    [0, 0, 0, 1, 1, 1], // 1 factor
-                    [0, 1, 1, 1, 1, 1], // 2 factors
-                    [1, 1, 1, 1, 1, 2], // 3 factors
-                    [1, 1, 1, 2, 2, 2], // 4 factors
-                    [1, 1, 2, 2, 2, 3], // 5 factors
-                    [1, 2, 2, 2, 3, 3], // 6 factors
-                    [1, 2, 2, 3, 3, 4], // 7 factors
-                    [2, 2, 3, 3, 4, 4], // 8+ factors
-                ],
-            [FireTable.Army] =
-                [
-                    [0, 0, 0, 1, 1, 2, 3, 4, 5, 6], // 0-1 factors
-                    [0, 0, 1, 1, 2, 3, 4, 5, 6, 7], // 2 factors
-                    [0, 1, 1, 2, 3, 4, 5, 6, 7, 8], // 3 factors
-                    [1, 1, 2, 3, 4, 5, 6, 7, 8, 9], // 4 factors
-                    [1, 2, 3, 4, 5, 6, 7, 8, 9,10], // 5 factors
-                    [2, 3, 4, 5, 6, 7, 8,10 ,11 ,12], //6-8 factors
-                    [3 ,4 ,5 ,6 ,7 ,8 ,10 ,11 ,12 ,13], //9-11 factors
-                    [4 ,5 ,6 ,7 ,8 ,10 ,11 ,12 ,13 ,14], //12-14 factors
-                    [5 ,6 ,7 ,8 ,10 ,11 ,12 ,13 ,14 ,15], //15 factors
-                    [6 ,7 ,8 ,9 ,10 ,11 ,12 ,13 ,14 ,16], //16+ factors
-                ]
-        };
-        private static Dictionary<FireTable, Func<int, int, int>> Lookup = new Dictionary<FireTable, Func<int, int, int>>
+            bool terrainAllowsFlank = battle.Terrain != Terrain.Marsh && battle.Terrain != Terrain.Mountain;
+            bool trenchBlocksFlank = normalizedTrench > 0 && !battle.NegateTrench;
+            bool unoccupiedFortBlocksFlank = battle.Defender.StrengthFactors <= 0
+                && FortressCombatFactors(battle.FortressLevel) > 0;
+
+            return battle.Attacker.FireTable == FireTable.Army
+                && terrainAllowsFlank
+                && battle.AttackFromMultipleSpaces
+                && !trenchBlocksFlank
+                && !unoccupiedFortBlocksFlank;
+        }
+
+        private static bool CanIgnoreRetreat(Terrain terrain, int trench) =>
+            trench > 0
+            || terrain == Terrain.Forest
+            || terrain == Terrain.Desert
+            || terrain == Terrain.Mountain
+            || terrain == Terrain.Marsh;
+
+        private static int FortressCombatFactors(FortressLevel fortressLevel) => fortressLevel switch
         {
-            [FireTable.Corps] = (factors, dieRoll) => FireTables[FireTable.Corps][CorpsFactorsToIndex(factors)][dieRoll - 1],
-            [FireTable.Army] = (factors, dieRoll) => FireTables[FireTable.Army][ArmyFactorsToIndex(factors)][dieRoll - 1]
+            FortressLevel.None => 0,
+            FortressLevel.Destroyed => 0,
+            FortressLevel.LevelOne => 1,
+            FortressLevel.Besieged => 1,
+            FortressLevel.LevelTwo => 2,
+            FortressLevel.LevelThree => 3,
+            _ => 0
         };
 
-        /// <summary>
-        /// Maps firing factors to the CorpsFireTable array index.
-        /// </summary>
+        private static int OffensiveColumnShift(Terrain terrain, int trench, bool negateTrench)
+        {
+            int terrainShift = terrain switch
+            {
+                Terrain.Mountain => -1,
+                Terrain.Marsh => -1,
+                _ => 0
+            };
+
+            if (negateTrench)
+                return terrainShift;
+
+            int trenchShift = trench switch
+            {
+                1 => -1,
+                2 => -2,
+                _ => 0
+            };
+
+            return terrainShift + trenchShift;
+        }
+
+        private static int DefensiveColumnShift(int trench, bool negateTrench)
+        {
+            if (negateTrench)
+                return 0;
+
+            return trench switch
+            {
+                1 => 1,
+                2 => 1,
+                _ => 0
+            };
+        }
+
+        private static int FireColumnIndex(FireTable fireTable, int factors, int shift)
+        {
+            int baseIndex = fireTable switch
+            {
+                FireTable.Corps => CorpsFactorsToIndex(factors),
+                FireTable.Army => ArmyFactorsToIndex(factors),
+                _ => throw new ArgumentOutOfRangeException(nameof(fireTable))
+            };
+
+            int maxIndex = fireTable switch
+            {
+                FireTable.Corps => CorpsFireTable.Length - 1,
+                FireTable.Army => ArmyFireTable.Length - 1,
+                _ => throw new ArgumentOutOfRangeException(nameof(fireTable))
+            };
+
+            return Math.Clamp(baseIndex + shift, 0, maxIndex);
+        }
+
+        private static int HitsFromColumn(FireTable fireTable, int columnIndex, int modifiedDieRoll)
+        {
+            int dieIndex = PoGBattleInputRules.ClampModifiedDieRoll(modifiedDieRoll) - 1;
+            return fireTable switch
+            {
+                FireTable.Corps => CorpsFireTable[columnIndex][dieIndex],
+                FireTable.Army => ArmyFireTable[columnIndex][dieIndex],
+                _ => throw new ArgumentOutOfRangeException(nameof(fireTable))
+            };
+        }
+
+        private static readonly int[][] CorpsFireTable =
+        [
+            [0, 0, 0, 0, 1, 1], // 0 factors
+            [0, 0, 0, 1, 1, 1], // 1 factor
+            [0, 1, 1, 1, 1, 1], // 2 factors
+            [1, 1, 1, 1, 2, 2], // 3 factors
+            [1, 1, 1, 2, 2, 2], // 4 factors
+            [1, 1, 2, 2, 2, 3], // 5 factors
+            [1, 1, 2, 2, 3, 3], // 6 factors
+            [1, 2, 2, 3, 3, 4], // 7 factors
+            [2, 2, 3, 3, 4, 4], // 8+ factors
+        ];
+
+        private static readonly int[][] ArmyFireTable =
+        [
+            [0, 1, 1, 1, 2, 2], // 1 factor
+            [1, 1, 2, 2, 3, 3], // 2 factors
+            [1, 2, 2, 3, 3, 4], // 3 factors
+            [2, 2, 3, 3, 4, 4], // 4 factors
+            [2, 3, 3, 4, 4, 5], // 5 factors
+            [3, 3, 4, 4, 5, 5], // 6-8 factors
+            [3, 4, 4, 5, 5, 7], // 9-11 factors
+            [4, 4, 5, 5, 7, 7], // 12-14 factors
+            [4, 5, 5, 7, 7, 7], // 15 factors
+            [5, 5, 7, 7, 7, 7], // 16+ factors
+        ];
+
         private static int CorpsFactorsToIndex(int factors) => Math.Clamp(factors, 0, 8);
 
-        /// <summary>
-        /// Maps firing factors to the ArmyFireTable array index.
-        /// </summary>
         private static int ArmyFactorsToIndex(int factors) => factors switch
         {
             <= 1 => 0,
@@ -92,11 +251,11 @@ namespace AbeGaming.GameLogic.PoG
             3 => 2,
             4 => 3,
             5 => 4,
-            <= 8 => 5,  // 6-8
-            <= 11 => 6, // 9-11
-            <= 14 => 7, // 12-14
+            <= 8 => 5,
+            <= 11 => 6,
+            <= 14 => 7,
             15 => 8,
-            _ => 9      // 16+
+            _ => 9
         };
     }
 }

@@ -261,6 +261,7 @@ UpgradeLog*.htm
 
 # Local-only rulebook references (do not commit third-party binaries)
 RulesAndTables/
+.tools/
 ServiceFabricBackup/
 *.rptproj.bak
 

@@ -1,0 +1,78 @@
+@using AbeGaming.GameLogic.PoG
+
+<div class="card border-@BorderColor mb-3">
+    <div class="card-header bg-@HeaderBgColor text-white py-2">
+        <strong>@Title</strong>
+    </div>
+    <div class="card-body py-2">
+        <div class="row g-2">
+            <div class="col-4">
+                <div class="d-flex justify-content-between small">
+                    <span>🗡️Attacker</span>
+                    <strong class="text-success">@(Stats.AttackerWinProbability.ToString("P1"))</strong>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-success" style="width: @(Stats.AttackerWinProbability * 100)%"></div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="d-flex justify-content-between small">
+                    <span>🛡️Defender</span>
+                    <strong class="text-danger">@(Stats.DefenderWinProbability.ToString("P1"))</strong>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-danger" style="width: @(Stats.DefenderWinProbability * 100)%"></div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="d-flex justify-content-between small">
+                    <span>🤝Draw</span>
+                    <strong class="text-secondary">@(Stats.DrawProbability.ToString("P1"))</strong>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-secondary" style="width: @(Stats.DrawProbability * 100)%"></div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-2" />
+        <div class="row small">
+            <div class="col-6">
+                Hits to Defender: <strong>@Stats.HitsStats.MeanHtoD.ToString("F2")</strong>
+                <span class="text-muted">(+/-@Stats.HitsStats.StdDevHtoD.ToString("F2"))</span>
+            </div>
+            <div class="col-6">
+                Hits to Attacker: <strong>@Stats.HitsStats.MeanHtoA.ToString("F2")</strong>
+                <span class="text-muted">(+/-@Stats.HitsStats.StdDevHtoA.ToString("F2"))</span>
+            </div>
+        </div>
+
+        <hr class="my-2" />
+        <div class="row small">
+            <div class="col-6">
+                Defender Retreat: <strong>@Stats.DefenderRetreatProbability.ToString("P1")</strong>
+                <span class="text-muted ms-1">(avg @Stats.MeanDefenderRetreatLength.ToString("F2") spaces)</span>
+            </div>
+            @if (Stats.FlankAttackSuccessProbability > 0)
+            {
+                <div class="col-6">
+                    Flank Success: <strong>@Stats.FlankAttackSuccessProbability.ToString("P1")</strong>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public PoGStats Stats { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = "";
+
+    [Parameter]
+    public string BorderColor { get; set; } = "primary";
+
+    [Parameter]
+    public string HeaderBgColor { get; set; } = "primary";
+}
