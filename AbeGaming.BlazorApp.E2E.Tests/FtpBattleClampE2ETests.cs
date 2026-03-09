@@ -29,6 +29,15 @@ namespace AbeGaming.BlazorApp.E2E.Tests
 
             // Attacker clamp flow: amphibious + army move on allows 9, turning army move off clamps to 3.
             await page.CheckAsync("#isAmphibious");
+            await page.UncheckAsync("#isArmyMove");
+
+            // Regression: entering above max in non-army amphibious must snap back to 3.
+            await page.FillAsync("#attackerSp", "5");
+            await page.PressAsync("#attackerSp", "Tab");
+
+            string attackerSpAfterDirectEdit = await page.InputValueAsync("#attackerSp");
+            Assert.Equal("3", attackerSpAfterDirectEdit);
+
             await page.CheckAsync("#isArmyMove");
             await page.FillAsync("#attackerSp", "9");
             await page.PressAsync("#attackerSp", "Tab");

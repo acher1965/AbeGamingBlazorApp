@@ -258,6 +258,9 @@ _UpgradeReport_Files/
 Backup*/
 UpgradeLog*.XML
 UpgradeLog*.htm
+
+# Local-only rulebook references (do not commit third-party binaries)
+RulesAndTables/
 ServiceFabricBackup/
 *.rptproj.bak
 
