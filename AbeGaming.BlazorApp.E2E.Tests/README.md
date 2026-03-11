@@ -23,6 +23,12 @@ dotnet run --project AbeGamingBlazorApp/AbeGamingBlazorApp.csproj --urls http://
 dotnet test AbeGaming.BlazorApp.E2E.Tests/AbeGaming.BlazorApp.E2E.Tests.csproj
 ```
 
+Run only PoG browser tests:
+
+```powershell
+dotnet test AbeGaming.BlazorApp.E2E.Tests/AbeGaming.BlazorApp.E2E.Tests.csproj --filter "FullyQualifiedName~PoGBattleE2ETests"
+```
+
 Optional: point tests to a different environment:
 
 ```powershell

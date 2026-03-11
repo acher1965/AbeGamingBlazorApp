@@ -1,0 +1,17 @@
+.card-body .row > .col-12.col-md-6:last-child {
+    border-left: 1px solid #e9ecef;
+    padding-left: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .card-body .row > .col-12.col-md-6:last-child {
+        border-left: none;
+        padding-left: calc(var(--bs-gutter-x) * 0.5);
+    }
+
+    input[type="number"],
+    input[type="text"],
+    select {
+        font-size: 16px !important;
+    }
+}

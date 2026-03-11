@@ -46,6 +46,70 @@
         "panel": "dedicated",
         "clear": false
       }
+    },
+    {
+      "label": "watch-blazor-app-e2e",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "watch",
+        "run",
+        "--project",
+        "${workspaceFolder}/AbeGamingBlazorApp/AbeGamingBlazorApp.csproj",
+        "--urls",
+        "http://localhost:5211"
+      ],
+      "isBackground": true,
+      "problemMatcher": [
+        {
+          "owner": "csharp",
+          "fileLocation": "absolute",
+          "pattern": {
+            "regexp": "^(.*)$",
+            "message": 1
+          },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^.*dotnet watch.*$",
+            "endsPattern": "^.*Now listening on:\\s+https?://localhost:5211.*$"
+          }
+        }
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": false
+      }
+    },
+    {
+      "label": "test-e2e-all",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "test",
+        "${workspaceFolder}/AbeGaming.BlazorApp.E2E.Tests/AbeGaming.BlazorApp.E2E.Tests.csproj"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "test-e2e-pog",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "test",
+        "${workspaceFolder}/AbeGaming.BlazorApp.E2E.Tests/AbeGaming.BlazorApp.E2E.Tests.csproj",
+        "--filter",
+        "FullyQualifiedName~PoGBattleE2ETests"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "e2e-pog-with-app",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "watch-blazor-app-e2e",
+        "test-e2e-pog"
+      ]
     }
   ]
 }

@@ -1,0 +1,103 @@
+@using AbeGaming.GameLogic.PoG
+
+<div class="card h-100">
+    <div class="card-header py-1 bg-@HeaderColor text-white">
+        <strong class="small">@Icon@SideName</strong>
+    </div>
+    <div class="card-body py-2">
+        <div class="row g-1 mb-1">
+            <label class="col-5 col-form-label col-form-label-sm">
+                Table <InfoTip Text="Corps table if all firing units are corps/forts; Army table if any army fires." />
+            </label>
+            <div class="col-7">
+                <select class="form-select form-select-sm" value="@FireTable" @onchange="OnFireTableChanged">
+                    @foreach (FireTable option in Enum.GetValues<FireTable>())
+                    {
+                        <option value="@option">@option</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="row g-1 mb-1">
+            <label class="col-5 col-form-label col-form-label-sm">
+                Factors <InfoTip Text="@FactorsInfoTip" />
+            </label>
+            <div class="col-7">
+                <input type="number"
+                       class="form-control form-control-sm"
+                       id="@FactorsInputId"
+                       value="@Factors"
+                       @onchange="OnFactorsChanged"
+                       onfocus="this.select()"
+                       min="0"
+                       max="16" />
+            </div>
+        </div>
+
+        <div class="row g-1 mb-1">
+            <label class="col-5 col-form-label col-form-label-sm">
+                DRM <InfoTip Text="Total die roll modifier from cards/events and conditions. Terrain and trench column shifts are applied separately, not here." />
+            </label>
+            <div class="col-7">
+                <input type="number"
+                       class="form-control form-control-sm"
+                       value="@DRM"
+                       @onchange="OnDRMChanged"
+                       onfocus="this.select()"
+                       min="0"
+                       max="9" />
+            </div>
+        </div>
+
+        <div class="small text-muted">
+            OOS <InfoTip Text="@OosInfoTip" />
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string SideName { get; set; } = "Attacker";
+    [Parameter] public string Icon { get; set; } = "🗡️";
+    [Parameter] public string HeaderColor { get; set; } = "primary";
+    [Parameter] public string FactorsInfoTip { get; set; } = "Total firing factors.";
+    [Parameter] public string OosInfoTip { get; set; } = "Out of Supply.";
+    [Parameter] public string FactorsInputId { get; set; } = string.Empty;
+
+    [Parameter] public FireTable FireTable { get; set; }
+    [Parameter] public EventCallback<FireTable> FireTableChanged { get; set; }
+
+    [Parameter] public int Factors { get; set; }
+    [Parameter] public EventCallback<int> FactorsChanged { get; set; }
+
+    [Parameter] public int DRM { get; set; }
+    [Parameter] public EventCallback<int> DRMChanged { get; set; }
+
+    private async Task OnFireTableChanged(ChangeEventArgs e)
+    {
+        if (Enum.TryParse<FireTable>(e.Value?.ToString(), out FireTable value))
+        {
+            await FireTableChanged.InvokeAsync(value);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnFactorsChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int value))
+        {
+            await FactorsChanged.InvokeAsync(PoGBattleInputRules.ClampFactors(value));
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnDRMChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int value))
+        {
+            await DRMChanged.InvokeAsync(PoGBattleInputRules.ClampDrm(value));
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+}

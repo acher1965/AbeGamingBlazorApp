@@ -5,5 +5,8 @@ namespace AbeGaming.GameLogic.PoG
         BattleSideInfo Defender,
         Terrain Terrain,
         FortressLevel FortressLevel,
-        int Trench);
+        int Trench,
+        bool AttemptFlankAttack = false,
+        int FlankAttackDrm = 0,
+        bool IsAllAttackersInSinai = false);
 }

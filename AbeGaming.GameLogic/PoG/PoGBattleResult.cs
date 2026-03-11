@@ -9,5 +9,12 @@ namespace AbeGaming.GameLogic.PoG
         int DefenderDieRoll,
         int AttackerModifiedDieRoll,
         int DefenderModifiedDieRoll,
-        int AdvanceMaxLength);
+        int AdvanceMaxLength,
+        bool DefenderCanIgnoreRetreat,
+        int AttackerFireColumnIndex,
+        int DefenderFireColumnIndex,
+        bool FlankAttackAttempted,
+        bool FlankAttackSucceeded,
+        int? FlankAttackDieRoll,
+        int? FlankAttackModifiedDieRoll);
 }
