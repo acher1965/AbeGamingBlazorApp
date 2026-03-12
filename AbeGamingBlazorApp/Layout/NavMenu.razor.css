@@ -65,7 +65,7 @@
     color: white;
 }
 
-.nav-item ::deep .pog-beta-tag {
+.nav-item ::deep .beta-tag {
     margin-left: 0.45rem;
     padding: 0.1rem 0.35rem;
     border-radius: 999px;
