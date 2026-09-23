@@ -1,4 +1,5 @@
-@* InfoTip.razor - A small info icon with tooltip that works on desktop (hover) and mobile (tap) *@
+@* InfoTip.razor - A small info icon with tooltip that works on desktop (hover) and mobile (tap).
+   When ChildContent is supplied, that content becomes the trigger instead of the info icon. *@
 
 @if (showPopover)
 {
@@ -6,7 +7,14 @@
 }
 
 <span class="info-tip" @onclick="TogglePopover" @onclick:stopPropagation="true" @ontouchend:stopPropagation="true">
-    <span class="info-icon" title="@Text">ⓘ</span>
+    @if (ChildContent is null)
+    {
+        <span class="info-icon" title="@Text">ⓘ</span>
+    }
+    else
+    {
+        <span class="info-tip-content" title="@Text">@ChildContent</span>
+    }
     @if (showPopover)
     {
         <span class="info-popover" @onclick:stopPropagation="true">@Text</span>
@@ -14,8 +22,13 @@
 </span>
 
 @code {
+    /// <summary>Tooltip text shown on hover (desktop) and in the popover (tap).</summary>
     [Parameter]
     public string Text { get; set; } = "";
+
+    /// <summary>Optional trigger content; when null the standard info icon is shown.</summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
 
     private bool showPopover = false;
 

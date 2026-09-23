@@ -112,6 +112,19 @@ AbeGamingBlazorApp.slnx
 
 `RulesAndTables/` holds the reference rules and charts used to implement the calculators.
 
+## Possible Future Work
+
+### Usage counting per calculation
+Visitor numbers come from Cloudflare Web Analytics, which counts page visits but not how many
+battles are actually calculated. A possible extension:
+- Add a small Cloudflare Pages Function endpoint (e.g. `/api/usage`) that records one event per
+  "Calculate Exact Stats", "Roll 1 Battle" or Monte Carlo run, with the calculator name (FtP/PoG)
+  and action type only, no personal data.
+- Store the events in Workers Analytics Engine (or D1) and query the totals from the Cloudflare dashboard.
+- Send the events fire-and-forget from the Blazor app, so a failed call never affects the calculators.
+- Optionally use Cloudflare Turnstile in invisible mode to count only verified humans.
+- Limitation: usage of the installed PWA while offline cannot be counted.
+
 ## Contributing
 
 This is a personal hobby project, but suggestions and feedback are welcome! Feel free to:

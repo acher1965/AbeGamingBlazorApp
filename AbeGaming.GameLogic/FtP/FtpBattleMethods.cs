@@ -178,7 +178,7 @@ namespace AbeGaming.GameLogic.FtP
 
         public static FtpStats ExactStats(this FtpBattle battle)
         {
-            List<FTPBattleResult> results = new List<FTPBattleResult>(36 * 36);
+            List<FTPBattleResult> results = new(36 * 36);
             int[] fourDiceRolls = [0, 0, 1, 1];
             int[] hitsToAVector = new int[36];
             int[] hitsToDVector = new int[36];
