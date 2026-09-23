@@ -32,6 +32,11 @@
     color: #0d6efd;
 }
 
+/* Custom trigger content (e.g. an icon with a value): hint that it has a tooltip */
+.info-tip-content {
+    cursor: help;
+}
+
 .info-popover {
     position: absolute;
     bottom: 100%;

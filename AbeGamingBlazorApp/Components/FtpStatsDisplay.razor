@@ -65,25 +65,25 @@
                 <div class="col-6">
                     @if (Stats.StarResultProbability > 0)
                     {
-                        <span class="me-2" style="white-space: nowrap;">⭐: @(Stats.StarResultProbability.ToString("P1"))</span>
+                        <span class="me-2" style="white-space: nowrap;"><InfoTip Text="@StarTip">⭐: @(Stats.StarResultProbability.ToString("P1"))</InfoTip></span>
                     }
                     @if (Stats.AttackerCanStayProbability > 0)
                     {
-                        <span class="me-2" style="white-space: nowrap;">🏠: @(Stats.AttackerCanStayProbability.ToString("P1"))</span>
+                        <span class="me-2" style="white-space: nowrap;"><InfoTip Text="@CanStayTip">🏠: @(Stats.AttackerCanStayProbability.ToString("P1"))</InfoTip></span>
                     }
                     @if (Stats.AttackerCanContinueProbability > 0)
                     {
-                        <span class="me-2" style="white-space: nowrap;">🚶: @(Stats.AttackerCanContinueProbability.ToString("P1"))</span>
+                        <span class="me-2" style="white-space: nowrap;"><InfoTip Text="@CanContinueTip">🚶: @(Stats.AttackerCanContinueProbability.ToString("P1"))</InfoTip></span>
                     }
                     @if (Stats.AttackerLeaderDeathProbability > 0)
                     {
-                        <span style="white-space: nowrap;">🗡️💀: @(Stats.AttackerLeaderDeathProbability.ToString("P1"))</span>
+                        <span style="white-space: nowrap;"><InfoTip Text="@AttackerLeaderDeathTip">🗡️💀: @(Stats.AttackerLeaderDeathProbability.ToString("P1"))</InfoTip></span>
                     }
                 </div>
                 <div class="col-6">
                     @if (Stats.DefenderLeaderDeathProbability > 0)
                     {
-                        <span style="white-space: nowrap;">🛡️💀: @(Stats.DefenderLeaderDeathProbability.ToString("P1"))</span>
+                        <span style="white-space: nowrap;"><InfoTip Text="@DefenderLeaderDeathTip">🛡️💀: @(Stats.DefenderLeaderDeathProbability.ToString("P1"))</InfoTip></span>
                     }
                 </div>
             </div>
@@ -102,7 +102,7 @@
                     @foreach (var kvp in Stats.HitsStats.HitsToA_Prblty.OrderBy(x => x.Key))
                     {
                         bool isMax = kvp.Value == maxAttackerProb;
-                        <span class="badge dist-badge"><span class="dist-hits">@kvp.Key</span>: <span class="dist-prob @(isMax ? "fw-bold" : "")">@(kvp.Value.ToString("P0"))</span></span>
+                        <span class="badge dist-badge" title="@DistributionTip(kvp.Key, kvp.Value)"><span class="dist-hits">@kvp.Key</span>: <span class="dist-prob @(isMax ? "fw-bold" : "")">@(kvp.Value.ToString("P0"))</span></span>
                     }
                 </div>
             </div>
@@ -112,7 +112,7 @@
                     @foreach (var kvp in Stats.HitsStats.HitsToD_Prblty.OrderBy(x => x.Key))
                     {
                         bool isMax = kvp.Value == maxDefenderProb;
-                        <span class="badge dist-badge"><span class="dist-hits">@kvp.Key</span>: <span class="dist-prob @(isMax ? "fw-bold" : "")">@(kvp.Value.ToString("P0"))</span></span>
+                        <span class="badge dist-badge" title="@DistributionTip(kvp.Key, kvp.Value)"><span class="dist-hits">@kvp.Key</span>: <span class="dist-prob @(isMax ? "fw-bold" : "")">@(kvp.Value.ToString("P0"))</span></span>
                     }
                 </div>
             </div>
@@ -121,6 +121,18 @@
 </div>
 
 @code {
+    // Tooltip texts for the icon-only statistics (rule references are to the FtP 2024 rulebook).
+    public const string StarTip =
+        "Star (asterisk) result on the CRT: the attacker wins if losses are tied. No Star results against a Resource or Capital.";
+    public const string CanStayTip =
+        "Attacker stays: the attacker does not retreat and occupies the battle space.";
+    public const string CanContinueTip =
+        "Attacker can continue moving after the battle (rules 5.73 and 7.33).";
+    public const string AttackerLeaderDeathTip =
+        "Attacking leader killed in the leader casualty check (assumes a leader is present).";
+    public const string DefenderLeaderDeathTip =
+        "Defending leader killed in the leader casualty check (assumes a leader is present).";
+
     [Parameter, EditorRequired]
     public FtpStats Stats { get; set; } = default!;
 
@@ -141,4 +153,8 @@
 
     [Parameter]
     public int DefenderElitesCommitted { get; set; }
+
+    /// <summary>Builds the hover text for one loss-distribution badge, e.g. "Loses 2 SP: 17%".</summary>
+    private static string DistributionTip(int spLost, double probability) =>
+        $"Loses {spLost} SP: {probability:P1}";
 }
