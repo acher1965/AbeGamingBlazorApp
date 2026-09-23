@@ -72,8 +72,8 @@ namespace AbeGaming.GameLogic.Tests
             Assert.True(hitStats.HitsToD_Prblty.Values.All(p => p >= 0 && p <= 1), "HitsToD probabilities should be between 0 and 1");
             Assert.True(hitStats.HitsToA_Prblty.Keys.Any(v => v >= 0), "bin should be non negative");
             Assert.True(hitStats.HitsToD_Prblty.Keys.Any(v => v >= 0), "bin should be non negative");
-            
-            
+
+
             double sumHtoA = hitStats.HitsToA_Prblty.Values.Sum();
             double sumHtoD = hitStats.HitsToD_Prblty.Values.Sum();
             Assert.Equal(1.0, sumHtoA, 3); // sum to 1.0 within 3 decimal places
@@ -163,22 +163,22 @@ namespace AbeGaming.GameLogic.Tests
         [Theory]
         // 9v3 amphibious (army move), no admiral/assault/hunley, non-resource/capital
         [InlineData(3, false, false, false, 0.500000000)]
-        [InlineData(3, false, false, true,  0.388888889)]
-        [InlineData(3, false, true,  false, 0.472222222)]
-        [InlineData(3, false, true,  true,  0.305555556)]
-        [InlineData(3, true,  false, false, 0.388888889)]
-        [InlineData(3, true,  false, true,  0.305555556)]
-        [InlineData(3, true,  true,  false, 0.305555556)]
-        [InlineData(3, true,  true,  true,  0.305555556)]
+        [InlineData(3, false, false, true, 0.388888889)]
+        [InlineData(3, false, true, false, 0.472222222)]
+        [InlineData(3, false, true, true, 0.305555556)]
+        [InlineData(3, true, false, false, 0.388888889)]
+        [InlineData(3, true, false, true, 0.305555556)]
+        [InlineData(3, true, true, false, 0.305555556)]
+        [InlineData(3, true, true, true, 0.305555556)]
         // 9v2 amphibious (army move), no admiral/assault/hunley, non-resource/capital
         [InlineData(2, false, false, false, 0.666666667)]
-        [InlineData(2, false, false, true,  0.527777778)]
-        [InlineData(2, false, true,  false, 0.638888889)]
-        [InlineData(2, false, true,  true,  0.416666667)]
-        [InlineData(2, true,  false, false, 0.527777778)]
-        [InlineData(2, true,  false, true,  0.416666667)]
-        [InlineData(2, true,  true,  false, 0.416666667)]
-        [InlineData(2, true,  true,  true,  0.416666667)]
+        [InlineData(2, false, false, true, 0.527777778)]
+        [InlineData(2, false, true, false, 0.638888889)]
+        [InlineData(2, false, true, true, 0.416666667)]
+        [InlineData(2, true, false, false, 0.527777778)]
+        [InlineData(2, true, false, true, 0.416666667)]
+        [InlineData(2, true, true, false, 0.416666667)]
+        [InlineData(2, true, true, true, 0.416666667)]
         public void ExactStats_Amphibious_9vX_Matrix_ExpectedWinProbability(
             int defenderSize,
             bool fortPresent,
@@ -301,7 +301,7 @@ namespace AbeGaming.GameLogic.Tests
             // Assert - win probabilities sum to 1.0
             double totalProbability = stats.AttackerWinProbability + stats.DefenderWinProbability;
 
-            Assert.Equal( 1.0, totalProbability, 0.001);
+            Assert.Equal(1.0, totalProbability, 0.001);
         }
 
         [Theory]
@@ -699,113 +699,113 @@ namespace AbeGaming.GameLogic.Tests
             //         meanHtoA, meanHtoD, stdDevHtoA, stdDevHtoD, starProb
 
             // Small battle 2v2 (verified)
-            yield return new object[] { 
-                CreateBattle(2, 2), 
-                BattleSize.Small, 
+            yield return new object[] {
+                CreateBattle(2, 2),
+                BattleSize.Small,
                 0.083333333333333329, 0.91666666666666663,
                 0.83333333333333337, 0.5,
                 0.37267799624996495, 0.5,
-                0.0 
+                0.0
             };
 
             // Medium battle 5v5 (verified)
-            yield return new object[] { 
-                CreateBattle(5, 5), 
-                BattleSize.Medium, 
+            yield return new object[] {
+                CreateBattle(5, 5),
+                BattleSize.Medium,
                 0.16666666666666666, 0.83333333333333337,
                 1.0, 1.0,
                 0.0, 0.57735026918962573,
-                0.0 
+                0.0
             };
 
             // Large battle 10v10 (verified)
-            yield return new object[] { 
-                CreateBattle(10, 10), 
-                BattleSize.Large, 
+            yield return new object[] {
+                CreateBattle(10, 10),
+                BattleSize.Large,
                 0.22222222222222221, 0.77777777777777779,
                 2.6666666666666665, 2.3333333333333335,
                 0.94280904158206336, 0.74535599249992989,
-                0.0 
+                0.0
             };
 
             // Medium 5v5 at resource/capital - no star results (verified)
-            yield return new object[] { 
-                CreateBattle(5, 5, resourceOrCapital: true), 
-                BattleSize.Medium, 
+            yield return new object[] {
+                CreateBattle(5, 5, resourceOrCapital: true),
+                BattleSize.Medium,
                 0.16666666666666666, 0.83333333333333337,
                 1.0, 1.0,
                 0.0, 0.57735026918962573,
-                0.0 
+                0.0
             };
 
             // Medium 5v5 with elites (attacker +2, defender +1) (verified)
-            yield return new object[] { 
-                CreateBattle(5, 5, attackerElites: 2, defenderElites: 1), 
-                BattleSize.Medium, 
+            yield return new object[] {
+                CreateBattle(5, 5, attackerElites: 2, defenderElites: 1),
+                BattleSize.Medium,
                 0.47222222222222221, 0.52777777777777779,
                 1.1666666666666667, 1.5,
                 0.37267799624996495, 0.5,
-                0.33333333333333331 
+                0.33333333333333331
             };
 
             // Medium 5v5 with defender OOS (attacker +2 DRM) (verified)
-            yield return new object[] { 
-                CreateBattle(5, 5, defenderOOS: true), 
-                BattleSize.Medium, 
+            yield return new object[] {
+                CreateBattle(5, 5, defenderOOS: true),
+                BattleSize.Medium,
                 0.5, 0.5,
                 1.0, 1.5,
                 0.0, 0.5,
-                0.33333333333333331 
+                0.33333333333333331
             };
 
             // Complex: 8v6, attacker DRM +2, defender DRM +1, attacker elite +1, fort (verified)
-            yield return new object[] { 
-                CreateBattle(8, 6, attackerLeaderDRM: 2, defenderLeaderDRM: 1, attackerElites: 1, fortPresent: true), 
-                BattleSize.Medium, 
+            yield return new object[] {
+                CreateBattle(8, 6, attackerLeaderDRM: 2, defenderLeaderDRM: 1, attackerElites: 1, fortPresent: true),
+                BattleSize.Medium,
                 0.41666666666666669, 0.58333333333333337,
                 1.8333333333333333, 1.6666666666666667,
                 0.89752746785575113, 0.47140452079103168,
-                0.5 
+                0.5
             };
 
             // Large battle 2v20 - extreme defender advantage
-            yield return new object[] { 
-                CreateBattle(2, 20), 
-                BattleSize.Large, 
+            yield return new object[] {
+                CreateBattle(2, 20),
+                BattleSize.Large,
                 0.0, 1.0,
                 2.0, 2.3333333333333335,
                 0.0, 0.7453559924999291,
-                0.0 
+                0.0
             };
 
             // Small battle 1v1 - minimum battle
-            yield return new object[] { 
-                CreateBattle(1, 1), 
-                BattleSize.Small, 
+            yield return new object[] {
+                CreateBattle(1, 1),
+                BattleSize.Small,
                 0.08333333333333333, 0.9166666666666666,
                 0.8333333333333334, 0.08333333333333333,
                 0.3726779962499649, 0.2763853991962833,
-                0.0 
+                0.0
             };
 
             // Medium battle 10v1 - overrun scenario
-            yield return new object[] { 
-                CreateBattle(10, 1), 
-                BattleSize.Medium, 
+            yield return new object[] {
+                CreateBattle(10, 1),
+                BattleSize.Medium,
                 1.0, 0.0,
                 0.0, 1.0,
                 0.0, 0.0,
-                0.0 
+                0.0
             };
 
             // Medium 3v3 with max DRM modifiers - extreme case
-            yield return new object[] { 
-                CreateBattle(3, 3, isInterception: true, attackerLeaderDRM: 9, defenderLeaderDRM: 9, attackerOOS: true, defenderOOS: true), 
-                BattleSize.Medium, 
+            yield return new object[] {
+                CreateBattle(3, 3, isInterception: true, attackerLeaderDRM: 9, defenderLeaderDRM: 9, attackerOOS: true, defenderOOS: true),
+                BattleSize.Medium,
                 1.0, 0.0,
                 2.0, 3.0,
                 0.0, 0.0,
-                1.0 
+                1.0
             };
         }
 

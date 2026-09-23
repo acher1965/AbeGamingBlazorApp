@@ -86,7 +86,7 @@ namespace AbeGaming.GameLogic.FtP
 
             HitStats hitsStats = new(avgDefenderCasualties, stdDefenderCasualties, avgAttackerCasualties, stdAttackerCasualties, defenderCasualtyDist, attackerCasualtyDist);
 
-            return ( trials, new FtpStats(
+            return (trials, new FtpStats(
                 battleSize,
                 (double)totalAttackerWins / trials,
                 (double)totalDefenderWins / trials,

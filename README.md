@@ -6,15 +6,31 @@ A Progressive Web App (PWA) built with Blazor WebAssembly to provide helpful too
 
 ## Features
 
+Both calculators are currently in **BETA**: feedback is welcome (see the Contact page in the app).
+Each one can roll a single battle result, or compute the probabilities of victory, the
+distribution of losses and other expected values for a given battle setup.
+
 ### For The People Battle Calculator
 A battle resolution calculator for GMT Games' acclaimed American Civil War card-driven strategy game "For The People". 
 
 The calculator handles:
 - Land battle resolution with full Combat Results Table (CRT) implementation
 - Die roll modifications (DRM) for leaders, elites, fortifications, and supply status
+- Amphibious assaults
 - Leader casualty checks
 - Army size ratios and battle sizes
 - Post-battle movement options
+- Exact statistics, cross-checked against a Monte Carlo simulation in the test suite
+
+### Paths of Glory Battle Calculator
+The same kind of tool for GMT Games' World War I card-driven strategy game "Paths of Glory".
+
+The calculator handles:
+- Corps and Army fire tables, with factors and DRM for each side
+- Terrain (clear, forest, marsh, mountain, desert) and trench column shifts
+- Fortresses
+- Flank attacks, including the extra-attacking-space DRM
+- Out-of-supply units and the Sinai attacker penalty
 
 ## Technology Stack
 
@@ -38,7 +54,7 @@ This app can be installed on your device for offline use:
 ## Development
 
 ### Prerequisites
-- .NET 10 SDK
+- .NET 10 SDK (stable; `global.json` excludes preview SDKs)
 - Git
 
 ### Local Setup
@@ -48,6 +64,19 @@ cd AbeGamingBlazorApp
 dotnet restore
 dotnet run --project AbeGamingBlazorApp
 ```
+
+The solution file is `AbeGamingBlazorApp.slnx` (the newer XML solution format, not a classic `.sln`).
+
+### Running Tests
+```bash
+dotnet test AbeGaming.GameLogic.Tests/AbeGaming.GameLogic.Tests.csproj
+dotnet test AbeGaming.BlazorApp.Component.Tests/AbeGaming.BlazorApp.Component.Tests.csproj
+```
+
+The Playwright browser tests need a running app and a one-off browser install; see
+[AbeGaming.BlazorApp.E2E.Tests/README.md](AbeGaming.BlazorApp.E2E.Tests/README.md).
+CI (GitHub Actions) runs the two suites above on every push and pull request to
+`develop` and `master`.
 
 ### Building for Production
 The repository includes a `build.sh` script for Cloudflare Pages deployment that:
@@ -60,19 +89,28 @@ The repository includes a `build.sh` script for Cloudflare Pages deployment that
 ## Project Structure
 
 ```
-AbeGamingBlazorApp/
-├── FtpBattle/           # For The People battle calculator logic
-│   ├── FtpCRT.cs        # Combat Results Table implementation
-│   ├── FtpLandBattle.cs # Battle data model
-│   └── FtpBattleMethods.cs # Battle resolution logic
-├── Pages/               # Blazor pages
-│   ├── FtpBattle.razor  # Battle calculator UI
-│   ├── About.razor      # About page
-│   ├── ChangeList.razor # Git commit history
-│   └── Home.razor       # Landing page
-├── Layout/              # App layout components
-└── wwwroot/             # Static assets
+AbeGamingBlazorApp.slnx
+├── AbeGaming.GameLogic/                 # Game rules engine (no UI dependencies)
+│   ├── FtP/                             # For The People: CRT, battle model, exact stats, Monte Carlo
+│   ├── PoG/                             # Paths of Glory: CRTs, battle model, exact stats
+│   └── Dice.cs, HitStats.cs, ...        # Shared helpers
+├── AbeGamingBlazorApp/                  # Blazor WebAssembly PWA
+│   ├── Components/                      # Reusable UI parts (side inputs, stats displays, InfoTip)
+│   ├── Pages/                           # Routable pages
+│   │   ├── Home.razor                   # Landing page
+│   │   ├── FtpBattlePage.razor          # For The People calculator
+│   │   ├── PoGBattle.razor              # Paths of Glory calculator
+│   │   ├── About.razor, Contact.razor   # Info pages
+│   │   ├── Install.razor                # PWA install instructions
+│   │   └── ChangeList.razor             # Git commit history
+│   ├── Layout/                          # App layout and navigation menu
+│   └── wwwroot/                         # Static assets, service worker, manifest
+├── AbeGaming.GameLogic.Tests/           # xUnit tests for the rules engine
+├── AbeGaming.BlazorApp.Component.Tests/ # bUnit component tests
+└── AbeGaming.BlazorApp.E2E.Tests/       # Playwright browser tests
 ```
+
+`RulesAndTables/` holds the reference rules and charts used to implement the calculators.
 
 ## Contributing
 
@@ -103,15 +141,16 @@ The version is displayed in the app's navigation menu.
 
 ## Useful Links
 
-- [GMT Games](https://www.gmtgames.com/) - Publisher of "For The People"
-- [For The People on BoardGameGeek](https://boardgamegeek.com/boardgame/2829/for-the-people)
+- [GMT Games](https://www.gmtgames.com/) - Publisher of "For The People" and "Paths of Glory"
+- [For The People on BoardGameGeek](https://boardgamegeek.com/boardgame/833/for-the-people)
+- [Paths of Glory on BoardGameGeek](https://boardgamegeek.com/boardgame/91/paths-of-glory)
 - [Blazor Documentation](https://learn.microsoft.com/aspnet/core/blazor/)
 
 ## License
 
 This project is provided as-is for educational and personal use. 
 
-"For The People" is a trademark of GMT Games LLC. This tool is an unofficial fan-made calculator and is not affiliated with or endorsed by GMT Games.
+"For The People" and "Paths of Glory" are trademarks of GMT Games LLC. These tools are unofficial fan-made calculators and are not affiliated with or endorsed by GMT Games.
 
 ## Changelog
 
