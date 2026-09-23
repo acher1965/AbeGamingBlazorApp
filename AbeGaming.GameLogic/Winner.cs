@@ -1,6 +1,7 @@
 namespace AbeGaming.GameLogic
 {
-    public enum Winner {
+    public enum Winner
+    {
         Defender,
         Attacker,
         Draw,

@@ -14,7 +14,7 @@ namespace AbeGaming.GameLogic.FtP
         bool Star,
         int? AttackerLeaderDeathDieRoll,
         int? DefenderLeaderDeathDieRoll,
-        bool Overrun, 
-        bool AttackerEliteLoss, 
+        bool Overrun,
+        bool AttackerEliteLoss,
         bool DefenderEliteLoss);
 }
