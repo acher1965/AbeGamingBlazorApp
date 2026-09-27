@@ -1,6 +1,6 @@
 {
-  "name": "AbeGamingBlazorApp",
-  "short_name": "AbeGamingBlazorApp",
+  "name": "AbeGaming",
+  "short_name": "AbeGaming",
   "id": "./",
   "start_url": "./",
   "display": "standalone",
