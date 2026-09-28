@@ -1,0 +1,114 @@
+@using AbeGaming.GameLogic.TNW
+
+<div class="card h-100">
+    <div class="card-header py-1 bg-primary text-white">
+        <strong class="small">⚔️Besieging Army</strong>
+    </div>
+    <div class="card-body py-2">
+        <div class="row g-1 mb-1">
+            <label class="col-5 col-form-label col-form-label-sm">
+                Units <InfoTip Text="Undisrupted Units in the Besieging Army (leaders other than the Commander count as 1 Unit each)." />
+            </label>
+            <div class="col-7">
+                <input type="number"
+                       class="form-control form-control-sm"
+                       id="tnwSiegeUnits"
+                       value="@Units"
+                       @onchange="OnUnitsChanged"
+                       onfocus="this.select()"
+                       min="0"
+                       max="20" />
+            </div>
+        </div>
+
+        <div class="row g-1 mb-1">
+            <label class="col-5 col-form-label col-form-label-sm">
+                Composition <InfoTip Text="At least half Minor-nation units: no bonus die. A normal force: +1. Majority French: +2 (rule 11.21)." />
+            </label>
+            <div class="col-7">
+                <select class="form-select form-select-sm" value="@Composition" @onchange="OnCompositionChanged">
+                    @foreach (TnwForceComposition option in Enum.GetValues<TnwForceComposition>())
+                    {
+                        <option value="@option">@option</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="form-check mb-1">
+            <input class="form-check-input" type="checkbox" id="tnwSiegeCommanderPresent" checked="@CommanderPresent" @onchange="OnCommanderPresentChanged" />
+            <label class="form-check-label small" for="tnwSiegeCommanderPresent">
+                Commander present <InfoTip Text="Adds the Commander's Battle Rating as bonus dice while undisrupted." />
+            </label>
+        </div>
+
+        @if (CommanderPresent)
+        {
+            <div class="row g-1 mb-1">
+                <label class="col-5 col-form-label col-form-label-sm">
+                    Battle Rating <InfoTip Text="The Commander's printed Battle Rating (1 to 4)." />
+                </label>
+                <div class="col-7">
+                    <input type="number"
+                           class="form-control form-control-sm"
+                           id="tnwSiegeCommanderBattleRating"
+                           value="@CommanderBattleRating"
+                           @onchange="OnCommanderBattleRatingChanged"
+                           onfocus="this.select()"
+                           min="1"
+                           max="4" />
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Units { get; set; }
+    [Parameter] public EventCallback<int> UnitsChanged { get; set; }
+
+    [Parameter] public TnwForceComposition Composition { get; set; }
+    [Parameter] public EventCallback<TnwForceComposition> CompositionChanged { get; set; }
+
+    [Parameter] public bool CommanderPresent { get; set; }
+    [Parameter] public EventCallback<bool> CommanderPresentChanged { get; set; }
+
+    [Parameter] public int CommanderBattleRating { get; set; }
+    [Parameter] public EventCallback<int> CommanderBattleRatingChanged { get; set; }
+
+    private async Task OnUnitsChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int value))
+        {
+            await UnitsChanged.InvokeAsync(TnwSiegeInputRules.ClampUnits(value));
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnCompositionChanged(ChangeEventArgs e)
+    {
+        if (Enum.TryParse<TnwForceComposition>(e.Value?.ToString(), out TnwForceComposition value))
+        {
+            await CompositionChanged.InvokeAsync(value);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnCommanderPresentChanged(ChangeEventArgs e)
+    {
+        if (e.Value is bool value)
+        {
+            await CommanderPresentChanged.InvokeAsync(value);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnCommanderBattleRatingChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int value))
+        {
+            await CommanderBattleRatingChanged.InvokeAsync(TnwSiegeInputRules.ClampCommanderBattleRating(value));
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+}

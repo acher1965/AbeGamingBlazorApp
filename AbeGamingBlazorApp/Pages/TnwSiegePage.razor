@@ -1,0 +1,201 @@
+@page "/tnwsiege"
+@using AbeGaming.GameLogic.TNW
+@using TnwSiegeBattleModel = AbeGaming.GameLogic.TNW.TnwSiegeBattle
+@inject IJSRuntime JS
+
+<PageTitle>TNW Siege Calculator</PageTitle>
+
+<h1 class="h3 mb-3">The Napoleonic Wars - Siege Calculator</h1>
+
+<div class="card mb-2">
+    <div class="card-body py-2">
+        <div class="d-flex flex-wrap gap-3">
+            <div class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" id="tnwSiegeGibraltar" @bind="IsGibraltar" />
+                <label class="form-check-label small" for="tnwSiegeGibraltar">
+                    Gibraltar
+                    <InfoTip Text="Gibraltar's Fortress strength is 4 instead of the usual 2 (rule 12.3)." />
+                </label>
+            </div>
+            <div class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" id="tnwSiegeZoneModifier" @bind="ZoneModifierApplies" />
+                <label class="form-check-label small" for="tnwSiegeZoneModifier">
+                    Zone modifier
+                    <InfoTip Text="Besieging a Fortress-Port where the owner (or an ally) Controls an adjacent Zone: the Besieging Army rolls one less die (rule 12.32)." />
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-2 mb-2">
+    <div class="col-12">
+        <TnwSiegeInput @bind-Units="Units"
+                       @bind-Composition="Composition"
+                       @bind-CommanderPresent="CommanderPresent"
+                       @bind-CommanderBattleRating="CommanderBattleRating" />
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="alert alert-danger py-2 mb-2">@ErrorMessage</div>
+}
+
+<div class="d-grid gap-2 mb-3">
+    <button id="tnwSiegeCalculateExactStats" class="btn btn-primary btn-lg" @onclick="CalculateExactStats">
+        📈Calculate Exact Stats
+    </button>
+    <button id="tnwSiegeRollOnce" class="btn btn-secondary" @onclick="RollOnce">
+        🎲Roll 1 Siege
+    </button>
+</div>
+
+<div id="resultsSection">
+    @if (ExactStats is not null && LastExactStatsBattle == CurrentBattle)
+    {
+        <TnwSiegeStatsDisplay Stats="ExactStats" Title="📈Exact Stats" />
+    }
+
+    @if (RollResult is not null && LastRollResultBattle == CurrentBattle)
+    {
+        <div class="card @GetResultCardClass() mb-3">
+            <div class="card-header py-2">
+                <strong>Single Siege Result</strong>
+            </div>
+            <div class="card-body py-2">
+                <p class="fs-5 fw-bold mb-1">
+                    @if (RollResult.FortressFalls)
+                    {
+                        <span class="text-success">🏰Fortress Falls@(RollResult.Overrun ? " (Overrun)" : "")</span>
+                    }
+                    else if (RollResult.BesiegersEliminated)
+                    {
+                        <span class="text-danger">💀Besiegers Eliminated</span>
+                    }
+                    else
+                    {
+                        <span class="text-secondary">🛡️Fortress Holds</span>
+                    }
+                </p>
+                <div class="small">
+                    Rounds: <strong>@RollResult.Rounds</strong> &middot;
+                    Units lost: <strong>@RollResult.UnitsLost</strong>
+                    @if (RollResult.CommanderLost)
+                    {
+                        <span class="badge bg-warning text-dark ms-1">Commander lost</span>
+                    }
+                </div>
+                <div class="small text-muted mt-1">
+                    @foreach (TnwSiegeRoundLog log in RollResult.RoundLog)
+                    {
+                        <div>
+                            Round @log.Round: besieger @log.BesiegerDice dice -> @log.BesiegerSixes six(es);
+                            fortress @log.FortressDice dice -> @log.FortressSixes six(es), @log.FortressFives five(s)
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool IsGibraltar;
+    private bool ZoneModifierApplies;
+
+    private int _units = 4;
+    private int Units
+    {
+        get => _units;
+        set => _units = TnwSiegeInputRules.ClampUnits(value);
+    }
+
+    private TnwForceComposition Composition = TnwForceComposition.Power;
+
+    private bool CommanderPresent = true;
+
+    private int _commanderBattleRating = 2;
+    private int CommanderBattleRating
+    {
+        get => _commanderBattleRating;
+        set => _commanderBattleRating = TnwSiegeInputRules.ClampCommanderBattleRating(value);
+    }
+
+    private TnwSiegeStats? ExactStats;
+    private TnwSiegeRollResult? RollResult;
+    private TnwSiegeBattleModel? LastExactStatsBattle;
+    private TnwSiegeBattleModel? LastRollResultBattle;
+    private string? ErrorMessage;
+
+    private TnwSiegeBattleModel CurrentBattle => CreateBattle();
+
+    private TnwSiegeBattleModel CreateBattle() => new(
+        Units,
+        CommanderPresent,
+        CommanderPresent ? CommanderBattleRating : 0,
+        Composition,
+        ZoneModifierApplies,
+        IsGibraltar);
+
+    private async Task ScrollToResults()
+    {
+        await JS.InvokeVoidAsync("abegamingUi.scrollIntoViewById", "resultsSection");
+    }
+
+    private async Task CalculateExactStats()
+    {
+        ErrorMessage = null;
+        RollResult = null;
+        LastRollResultBattle = null;
+
+        try
+        {
+            TnwSiegeBattleModel battle = CreateBattle();
+            ExactStats = TnwSiegeExactStats.Calculate(battle);
+            LastExactStatsBattle = battle;
+            await ScrollToResults();
+        }
+        catch (Exception ex)
+        {
+            ExactStats = null;
+            LastExactStatsBattle = null;
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task RollOnce()
+    {
+        ErrorMessage = null;
+        ExactStats = null;
+        LastExactStatsBattle = null;
+
+        try
+        {
+            TnwSiegeBattleModel battle = CreateBattle();
+            RollResult = TnwSiegeMethods.RollOnce(battle);
+            LastRollResultBattle = battle;
+            await ScrollToResults();
+        }
+        catch (Exception ex)
+        {
+            RollResult = null;
+            LastRollResultBattle = null;
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private string GetResultCardClass()
+    {
+        if (RollResult is null)
+            return "";
+
+        if (RollResult.FortressFalls)
+            return "border-success";
+
+        if (RollResult.BesiegersEliminated)
+            return "border-danger";
+
+        return "border-secondary";
+    }
+}

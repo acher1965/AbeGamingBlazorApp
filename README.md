@@ -6,7 +6,7 @@ A Progressive Web App (PWA) built with Blazor WebAssembly to provide helpful too
 
 ## Features
 
-Both calculators are currently in **BETA**: feedback is welcome (see the Contact page in the app).
+All calculators are currently in **BETA**: feedback is welcome (see the Contact page in the app).
 Each one can roll a single battle result, or compute the probabilities of victory, the
 distribution of losses and other expected values for a given battle setup.
 
@@ -31,6 +31,18 @@ The calculator handles:
 - Fortresses
 - Flank attacks, including the extra-attacking-space DRM
 - Out-of-supply units and the Sinai attacker penalty
+
+### The Napoleonic Wars Siege Calculator
+The first calculator for GMT Games' multiplayer card-driven strategy game "The Napoleonic Wars",
+covering Sieges (rule 12) - a Fortress's exact probability of falling to a Besieging Army. Land
+Battle and Naval Battle calculators for the same game may follow.
+
+The calculator handles:
+- The Besieging Army's dice pool: Units, Commander presence and Battle Rating, nationality
+  composition bonus
+- The Fortress's own strength (2 normally, 4 for Gibraltar) and its Zone modifier (rule 12.32)
+- Multi-round Sieges within one Impulse, Overrun, and the "besiegers eliminated" edge case
+- Exact statistics (no Monte Carlo needed - the Siege's state space is small and strictly bounded)
 
 ## Technology Stack
 
@@ -93,6 +105,7 @@ AbeGamingBlazorApp.slnx
 ├── AbeGaming.GameLogic/                 # Game rules engine (no UI dependencies)
 │   ├── FtP/                             # For The People: CRT, battle model, exact stats, Monte Carlo
 │   ├── PoG/                             # Paths of Glory: CRTs, battle model, exact stats
+│   ├── TNW/                             # The Napoleonic Wars: shared dice pool, Siege calculator
 │   └── Dice.cs, HitStats.cs, ...        # Shared helpers
 ├── AbeGamingBlazorApp/                  # Blazor WebAssembly PWA
 │   ├── Components/                      # Reusable UI parts (side inputs, stats displays, InfoTip)
@@ -100,6 +113,7 @@ AbeGamingBlazorApp.slnx
 │   │   ├── Home.razor                   # Landing page
 │   │   ├── FtpBattlePage.razor          # For The People calculator
 │   │   ├── PoGBattle.razor              # Paths of Glory calculator
+│   │   ├── TnwSiegePage.razor           # The Napoleonic Wars: Siege calculator
 │   │   ├── About.razor, Contact.razor   # Info pages
 │   │   ├── Install.razor                # PWA install instructions
 │   │   └── ChangeList.razor             # Git commit history
@@ -154,16 +168,17 @@ The version is displayed in the app's navigation menu.
 
 ## Useful Links
 
-- [GMT Games](https://www.gmtgames.com/) - Publisher of "For The People" and "Paths of Glory"
+- [GMT Games](https://www.gmtgames.com/) - Publisher of "For The People", "Paths of Glory", and "The Napoleonic Wars"
 - [For The People on BoardGameGeek](https://boardgamegeek.com/boardgame/833/for-the-people)
 - [Paths of Glory on BoardGameGeek](https://boardgamegeek.com/boardgame/91/paths-of-glory)
+- [The Napoleonic Wars on BoardGameGeek](https://boardgamegeek.com/boardgame/36399/the-napoleonic-wars-second-edition)
 - [Blazor Documentation](https://learn.microsoft.com/aspnet/core/blazor/)
 
 ## License
 
 This project is provided as-is for educational and personal use. 
 
-"For The People" and "Paths of Glory" are trademarks of GMT Games LLC. These tools are unofficial fan-made calculators and are not affiliated with or endorsed by GMT Games.
+"For The People", "Paths of Glory", and "The Napoleonic Wars" are trademarks of GMT Games LLC. These tools are unofficial fan-made calculators and are not affiliated with or endorsed by GMT Games.
 
 ## Changelog
 

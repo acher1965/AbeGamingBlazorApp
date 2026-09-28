@@ -1,0 +1,93 @@
+@* TnwSiegeStatsDisplay.razor - Displays exact TnwSiegeStats for a Siege *@
+@using AbeGaming.GameLogic.TNW
+
+<div class="card border-primary mb-3">
+    <div class="card-header bg-primary text-white py-2">
+        <strong>@Title</strong>
+    </div>
+    <div class="card-body py-2">
+        <div class="row g-2">
+            <div class="col-6">
+                <div class="d-flex justify-content-between small">
+                    <span>🏰Fortress Falls:</span>
+                    <strong class="text-success">@(Stats.FortressFallsProbability.ToString("P1"))</strong>
+                </div>
+                <div class="progress mb-1" style="height: 8px;">
+                    <div class="progress-bar bg-success" style="width: @(Stats.FortressFallsProbability * 100)%"></div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="d-flex justify-content-between small">
+                    <span><InfoTip Text="Fewer Siege Rounds than the Fortress's strength needed, or more sixes than it needed (rule 12.31).">💥Overrun (if falls):</InfoTip></span>
+                    <strong class="text-warning">@(Stats.OverrunProbabilityGivenFalls.ToString("P1"))</strong>
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-2" />
+        <div class="row small">
+            <div class="col-6">
+                Besieger losses: <strong>@(Stats.MeanBesiegerUnitsLost.ToString("F1"))</strong>
+                <span class="text-muted">(+/-@(Stats.StdDevBesiegerUnitsLost.ToString("F1")))</span>
+            </div>
+            <div class="col-6">
+                Mean rounds: <strong>@(Stats.MeanRoundsTaken.ToString("F1"))</strong>
+            </div>
+        </div>
+
+        @if (Stats.BesiegersEliminatedProbability > 0 || Stats.CommanderLostProbability > 0)
+        {
+            <hr class="my-2" />
+            <div class="row small">
+                @if (Stats.BesiegersEliminatedProbability > 0)
+                {
+                    <div class="col-6">
+                        <InfoTip Text="The whole Besieging Army was killed - the Fortress cannot fall this Impulse even if the six threshold was reached (rule 12.3).">💀Besiegers eliminated: @(Stats.BesiegersEliminatedProbability.ToString("P1"))</InfoTip>
+                    </div>
+                }
+                @if (Stats.CommanderLostProbability > 0)
+                {
+                    <div class="col-6">
+                        🎖️Commander lost: @(Stats.CommanderLostProbability.ToString("P1"))
+                    </div>
+                }
+            </div>
+        }
+
+        <hr class="my-2" />
+        @{
+            double maxRoundsProb = Stats.RoundsDistribution.Values.Max();
+            double maxLossProb = Stats.BesiegerUnitsLostDistribution.Values.Max();
+        }
+        <div class="row">
+            <div class="col-6 mb-2">
+                <div class="small text-muted mb-1">Rounds taken📊</div>
+                <div class="d-flex flex-wrap gap-1">
+                    @foreach (var kvp in Stats.RoundsDistribution.OrderBy(x => x.Key))
+                    {
+                        bool isMax = kvp.Value == maxRoundsProb;
+                        <span class="badge dist-badge" title="@($"Ends after {kvp.Key} round(s): {kvp.Value:P1}")"><span class="dist-hits">@kvp.Key</span>: <span class="dist-prob @(isMax ? "fw-bold" : "")">@(kvp.Value.ToString("P0"))</span></span>
+                    }
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="small text-muted mb-1">Besieger losses📊</div>
+                <div class="d-flex flex-wrap gap-1">
+                    @foreach (var kvp in Stats.BesiegerUnitsLostDistribution.OrderBy(x => x.Key))
+                    {
+                        bool isMax = kvp.Value == maxLossProb;
+                        <span class="badge dist-badge" title="@($"Loses {kvp.Key} unit(s): {kvp.Value:P1}")"><span class="dist-hits">@kvp.Key</span>: <span class="dist-prob @(isMax ? "fw-bold" : "")">@(kvp.Value.ToString("P0"))</span></span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public TnwSiegeStats Stats { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = "";
+}

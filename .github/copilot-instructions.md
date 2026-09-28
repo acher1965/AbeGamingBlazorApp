@@ -11,6 +11,9 @@ The solution file is `AbeGamingBlazorApp.slnx` (XML solution format).
 - `AbeGaming.GameLogic/` - rules engine
   - `FtP/` - For The People: CRT, battle model and input rules, exact stats, Monte Carlo simulation
   - `PoG/` - Paths of Glory: CRTs, battle model and input rules, exact stats (`PoGExactStats.Calculate`)
+  - `TNW/` - The Napoleonic Wars: `TnwDicePool` (shared trinomial dice math, reused across TNW's
+    battle types), `TnwSiege*` (Siege calculator - the only TNW calculator so far; Land Battle and
+    Naval Battle are planned to follow, each on its own page, reusing `TnwDicePool`)
 - `AbeGamingBlazorApp/` - Blazor WebAssembly PWA (`Pages/`, `Components/`, `Layout/`, `wwwroot/`)
 - `AbeGaming.GameLogic.Tests/` - xUnit tests for the rules engine
 - `AbeGaming.BlazorApp.Component.Tests/` - bUnit component tests
@@ -45,3 +48,21 @@ The solution file is `AbeGamingBlazorApp.slnx` (XML solution format).
   rather than hardcoding values, unless you have derived the expected value independently from the rules.
 - UI clamping and input behaviour for PoG components is covered by bUnit tests (`PoGSideInputTests.cs`)
   and Playwright tests (`PoGBattleE2ETests.cs`).
+
+## Tests for TNW Siege
+
+- TNW's Siege calculator (rule 12) has a small, strictly bounded state space (at most
+  `TnwSiegeMethods.FortressStrength` Rounds - 2 normally, 4 for Gibraltar), so it ships with exact
+  stats only, no Monte Carlo cross-check - see `TNW-FEASIBILITY-2026-09-27.md` if that report is
+  still present.
+- `TnwSiegeRulesTests.cs` reproduces the rulebook's own worked example (Castanos besieging Lisbon,
+  12.3) verbatim as a golden test, plus the edges that are easy to miss on a first read of the
+  rules: the Fortress does not fall if the besiegers are wiped out the same Round it would
+  otherwise fall (12.3), and kills take priority over disrupts when capacity runs out (11.3).
+- Two assumptions the rulebook leaves open, fixed for the calculator to compute against (see
+  TNW-FEASIBILITY-2026-09-27.md §7 for the reasoning): excess casualties fall on Units before the
+  Commander, and Land Battle's discretionary bonus-cancellation (11.33) does not apply to Sieges.
+  Revisit both if a rule change or an official ruling settles them differently.
+- `TnwSiegeMethods.ResolveRound` is the single source of truth for one Siege Round; both the exact
+  stats (`TnwSiegeExactStats`) and the single-roll simulation (`TnwSiegeMethods.RollOnce`) call it,
+  so they cannot disagree with each other by construction.
