@@ -32,9 +32,9 @@ The calculator handles:
 - Flank attacks, including the extra-attacking-space DRM
 - Out-of-supply units and the Sinai attacker penalty
 
-### The Napoleonic Wars Battle and Siege Calculators
-Two calculators for GMT Games' multiplayer card-driven strategy game "The Napoleonic Wars", each
-on its own page. A Naval Battle calculator may follow.
+### The Napoleonic Wars Battle, Naval Battle and Siege Calculators
+Three calculators for GMT Games' multiplayer card-driven strategy game "The Napoleonic Wars", each
+on its own page.
 
 The Battle calculator (rule 11) handles:
 - Each side's dice pool: Units, Commander Battle Rating, nationality bonus, battle event dice
@@ -43,6 +43,12 @@ The Battle calculator (rule 11) handles:
 - Two Rounds, kill/disrupt priority, rout, Overrun, Flag Overrun and the rout Resource roll
 - Exact statistics for small and medium battles; larger battles fall back to a Monte Carlo
   estimate, and the result says which one you got
+
+The Naval Battle calculator (rule 13) handles:
+- Fleets of any mix of nations, with each nation's dice per Squadron and Squadrons under Refit
+- Sinking by "6"s split evenly across nations, and "5"s reducing a Fleet's later dice
+- Failed evasions, and battles in an enemy Port or Fortress-Port with shore battery fire
+- Exact statistics for small and medium battles, Monte Carlo above that, as for land battles
 
 The Siege calculator (rule 12) handles:
 - The Besieging Army's dice pool: Command Rating cap, Commander Battle Rating, nationality bonus,
@@ -112,7 +118,7 @@ AbeGamingBlazorApp.slnx
 ├── AbeGaming.GameLogic/                 # Game rules engine (no UI dependencies)
 │   ├── FtP/                             # For The People: CRT, battle model, exact stats, Monte Carlo
 │   ├── PoG/                             # Paths of Glory: CRTs, battle model, exact stats
-│   ├── TNW/                             # The Napoleonic Wars: shared dice pool, Battle and Siege
+│   ├── TNW/                             # The Napoleonic Wars: shared dice pool, Battle, Naval, Siege
 │   └── Dice.cs, HitStats.cs, ...        # Shared helpers
 ├── AbeGamingBlazorApp/                  # Blazor WebAssembly PWA
 │   ├── Components/                      # Reusable UI parts (side inputs, stats displays, InfoTip)
@@ -121,6 +127,7 @@ AbeGamingBlazorApp.slnx
 │   │   ├── FtpBattlePage.razor          # For The People calculator
 │   │   ├── PoGBattle.razor              # Paths of Glory calculator
 │   │   ├── TnwBattlePage.razor          # The Napoleonic Wars: Battle calculator
+│   │   ├── TnwNavalPage.razor           # The Napoleonic Wars: Naval Battle calculator
 │   │   ├── TnwSiegePage.razor           # The Napoleonic Wars: Siege calculator
 │   │   ├── About.razor, Contact.razor   # Info pages
 │   │   ├── Install.razor                # PWA install instructions

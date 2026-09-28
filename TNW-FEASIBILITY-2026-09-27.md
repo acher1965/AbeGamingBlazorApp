@@ -435,3 +435,56 @@ one you got.
    rout eliminations. The Fortress exception is a tooltip, not an input.
 
 Nav now has 9 items. The grouping caveat from §0.1 still applies.
+
+## 10. Naval Battle (stage 3) - implemented 2026-09-28
+
+The Naval Battle calculator is at `/tnwnaval`. It has the same structure as Land Battle:
+one pure rules path, exact stats within a work budget, and Monte Carlo above it. The
+page opens with the rulebook's own example (four British Squadrons against two French
+and two Spanish that failed to evade), and shows each Fleet's Round-1 dice live. The
+tester should see 13 and 6.
+
+**Rules settled from the text (no assumption needed):**
+- **Dice per Squadron:** British 3; French, Danish or Swedish 2; Russian, Turkish or
+  Spanish 1. A Squadron under Refit rolls one less, never below 0. There are no events
+  and no nationality bonus in naval combat (13.4).
+- **Hits:** each "6" sinks a Squadron, and each "5" costs the Fleet one die in later
+  Rounds, however often a Squadron is hit. There is no rout.
+- **Sides are Active and Inactive, not attacker and defender.** A tie after two Rounds
+  goes against the Active Fleet. The +1 die for a failed evasion goes to whichever Fleet
+  the enemy failed to evade, in Round 1 only. Fleets in Port can't evade, so that option
+  is disabled for Port battles.
+- **Port battles (13.5):**
+  - The shore batteries (2 dice, 4 for a Fortress) fire before combat. Their "5"s already
+    cut the Active Fleet's Round 1 dice, and their hits count in Round 1's total.
+  - They fire again with the defending Fleet in each Round.
+  - A second Round needs both Fleets to still exist, so an empty Port that ties means the
+    Active Fleet loses.
+  - If the Port loses, its whole Fleet is eliminated.
+
+**Assumptions - please review:**
+1. **Which Squadron sinks.** It's the owner's choice, split as evenly as possible across
+   nations. Among the nations that have lost the fewest so far, the owner sinks the
+   Squadron rolling the fewest dice, Refit ones first. This reproduces the rulebook
+   example: the first loss is Spanish rather than French, the second is French.
+2. **Shore batteries are not a Fleet,** so "5"s never reduce their dice.
+3. **An empty Port is not "eliminated".** It never had a Fleet, so the "surviving Fleet
+   always wins" clause doesn't apply to it. The Port battle is still fought and decided
+   on hits.
+4. **Out of scope:**
+   - Fortified straits (13.8), since the rule doesn't give the shore dice for a strait.
+   - Squadrons under Build in a Port that loses (they aren't counted as losses).
+   - The 2d6 interception and evasion rolls themselves: "failed to evade" is an input, as
+     on the land page.
+   - Where a defeated Fleet retreats (13.42).
+
+**Performance, measured in the browser.** The first version took up to 13 s for exact
+stats and 10 s for Monte Carlo. Two changes brought that to about 1.1 s and 1.4 s at
+worst:
+- Precomputing the order Squadrons sink in, once per Fleet.
+- Counting Squadrons with bit arithmetic instead of a loop.
+
+The exact/Monte Carlo boundary stays at 1M evaluations, as for Land Battle.
+
+Nav now has 10 items. A single TNW landing page, or a grouped menu, is a reasonable next
+tidy-up.

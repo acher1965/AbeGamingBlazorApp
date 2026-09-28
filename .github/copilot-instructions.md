@@ -12,8 +12,8 @@ The solution file is `AbeGamingBlazorApp.slnx` (XML solution format).
   - `FtP/` - For The People: CRT, battle model and input rules, exact stats, Monte Carlo simulation
   - `PoG/` - Paths of Glory: CRTs, battle model and input rules, exact stats (`PoGExactStats.Calculate`)
   - `TNW/` - The Napoleonic Wars: `TnwDicePool` (shared trinomial dice math), `TnwLandBattle*`
-    (Battle calculator, rule 11), `TnwSiege*` (Siege calculator, rule 12). Each battle type has its
-    own page; Naval Battle may follow and should reuse `TnwDicePool`
+    (Battle calculator, rule 11), `TnwSiege*` (Siege calculator, rule 12), `TnwNavalBattle*` and
+    `TnwFleet*` (Naval Battle calculator, rule 13). Each battle type has its own page
 - `AbeGamingBlazorApp/` - Blazor WebAssembly PWA (`Pages/`, `Components/`, `Layout/`, `wwwroot/`)
 - `AbeGaming.GameLogic.Tests/` - xUnit tests for the rules engine
 - `AbeGaming.BlazorApp.Component.Tests/` - bUnit component tests
@@ -87,3 +87,21 @@ The solution file is `AbeGamingBlazorApp.slnx` (XML solution format).
 - Assumptions (see TNW-FEASIBILITY-2026-09-27.md §9): kills fall on already-disrupted Units first,
   then undisrupted Units, then the Commander; each disrupt beyond the Commander cancels one
   nationality bonus die; event dice apply to Round 1 only; a losing attacker can always retreat.
+
+## Tests for TNW Naval Battle
+
+- Same structure as Land Battle: one pure path in `TnwNavalBattleMethods`, exact stats with a work
+  budget and a Monte Carlo fallback, and `ExactStats_And_MonteCarlo_ProduceSimilarResults`.
+- The rulebook's naval example (13.4, British vs French and Spanish) is the golden test,
+  `RulebookExample_FullBattle_TieThenTie_ActiveBritishLose`, step by step: 13 vs 6 dice, the Spanish
+  Squadron sunk first, 9 vs 3 dice in Round 2, and the Active Fleet losing the second tie.
+- `TnwFleetComposition` packs the per-nation counts into one `ulong` so battle definitions keep value
+  equality - the page shows results only while `LastStatsBattle == CurrentBattle`. Don't replace it
+  with an array or list.
+- Performance matters here: the first version took 13 s in the browser. Sinkings follow a fixed
+  allocation rule, so the Fleet after k sinkings is precomputed once per starting Fleet
+  (`LossSequence`), and `TotalSquadrons` sums the packed counts in constant time. Re-measure in the
+  browser after touching `ApplyHits`, `Verdict` or `Conclude`.
+- Assumptions (see TNW-FEASIBILITY-2026-09-27.md §10): among the nations with fewest losses, the
+  owner sinks the Squadron rolling fewest dice, Refit first; shore battery dice are never reduced by
+  "5"s; fortified straits (13.8) and Squadrons under Build are out of scope.

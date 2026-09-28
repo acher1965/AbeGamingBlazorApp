@@ -1,0 +1,82 @@
+@* TnwNavalBattleStatsDisplay.razor - Displays TnwNavalBattleStats (exact or Monte Carlo) *@
+@using AbeGaming.GameLogic.TNW
+
+<div class="card border-primary mb-3">
+    <div class="card-header bg-primary text-white py-2">
+        <strong>@Title</strong>
+    </div>
+    <div class="card-body py-2">
+        <div class="row g-2">
+            <div class="col-6">
+                <div class="d-flex justify-content-between small">
+                    <span>⛵Active Wins:</span>
+                    <strong class="text-success">@(Stats.ActiveWinProbability.ToString("P1"))</strong>
+                </div>
+                <div class="progress mb-1" style="height: 8px;">
+                    <div class="progress-bar bg-success" style="width: @(Stats.ActiveWinProbability * 100)%"></div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="d-flex justify-content-between small">
+                    <span>⚓Inactive Wins:</span>
+                    <strong class="text-danger">@(Stats.InactiveWinProbability.ToString("P1"))</strong>
+                </div>
+                <div class="progress mb-1" style="height: 8px;">
+                    <div class="progress-bar bg-danger" style="width: @(Stats.InactiveWinProbability * 100)%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="small text-muted">
+            <InfoTip Text="@SecondRoundTip">🔁Second Round: @(Stats.SecondRoundProbability.ToString("P1"))</InfoTip>
+        </div>
+
+        <hr class="my-2" />
+        <div class="row small">
+            @foreach (TnwNavalSideStats side in new[] { Stats.Active, Stats.Inactive })
+            {
+                <div class="col-6">
+                    <div>
+                        Squadrons lost: <strong>@(side.MeanSquadronsLost.ToString("F1"))</strong>
+                        <span class="text-muted">(+/-@(side.StdDevSquadronsLost.ToString("F1")))</span>
+                    </div>
+                    @if (side.EliminatedProbability > 0)
+                    {
+                        <span style="white-space: nowrap;"><InfoTip Text="@EliminatedTip">💀Fleet eliminated: @(side.EliminatedProbability.ToString("P1"))</InfoTip></span>
+                    }
+                </div>
+            }
+        </div>
+
+        <hr class="my-2" />
+        <div class="row">
+            @foreach (TnwNavalSideStats side in new[] { Stats.Active, Stats.Inactive })
+            {
+                double maxProbability = side.SquadronsLostDistribution.Count == 0 ? 0 : side.SquadronsLostDistribution.Values.Max();
+                <div class="col-6 mb-2">
+                    <div class="small text-muted mb-1">Squadrons lost📊</div>
+                    <div class="d-flex flex-wrap gap-1">
+                        @foreach (KeyValuePair<int, double> entry in side.SquadronsLostDistribution.OrderBy(x => x.Key))
+                        {
+                            bool isMax = entry.Value == maxProbability;
+                            <span class="badge dist-badge" title="@($"Loses {entry.Key} Squadron(s): {entry.Value:P1}")"><span class="dist-hits">@entry.Key</span>: <span class="dist-prob @(isMax ? "fw-bold" : "")">@(entry.Value.ToString("P0"))</span></span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    public const string SecondRoundTip =
+        "Round 1 ended with equal casualties and both Fleets still exist, so a second Round was fought. If still tied, the Active Fleet loses (rules 13.4, 13.5).";
+    public const string EliminatedTip =
+        "Every Squadron is lost: sunk by 6s, or - in a Port battle the Port loses - the whole defending Fleet (rule 13.5).";
+
+    [Parameter, EditorRequired]
+    public TnwNavalBattleStats Stats { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = "";
+}
