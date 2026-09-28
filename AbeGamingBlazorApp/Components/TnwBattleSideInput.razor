@@ -1,0 +1,135 @@
+@using AbeGaming.GameLogic.TNW
+
+<div class="card h-100">
+    <div class="card-header py-1 bg-@HeaderColor text-white">
+        <strong class="small">@Icon@SideName</strong>
+    </div>
+    <div class="card-body py-2">
+        <div class="row g-1 mb-1">
+            <label class="col-5 col-form-label col-form-label-sm">
+                Units <InfoTip Text="Every Unit in the battle, excluding the Commander. Other leaders count as 1 Unit each (rule 11.2)." />
+            </label>
+            <div class="col-7">
+                <input type="number"
+                       class="form-control form-control-sm"
+                       id="@($"{IdPrefix}Units")"
+                       value="@Units"
+                       @onchange="OnUnitsChanged"
+                       onfocus="this.select()"
+                       min="0"
+                       max="30" />
+            </div>
+        </div>
+
+        <div class="row g-1 mb-1">
+            <label class="col-5 col-form-label col-form-label-sm">
+                Commander <InfoTip Text="The Commander's printed Battle Rating: that many bonus dice while he is undisrupted. None if no leader is present." />
+            </label>
+            <div class="col-7">
+                <select class="form-select form-select-sm" id="@($"{IdPrefix}Commander")" value="@CommanderBattleRating" @onchange="OnCommanderChanged">
+                    <option value="0">None</option>
+                    @for (int rating = 1; rating <= 4; rating++)
+                    {
+                        <option value="@rating">Battle Rating @rating</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="row g-1 mb-1">
+            <label class="col-5 col-form-label col-form-label-sm">
+                Nationality <InfoTip Text="Counted over all Units and leaders: more than half French +2 dice, at least half Minor +0, otherwise +1 (rule 11.21)." />
+            </label>
+            <div class="col-7">
+                <select class="form-select form-select-sm" id="@($"{IdPrefix}Composition")" value="@Composition" @onchange="OnCompositionChanged">
+                    @foreach (TnwForceComposition option in Enum.GetValues<TnwForceComposition>())
+                    {
+                        <option value="@option">@CompositionLabel(option)</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="row g-1 mb-1">
+            <label class="col-5 col-form-label col-form-label-sm">
+                Event dice <InfoTip Text="Dice added or removed by battle events. Events affect only one Round, so these apply to Round 1 only (rule 11.1)." />
+            </label>
+            <div class="col-7">
+                <input type="number"
+                       class="form-control form-control-sm"
+                       id="@($"{IdPrefix}EventDice")"
+                       value="@EventDice"
+                       @onchange="OnEventDiceChanged"
+                       onfocus="this.select()"
+                       min="-5"
+                       max="5" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string SideName { get; set; } = "Attacker";
+    [Parameter] public string Icon { get; set; } = "";
+    [Parameter] public string HeaderColor { get; set; } = "primary";
+
+    /// <summary>Prefix for element ids, e.g. "tnwAttacker" gives "tnwAttackerUnits".</summary>
+    [Parameter] public string IdPrefix { get; set; } = string.Empty;
+
+    [Parameter] public int Units { get; set; }
+    [Parameter] public EventCallback<int> UnitsChanged { get; set; }
+
+    [Parameter] public int CommanderBattleRating { get; set; }
+    [Parameter] public EventCallback<int> CommanderBattleRatingChanged { get; set; }
+
+    [Parameter] public TnwForceComposition Composition { get; set; }
+    [Parameter] public EventCallback<TnwForceComposition> CompositionChanged { get; set; }
+
+    [Parameter] public int EventDice { get; set; }
+    [Parameter] public EventCallback<int> EventDiceChanged { get; set; }
+
+    /// <summary>Display name for a (possibly multinational) force's bonus-dice category.</summary>
+    private static string CompositionLabel(TnwForceComposition composition) => composition switch
+    {
+        TnwForceComposition.MajorityFrench => "Over half French (+2)",
+        TnwForceComposition.Power => "Other (+1)",
+        TnwForceComposition.Minor => "Half or more Minor (+0)",
+        _ => composition.ToString(),
+    };
+
+    private async Task OnUnitsChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int value))
+        {
+            await UnitsChanged.InvokeAsync(TnwLandBattleInputRules.ClampUnits(value));
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnCommanderChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int value))
+        {
+            await CommanderBattleRatingChanged.InvokeAsync(TnwLandBattleInputRules.ClampCommanderBattleRating(value));
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnCompositionChanged(ChangeEventArgs e)
+    {
+        if (Enum.TryParse<TnwForceComposition>(e.Value?.ToString(), out TnwForceComposition value))
+        {
+            await CompositionChanged.InvokeAsync(value);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnEventDiceChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int value))
+        {
+            await EventDiceChanged.InvokeAsync(TnwLandBattleInputRules.ClampEventDice(value));
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+}

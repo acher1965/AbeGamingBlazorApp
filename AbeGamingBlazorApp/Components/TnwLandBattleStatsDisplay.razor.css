@@ -1,0 +1,23 @@
+/* TnwLandBattleStatsDisplay component styles */
+
+.dist-badge {
+    font-size: 0.72em;
+    background-color: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+    color: #212529 !important;
+}
+
+.dist-hits {
+    font-weight: 700;
+    color: #0d6efd;
+}
+
+.dist-prob {
+    color: #6c757d;
+}
+
+/* Vertical separator between attacker and defender columns */
+.card-body .row > .col-6:last-child {
+    border-left: 1px solid #e9ecef;
+    padding-left: 0.75rem;
+}

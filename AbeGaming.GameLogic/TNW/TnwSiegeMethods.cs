@@ -14,14 +14,6 @@ namespace AbeGaming.GameLogic.TNW
         /// </summary>
         public static int FortressStrength(bool isGibraltar) => isGibraltar ? 4 : 2;
 
-        private static int NationalityBonusDice(TnwForceComposition composition) => composition switch
-        {
-            TnwForceComposition.Minor => 0,
-            TnwForceComposition.Power => 1,
-            TnwForceComposition.MajorityFrench => 2,
-            _ => 0,
-        };
-
         /// <summary>
         /// Units that roll this Round: the undisrupted Units available, capped at the
         /// Commander's Command Rating. Units beyond the cap wait outside the Army and
@@ -41,7 +33,7 @@ namespace AbeGaming.GameLogic.TNW
         {
             int dice = RollingUnits(battle, unitsAvailable)
                 + (commanderAvailable ? battle.CommanderBattleRating : 0)
-                + NationalityBonusDice(battle.Composition)
+                + battle.Composition.BonusDice()
                 - (battle.ZoneModifierApplies ? 1 : 0);
             return Math.Max(0, dice);
         }

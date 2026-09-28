@@ -11,9 +11,9 @@ The solution file is `AbeGamingBlazorApp.slnx` (XML solution format).
 - `AbeGaming.GameLogic/` - rules engine
   - `FtP/` - For The People: CRT, battle model and input rules, exact stats, Monte Carlo simulation
   - `PoG/` - Paths of Glory: CRTs, battle model and input rules, exact stats (`PoGExactStats.Calculate`)
-  - `TNW/` - The Napoleonic Wars: `TnwDicePool` (shared trinomial dice math, reused across TNW's
-    battle types), `TnwSiege*` (Siege calculator - the only TNW calculator so far; Land Battle and
-    Naval Battle are planned to follow, each on its own page, reusing `TnwDicePool`)
+  - `TNW/` - The Napoleonic Wars: `TnwDicePool` (shared trinomial dice math), `TnwLandBattle*`
+    (Battle calculator, rule 11), `TnwSiege*` (Siege calculator, rule 12). Each battle type has its
+    own page; Naval Battle may follow and should reuse `TnwDicePool`
 - `AbeGamingBlazorApp/` - Blazor WebAssembly PWA (`Pages/`, `Components/`, `Layout/`, `wwwroot/`)
 - `AbeGaming.GameLogic.Tests/` - xUnit tests for the rules engine
 - `AbeGaming.BlazorApp.Component.Tests/` - bUnit component tests
@@ -70,3 +70,20 @@ The solution file is `AbeGamingBlazorApp.slnx` (XML solution format).
 - `TnwSiegeMethods.ResolveRound` is the single source of truth for one Siege Round; both the exact
   stats (`TnwSiegeExactStats`) and the single-roll simulation (`TnwSiegeMethods.RollOnce`) call it,
   so they cannot disagree with each other by construction.
+
+## Tests for TNW Land Battle
+
+- `TnwLandBattleMethods` holds one pure path (`DiceForRound`, `ApplyHits`, `Verdict`, `Conclude`)
+  shared by the exact enumeration, the Monte Carlo simulation and "Roll 1 Battle", as for Siege.
+- Exact stats get expensive with large dice pools: every tied Round-1 state pair needs a joint
+  enumeration of both sides' Round-2 rolls. `TnwLandBattleExactStats.TryCalculate` estimates the
+  work before Round 2 and declines above `DefaultWorkBudget` (1M evaluations, about 1.3 s in the
+  browser, around 11 v 11); `TnwLandBattleStatsCalculator` then falls back to Monte Carlo and the
+  result is labelled accordingly. Re-measure in the browser before raising the budget.
+- `ExactStats_And_MonteCarlo_ProduceSimilarResults` cross-checks the two engines on small battles,
+  using a seeded `Random` so it is deterministic - keep it passing after any rules change.
+- Victory and rout are decided on casualties as rolled (uncapped), following the rulebook's naval
+  example (13.4); a side wiped out by kills loses regardless of totals (11.32).
+- Assumptions (see TNW-FEASIBILITY-2026-09-27.md §9): kills fall on already-disrupted Units first,
+  then undisrupted Units, then the Commander; each disrupt beyond the Commander cancels one
+  nationality bonus die; event dice apply to Round 1 only; a losing attacker can always retreat.

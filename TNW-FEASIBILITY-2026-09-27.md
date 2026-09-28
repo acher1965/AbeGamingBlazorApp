@@ -110,15 +110,14 @@ kills take priority over disrupts when there aren't enough units to record both.
   the winner's kills exceed the loser's total units/leaders, extra effects trigger
   (continued movement, a free Flag placement).
 
-This is genuinely simpler to compute exactly than FtP's CRT: each round is a small,
-independent trinomial (kill/disrupt/miss) per die, Round 2 only happens on the tie
-branch, and every downstream check (rout margin, overrun, flag overrun) is a
-deterministic function of the (kills, disrupts) pair. Exact enumeration is very
-feasible — likely *less* combinatorial work than FtP's `ExactStats` (which already
-handles two dice, four die-roll checks, and amphibious edge cases over a 36x36
-result space). A Monte Carlo cross-check (same pattern as `FtpMonteCarlo`) would
-still be worth adding, mirroring the existing FtP/PoG UI pattern of exact stats plus
-an optional simulation.
+~~This is genuinely simpler to compute exactly than FtP's CRT ... Exact enumeration is
+very feasible.~~ **Corrected 2026-09-28, after building it.** Each Round alone is a small
+trinomial per side, but the battle is two-sided: every tied Round-1 state pair needs a
+joint enumeration of both sides' Round-2 rolls. The work grows roughly with the sixth
+power of the dice pool. Measured natively, 12 v 12 took 180 ms and 24 v 24 took 7 s,
+and the browser is about 10x slower. So exact stats only cover small and medium
+battles, and larger ones fall back to Monte Carlo (see §9). The two engines agree to
+within half a percentage point where both can run.
 
 ### 1.1-revised The Siege mechanic (rule 12), corrected and in calculator terms
 
@@ -384,3 +383,55 @@ Army" (12.33). **Confirmed correct by the user, 2026-09-28.**
 
 The bound on the number of Rounds (§1.1-revised) is unchanged. Continuing still needs
 at least one net six per Round.
+
+## 9. Land Battle (stage 2) - implemented 2026-09-28
+
+The Land Battle calculator is at `/tnwbattle`, on its own page as agreed. It uses the
+same structure as Siege: one pure rules path (`TnwLandBattleMethods`) shared by exact
+stats, Monte Carlo and "Roll 1 Battle".
+
+**Exact or Monte Carlo.** Exact stats are computed when they fit a budget of 1M outcome
+evaluations. Measured in the browser, that's about 1.3 s at worst, around 11 v 11 with
+default settings. Bigger battles use a 65,536-trial Monte Carlo estimate, which takes
+about 1.2 s and is within about 0.4 percentage points. The result header says which
+one you got.
+
+**Rules settled from the text (no assumption needed):**
+- There is no Command Rating cap in battle, unlike Siege. Every piece in the Duchy
+  fights (9.7), and leaders other than the Commander count as Units (11.2).
+- The victor is decided on casualties *as rolled*, uncapped (11.32). This matches the
+  rulebook's naval example (13.4), the only two-Round example in the book. A side wiped
+  out by kills loses whatever the totals.
+- A tie after Round 1 means Round 2. A tie after Round 2 means the attacker (the Active
+  Formation) retreats.
+- Terrain helps the defender in Round 1 only, and is lost entirely if any defender
+  evasion failed (11.22).
+- Defending Armies not formed into an Army Group fight with Commander rating 0, but the
+  printed rating still counts for the rout Resource roll (9.7). This is a checkbox.
+- Rout (margin of 3 or more) eliminates the loser's disrupted pieces, and gives a
+  Resource chance of the routed Commander's Battle Rating out of 6 (11.5). A defender
+  that can't retreat is eliminated (11.42). Flag Overrun happens when the kills rolled
+  exceed the loser's pieces, unless both sides are eliminated (11.7).
+
+**Assumptions - please review, as with Siege:**
+1. **Kill allocation.** Kills fall on already-disrupted Units first, then undisrupted
+   Units, and on the Commander only when no Unit is left. The owner chooses (11.3); this
+   is the owner-optimal choice, the same philosophy as Siege. It only matters in Round 2,
+   and only for how many Units a rout then eliminates.
+2. **Excess disrupts (11.33).** The first disrupt beyond the Units disrupts the
+   Commander, whose whole rating is then lost for Round 2. Each further excess disrupt
+   cancels **one** nationality bonus die. The rule says they "detract from" the bonuses
+   "at the player's discretion"; per-die is my reading.
+3. **Event dice apply to Round 1 only.** Events affect one Round (11.1), and events
+   played before Round 2 aren't modeled. The same input is not applied twice.
+4. **One terrain type.** If Formations entered across different terrain (say Rough and
+   Pass from two directions), the calculator takes the single terrain you pick. The rule
+   lists each case separately without saying whether they stack.
+5. **A losing attacker can always retreat** to a Duchy it came from, without Attrition.
+   11.41 Attrition retreats and attacker no-retreat eliminations are out of scope.
+6. **Nationality composition is fixed** for the battle, even if losses would change the
+   French/Minor majority.
+7. **Flag Overrun** reads "eliminations" as kills rolled against the loser, not counting
+   rout eliminations. The Fortress exception is a tooltip, not an input.
+
+Nav now has 9 items. The grouping caveat from §0.1 still applies.
