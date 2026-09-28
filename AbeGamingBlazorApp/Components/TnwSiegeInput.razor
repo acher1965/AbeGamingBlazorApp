@@ -7,7 +7,37 @@
     <div class="card-body py-2">
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
-                Units <InfoTip Text="Undisrupted Units in the Besieging Army (leaders other than the Commander count as 1 Unit each)." />
+                Command Rating <InfoTip Text="The Commander's Command Rating (4, 6 or 8): the most Units that roll each Siege Round (rule 12.33)." />
+            </label>
+            <div class="col-7">
+                <select class="form-select form-select-sm" id="tnwSiegeCommandRating" value="@CommandRating" @onchange="OnCommandRatingChanged">
+                    @foreach (int rating in TnwSiegeInputRules.CommandRatings)
+                    {
+                        <option value="@rating">@rating</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="row g-1 mb-1">
+            <label class="col-5 col-form-label col-form-label-sm">
+                Battle Rating <InfoTip Text="The Commander's Battle Rating (1 to 4): that many bonus dice while he is undisrupted." />
+            </label>
+            <div class="col-7">
+                <input type="number"
+                       class="form-control form-control-sm"
+                       id="tnwSiegeCommanderBattleRating"
+                       value="@CommanderBattleRating"
+                       @onchange="OnCommanderBattleRatingChanged"
+                       onfocus="this.select()"
+                       min="1"
+                       max="4" />
+            </div>
+        </div>
+
+        <div class="row g-1 mb-1">
+            <label class="col-5 col-form-label col-form-label-sm">
+                Units available <InfoTip Text="All Units in the Duchy, excluding the Commander (other leaders count as 1 Unit). Only up to the Command Rating roll; the rest replace losses in later Rounds (rule 12.33)." />
             </label>
             <div class="col-7">
                 <input type="number"
@@ -17,49 +47,23 @@
                        @onchange="OnUnitsChanged"
                        onfocus="this.select()"
                        min="0"
-                       max="20" />
+                       max="30" />
             </div>
         </div>
 
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
-                Composition <InfoTip Text="At least half Minor-nation units: no bonus die. A normal force: +1. Majority French: +2 (rule 11.21)." />
+                Nationality <InfoTip Text="Armies are single-nationality. French: +2 bonus dice. Other Power: +1. Minor: none (rule 11.21)." />
             </label>
             <div class="col-7">
-                <select class="form-select form-select-sm" value="@Composition" @onchange="OnCompositionChanged">
+                <select class="form-select form-select-sm" id="tnwSiegeComposition" value="@Composition" @onchange="OnCompositionChanged">
                     @foreach (TnwForceComposition option in Enum.GetValues<TnwForceComposition>())
                     {
-                        <option value="@option">@option</option>
+                        <option value="@option">@CompositionLabel(option)</option>
                     }
                 </select>
             </div>
         </div>
-
-        <div class="form-check mb-1">
-            <input class="form-check-input" type="checkbox" id="tnwSiegeCommanderPresent" checked="@CommanderPresent" @onchange="OnCommanderPresentChanged" />
-            <label class="form-check-label small" for="tnwSiegeCommanderPresent">
-                Commander present <InfoTip Text="Adds the Commander's Battle Rating as bonus dice while undisrupted." />
-            </label>
-        </div>
-
-        @if (CommanderPresent)
-        {
-            <div class="row g-1 mb-1">
-                <label class="col-5 col-form-label col-form-label-sm">
-                    Battle Rating <InfoTip Text="The Commander's printed Battle Rating (1 to 4)." />
-                </label>
-                <div class="col-7">
-                    <input type="number"
-                           class="form-control form-control-sm"
-                           id="tnwSiegeCommanderBattleRating"
-                           value="@CommanderBattleRating"
-                           @onchange="OnCommanderBattleRatingChanged"
-                           onfocus="this.select()"
-                           min="1"
-                           max="4" />
-                </div>
-            </div>
-        }
     </div>
 </div>
 
@@ -67,14 +71,23 @@
     [Parameter] public int Units { get; set; }
     [Parameter] public EventCallback<int> UnitsChanged { get; set; }
 
-    [Parameter] public TnwForceComposition Composition { get; set; }
-    [Parameter] public EventCallback<TnwForceComposition> CompositionChanged { get; set; }
-
-    [Parameter] public bool CommanderPresent { get; set; }
-    [Parameter] public EventCallback<bool> CommanderPresentChanged { get; set; }
+    [Parameter] public int CommandRating { get; set; }
+    [Parameter] public EventCallback<int> CommandRatingChanged { get; set; }
 
     [Parameter] public int CommanderBattleRating { get; set; }
     [Parameter] public EventCallback<int> CommanderBattleRatingChanged { get; set; }
+
+    [Parameter] public TnwForceComposition Composition { get; set; }
+    [Parameter] public EventCallback<TnwForceComposition> CompositionChanged { get; set; }
+
+    /// <summary>Display name for a single-nationality Army's bonus-dice category.</summary>
+    private static string CompositionLabel(TnwForceComposition composition) => composition switch
+    {
+        TnwForceComposition.MajorityFrench => "French (+2)",
+        TnwForceComposition.Power => "Other Power (+1)",
+        TnwForceComposition.Minor => "Minor (+0)",
+        _ => composition.ToString(),
+    };
 
     private async Task OnUnitsChanged(ChangeEventArgs e)
     {
@@ -85,20 +98,11 @@
         }
     }
 
-    private async Task OnCompositionChanged(ChangeEventArgs e)
+    private async Task OnCommandRatingChanged(ChangeEventArgs e)
     {
-        if (Enum.TryParse<TnwForceComposition>(e.Value?.ToString(), out TnwForceComposition value))
+        if (int.TryParse(e.Value?.ToString(), out int value))
         {
-            await CompositionChanged.InvokeAsync(value);
-            await InvokeAsync(StateHasChanged);
-        }
-    }
-
-    private async Task OnCommanderPresentChanged(ChangeEventArgs e)
-    {
-        if (e.Value is bool value)
-        {
-            await CommanderPresentChanged.InvokeAsync(value);
+            await CommandRatingChanged.InvokeAsync(TnwSiegeInputRules.ClampCommandRating(value));
             await InvokeAsync(StateHasChanged);
         }
     }
@@ -108,6 +112,15 @@
         if (int.TryParse(e.Value?.ToString(), out int value))
         {
             await CommanderBattleRatingChanged.InvokeAsync(TnwSiegeInputRules.ClampCommanderBattleRating(value));
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnCompositionChanged(ChangeEventArgs e)
+    {
+        if (Enum.TryParse<TnwForceComposition>(e.Value?.ToString(), out TnwForceComposition value))
+        {
+            await CompositionChanged.InvokeAsync(value);
             await InvokeAsync(StateHasChanged);
         }
     }

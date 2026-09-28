@@ -55,7 +55,7 @@ namespace AbeGaming.BlazorApp.E2E.Tests
             await page.PressAsync("#tnwSiegeUnits", "Tab");
 
             string unitsValue = await page.InputValueAsync("#tnwSiegeUnits");
-            Assert.Equal("20", unitsValue);
+            Assert.Equal("30", unitsValue);
         }
 
         [Fact]

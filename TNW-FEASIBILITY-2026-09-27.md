@@ -336,19 +336,51 @@ calculator computable — flagged here, not buried in code comments only:
    the natural reading if you're using the calculator to evaluate *whether it's
    worth sieging*, which wants the best-case continuation policy, not a random
    one).
-4. **12.33 (Army Group reserves replacing losses mid-siege) is out of scope.** The
-   MVP models a single, non-reinforced Besieging Army, matching how PoG originally
-   shipped without sieges and FtP without naval rules — a deliberate cut, not an
-   oversight.
+4. ~~**12.33 (Army Group reserves replacing losses mid-siege) is out of scope.**~~
+   **Superseded 2026-09-28 by playtest feedback — see §8.** Leaving it out was a
+   mistake, not a harmless cut: the reserve rule changes the dice count in every
+   Round after a loss.
 5. **No Monte Carlo cross-check for Siege.** Exact stats are cheap enough here
    (small, strictly bounded state space) that a simulation adds little; this
    matches how PoG itself originally shipped exact-stats-only. Worth adding later
    if Land Battle's Monte Carlo makes the pattern feel expected.
 
-Also implemented, not requiring review: input clamps (Units 0-20, Commander
-Battle Rating 1-4 per the rulebook's own leader-rating range), a "Roll 1 Siege"
+Also implemented, not requiring review: input clamps (Units 0-30 since 2026-09-28,
+Commander Battle Rating 1-4 per the rulebook's own leader-rating range), a "Roll 1 Siege"
 single-random-resolution button mirroring FtP/PoG's UX, and the standard
 build/test/docs pass (GameLogic tests including the Castanos golden test, bUnit,
 one Playwright test, nav entry, a `TNW` section in `.github/copilot-instructions.md`
 and a `Home.razor` bullet). **Nothing was committed** — same as every other session
 this evening; that's still your call in the morning.
+
+## 8. Playtest corrections (2026-09-28)
+
+A human playtester checked the preview deployment and found the Siege inputs didn't
+match how the rules actually work. All three points are right, and follow directly
+from 12.2 and 12.33, which the first version had misread or left out:
+
+1. **The Commander is always present.** Only an Army may Siege (12.2), and an Army
+   always has a leader, so the "Commander present" checkbox was removed.
+2. **Only one Army rolls, capped at its Command Rating.** The number of Units that
+   roll each Round is at most the Commander's Command Rating (4, 6 or 8). Other
+   Armies in the same Duchy don't add dice. There is now a Command Rating input.
+3. **Spare Units replace losses (12.33).** The "Units" input is now *every* Unit
+   available in the Duchy. Units beyond the Command Rating don't roll, but they step
+   in to replace the rolling Army's disrupted or killed Units in later Rounds. Armies
+   are single-nationality, so the nationality bonus applies to the whole force (the
+   dropdown now reads French / Other Power / Minor).
+
+The playtester's worked example is now a golden test
+(`ResolveRound_NapoleonExample_LossReplacedFromReserve_StillRolls14`). Napoleon
+(Command Rating 8, Battle Rating 4) has 8 Units, and Soult's Army of 4 is with him.
+Round 1 rolls 8 + 2 (French) + 4 (Napoleon) = **14 dice, not 18**. After one Unit is
+killed, a Unit from Soult's Army steps in, so Round 2 rolls **14 again, not 13**.
+
+One modeling choice follows from this, adding to §7's list: **Units waiting beyond
+the Command Rating can't be hit by the Fortress's fire.** Only the Units that rolled
+that Round (plus the Commander) absorb its kills and disrupts, and the reserve then
+refills the gaps. This fits "replace any disrupted/eliminated Units in the Besieging
+Army" (12.33). **Confirmed correct by the user, 2026-09-28.**
+
+The bound on the number of Rounds (§1.1-revised) is unchanged. Continuing still needs
+at least one net six per Round.

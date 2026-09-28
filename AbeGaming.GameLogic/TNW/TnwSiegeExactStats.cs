@@ -74,9 +74,7 @@ namespace AbeGaming.GameLogic.TNW
                 ? 0
                 : outcomes.Where(o => o.Outcome.FortressFalls && o.Outcome.Overrun).Sum(o => o.Probability) / fallsProbability;
             double eliminatedProbability = outcomes.Where(o => o.Outcome.BesiegersEliminated).Sum(o => o.Probability);
-            double commanderLostProbability = battle.CommanderPresent
-                ? outcomes.Where(o => !o.Outcome.State.CommanderAlive).Sum(o => o.Probability)
-                : 0;
+            double commanderLostProbability = outcomes.Where(o => !o.Outcome.State.CommanderAlive).Sum(o => o.Probability);
 
             int[] unitsLost = outcomes.Select(o => battle.Units - o.Outcome.State.UnitsAlive).ToArray();
             int[] roundsTaken = outcomes.Select(o => o.Outcome.Round).ToArray();

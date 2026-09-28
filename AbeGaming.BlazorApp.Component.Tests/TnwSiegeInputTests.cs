@@ -18,7 +18,7 @@ public class TnwSiegeInputTests : BunitContext
 
         cut.Find("#tnwSiegeUnits").Change("999");
 
-        Assert.Equal(20, emittedUnits);
+        Assert.Equal(30, emittedUnits);
     }
 
     [Fact]
@@ -36,17 +36,39 @@ public class TnwSiegeInputTests : BunitContext
     }
 
     [Fact]
-    public void CommanderBattleRatingInput_OnlyRendersWhenCommanderPresent()
+    public void NoCommanderPresentCheckbox_BecauseOnlyArmiesCanSiege()
     {
         IRenderedComponent<TnwSiegeInput> cut = Render<TnwSiegeInput>(parameters => parameters
             .Add(p => p.Units, 4)
-            .Add(p => p.CommanderPresent, false));
+            .Add(p => p.CommandRating, 4));
 
-        Assert.Empty(cut.FindAll("#tnwSiegeCommanderBattleRating"));
-
-        cut.Render(parameters => parameters.Add(p => p.CommanderPresent, true));
-
+        Assert.Empty(cut.FindAll("input[type=checkbox]"));
         Assert.Single(cut.FindAll("#tnwSiegeCommanderBattleRating"));
+    }
+
+    [Fact]
+    public void CommandRatingSelect_OffersOnlyPrintedValues()
+    {
+        IRenderedComponent<TnwSiegeInput> cut = Render<TnwSiegeInput>(parameters => parameters
+            .Add(p => p.CommandRating, 4));
+
+        string[] options = cut.FindAll("#tnwSiegeCommandRating option").Select(o => o.TextContent).ToArray();
+
+        Assert.Equal(["4", "6", "8"], options);
+    }
+
+    [Fact]
+    public void OnCommandRatingChanged_EmitsSelectedValue()
+    {
+        int? emitted = null;
+
+        IRenderedComponent<TnwSiegeInput> cut = Render<TnwSiegeInput>(parameters => parameters
+            .Add(p => p.CommandRating, 4)
+            .Add(p => p.CommandRatingChanged, EventCallback.Factory.Create<int>(this, value => emitted = value)));
+
+        cut.Find("#tnwSiegeCommandRating").Change("8");
+
+        Assert.Equal(8, emitted);
     }
 
     [Fact]
@@ -55,8 +77,6 @@ public class TnwSiegeInputTests : BunitContext
         int? emittedRating = null;
 
         IRenderedComponent<TnwSiegeInput> cut = Render<TnwSiegeInput>(parameters => parameters
-            .Add(p => p.Units, 4)
-            .Add(p => p.CommanderPresent, true)
             .Add(p => p.CommanderBattleRating, 2)
             .Add(p => p.CommanderBattleRatingChanged, EventCallback.Factory.Create<int>(this, value => emittedRating = value)));
 
@@ -71,11 +91,10 @@ public class TnwSiegeInputTests : BunitContext
         TnwForceComposition? emitted = null;
 
         IRenderedComponent<TnwSiegeInput> cut = Render<TnwSiegeInput>(parameters => parameters
-            .Add(p => p.Units, 4)
             .Add(p => p.Composition, TnwForceComposition.Power)
             .Add(p => p.CompositionChanged, EventCallback.Factory.Create<TnwForceComposition>(this, value => emitted = value)));
 
-        cut.Find("select").Change(nameof(TnwForceComposition.MajorityFrench));
+        cut.Find("#tnwSiegeComposition").Change(nameof(TnwForceComposition.MajorityFrench));
 
         Assert.Equal(TnwForceComposition.MajorityFrench, emitted);
     }

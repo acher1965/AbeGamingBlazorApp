@@ -31,9 +31,9 @@
 <div class="row g-2 mb-2">
     <div class="col-12">
         <TnwSiegeInput @bind-Units="Units"
-                       @bind-Composition="Composition"
-                       @bind-CommanderPresent="CommanderPresent"
-                       @bind-CommanderBattleRating="CommanderBattleRating" />
+                       @bind-CommandRating="CommandRating"
+                       @bind-CommanderBattleRating="CommanderBattleRating"
+                       @bind-Composition="Composition" />
     </div>
 </div>
 
@@ -111,9 +111,14 @@
         set => _units = TnwSiegeInputRules.ClampUnits(value);
     }
 
-    private TnwForceComposition Composition = TnwForceComposition.Power;
+    private int _commandRating = 4;
+    private int CommandRating
+    {
+        get => _commandRating;
+        set => _commandRating = TnwSiegeInputRules.ClampCommandRating(value);
+    }
 
-    private bool CommanderPresent = true;
+    private TnwForceComposition Composition = TnwForceComposition.Power;
 
     private int _commanderBattleRating = 2;
     private int CommanderBattleRating
@@ -132,8 +137,8 @@
 
     private TnwSiegeBattleModel CreateBattle() => new(
         Units,
-        CommanderPresent,
-        CommanderPresent ? CommanderBattleRating : 0,
+        CommandRating,
+        CommanderBattleRating,
         Composition,
         ZoneModifierApplies,
         IsGibraltar);

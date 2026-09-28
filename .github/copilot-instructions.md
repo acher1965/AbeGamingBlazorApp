@@ -63,6 +63,10 @@ The solution file is `AbeGamingBlazorApp.slnx` (XML solution format).
   TNW-FEASIBILITY-2026-09-27.md §7 for the reasoning): excess casualties fall on Units before the
   Commander, and Land Battle's discretionary bonus-cancellation (11.33) does not apply to Sieges.
   Revisit both if a rule change or an official ruling settles them differently.
+- Only one Army sieges, so a Commander is always present. At most `CommandRating` Units roll per
+  Round; any further Units in the Duchy replace the Army's losses in later Rounds (12.33) and cannot
+  be hit by the Fortress while waiting. The playtester's Napoleon example (14 dice in both Rounds)
+  is a golden test.
 - `TnwSiegeMethods.ResolveRound` is the single source of truth for one Siege Round; both the exact
   stats (`TnwSiegeExactStats`) and the single-roll simulation (`TnwSiegeMethods.RollOnce`) call it,
   so they cannot disagree with each other by construction.

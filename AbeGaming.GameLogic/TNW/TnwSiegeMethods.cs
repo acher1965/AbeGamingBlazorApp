@@ -23,15 +23,23 @@ namespace AbeGaming.GameLogic.TNW
         };
 
         /// <summary>
+        /// Units that roll this Round: the undisrupted Units available, capped at the
+        /// Commander's Command Rating. Units beyond the cap wait outside the Army and
+        /// replace its losses in later Rounds (rule 12.33).
+        /// </summary>
+        public static int RollingUnits(TnwSiegeBattle battle, int unitsAvailable) =>
+            Math.Min(unitsAvailable, battle.CommandRating);
+
+        /// <summary>
         /// Dice the Besieging Army rolls this Round, given how much of its force is
-        /// still undisrupted (rule 11.2, 12.32). Assumption: the nationality bonus
-        /// applies at full value every Round the force is eligible - Land Battle's
-        /// discretionary bonus-cancellation on excess disrupts (11.33) is not carried
-        /// over to Sieges (see TNW-FEASIBILITY-2026-09-27.md §7).
+        /// still undisrupted (rule 11.2, 12.32, 12.33). Assumption: the nationality bonus
+        /// applies at full value every Round - Land Battle's discretionary
+        /// bonus-cancellation on excess disrupts (11.33) is not carried over to Sieges
+        /// (see TNW-FEASIBILITY-2026-09-27.md §7).
         /// </summary>
         public static int BesiegerDiceThisRound(TnwSiegeBattle battle, int unitsAvailable, bool commanderAvailable)
         {
-            int dice = unitsAvailable
+            int dice = RollingUnits(battle, unitsAvailable)
                 + (commanderAvailable ? battle.CommanderBattleRating : 0)
                 + NationalityBonusDice(battle.Composition)
                 - (battle.ZoneModifierApplies ? 1 : 0);
@@ -39,14 +47,14 @@ namespace AbeGaming.GameLogic.TNW
         }
 
         /// <summary>
-        /// The Besieging Army's state before Round 1: every Unit and the Commander (if
-        /// present) undisrupted, no sixes accumulated yet.
+        /// The Besieging Army's state before Round 1: every Unit and the Commander
+        /// undisrupted, no sixes accumulated yet.
         /// </summary>
         public static TnwSiegeState InitialState(TnwSiegeBattle battle) => new(
             UnitsAlive: battle.Units,
             UnitsAvailable: battle.Units,
-            CommanderAlive: battle.CommanderPresent,
-            CommanderAvailable: battle.CommanderPresent,
+            CommanderAlive: true,
+            CommanderAvailable: true,
             CumulativeSixes: 0);
 
         /// <summary>
@@ -57,7 +65,8 @@ namespace AbeGaming.GameLogic.TNW
         /// defensive fire on the besieger; kills take priority over disrupts when there
         /// isn't enough undisrupted capacity to record both (11.3), and - an assumption,
         /// since the rulebook does not state an order - excess casualties fall on Units
-        /// before the Commander.
+        /// before the Commander. Only the Units that rolled this Round can be hit; Units
+        /// waiting beyond the Command Rating are safe until they step in (12.33).
         /// </summary>
         public static TnwSiegeRoundResult ResolveRound(
             TnwSiegeBattle battle,
@@ -69,14 +78,15 @@ namespace AbeGaming.GameLogic.TNW
         {
             int strength = FortressStrength(battle.IsGibraltar);
 
-            int capacity = state.UnitsAvailable + (state.CommanderAvailable ? 1 : 0);
+            int rollingUnits = RollingUnits(battle, state.UnitsAvailable);
+            int capacity = rollingUnits + (state.CommanderAvailable ? 1 : 0);
             int effectiveKills = Math.Min(fortressSixes, capacity);
             int effectiveDisrupts = Math.Min(fortressFives, capacity - effectiveKills);
             int sufferedThisRound = effectiveKills + effectiveDisrupts;
 
-            int unitsKilled = Math.Min(effectiveKills, state.UnitsAvailable);
+            int unitsKilled = Math.Min(effectiveKills, rollingUnits);
             bool commanderKilled = effectiveKills > unitsKilled;
-            int unitsDisrupted = Math.Min(effectiveDisrupts, state.UnitsAvailable - unitsKilled);
+            int unitsDisrupted = Math.Min(effectiveDisrupts, rollingUnits - unitsKilled);
             bool commanderDisrupted = !commanderKilled
                 && effectiveDisrupts > unitsDisrupted
                 && state.CommanderAvailable;
@@ -88,8 +98,7 @@ namespace AbeGaming.GameLogic.TNW
                 CommanderAvailable: state.CommanderAvailable && !commanderKilled && !commanderDisrupted,
                 CumulativeSixes: state.CumulativeSixes + besiegerSixes);
 
-            bool besiegersEliminated = newState.UnitsAlive == 0
-                && (!battle.CommanderPresent || !newState.CommanderAlive);
+            bool besiegersEliminated = newState.UnitsAlive == 0 && !newState.CommanderAlive;
 
             // 12.3: the Fortress does not fall if the besiegers were eliminated this same Round.
             bool fortressFalls = !besiegersEliminated && newState.CumulativeSixes >= strength;
@@ -148,7 +157,7 @@ namespace AbeGaming.GameLogic.TNW
                 result.BesiegersEliminated,
                 result.Round,
                 battle.Units - state.UnitsAlive,
-                battle.CommanderPresent && !state.CommanderAlive,
+                !state.CommanderAlive,
                 log);
         }
 
