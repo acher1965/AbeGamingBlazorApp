@@ -68,7 +68,12 @@ namespace AbeGaming.GameLogic.PoG
                 MeanDefenderRetreatLengthGivenDefenderLoses: meanRetreatGivenDefenderLoses,
                 FlankAttackSuccessProbability: battle.AttemptFlankAttack
                     ? (double)flankSuccesses / total
-                    : 0);
+                    : 0,
+                IsDetailed: battle.Detailed is not null,
+                DefenderEliminatedProbability: (double)results.Count(r => r.DefenderEliminated) / total,
+                FortDestroyedProbability: (double)results.Count(r => r.FortDestroyed) / total,
+                MeanAttackerStepsLost: results.Average(r => r.AttackerStepsLost),
+                MeanDefenderStepsLost: results.Average(r => r.DefenderStepsLost));
         }
     }
 }

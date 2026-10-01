@@ -1,11 +1,14 @@
 namespace AbeGaming.GameLogic.PoG
 {
-    public static class PoGCRT
+    public static partial class PoGCRT
     {
         public static PoGBattleResult Outcome(this PoGBattle battle, int attackerDieRoll, int defenderDieRoll, int? flankAttackDieRoll = null)
         {
             if (!PoGBattleInputRules.IsBattleDefinitionConsistent(battle, out string? errorMessage))
                 throw new InvalidOperationException(errorMessage);
+
+            if (battle.Detailed is PoGDetailedForces detailed)
+                return DetailedOutcome(battle, detailed, attackerDieRoll, defenderDieRoll, flankAttackDieRoll);
 
             // 15.1.6: a fort with no friendly units in its space gets no benefit from a trench.
             int normalizedTrench = battle.IsUnoccupiedFort() ? 0 : PoGBattleInputRules.ClampTrench(battle.Trench);

@@ -1,0 +1,47 @@
+{
+  "comment": "Paths of Glory combat units for the detailed calculator mode: CF and LF of the full and reduced sides (MF is not needed for combat). Values as supplied by the project owner on 2026-10-01. ReplacementCorps: the Corps that replaces an Army eliminated from its reduced side (12.4.4, 12.4.4.3).",
+  "units": [
+    { "id": "FR_ARMY", "nation": "France", "name": "FR Army", "kind": "Army", "fullCf": 3, "fullLf": 3, "reducedCf": 2, "reducedLf": 3, "replacementCorps": "FR_CORPS" },
+    { "id": "FR_AOO", "nation": "France", "name": "FR Army of the Orient", "kind": "Army", "fullCf": 3, "fullLf": 3, "reducedCf": 2, "reducedLf": 3, "replacementCorps": "FR_CORPS" },
+    { "id": "FR_CORPS", "nation": "France", "name": "FR Corps", "kind": "Corps", "fullCf": 1, "fullLf": 1, "reducedCf": 1, "reducedLf": 1 },
+
+    { "id": "GE_ARMY", "nation": "Germany", "name": "GE Army", "kind": "Army", "fullCf": 5, "fullLf": 3, "reducedCf": 3, "reducedLf": 3, "replacementCorps": "GE_CORPS" },
+    { "id": "GE_CORPS", "nation": "Germany", "name": "GE Corps", "kind": "Corps", "fullCf": 2, "fullLf": 1, "reducedCf": 1, "reducedLf": 1 },
+
+    { "id": "RU_ARMY", "nation": "Russia", "name": "RU Army", "kind": "Army", "fullCf": 3, "fullLf": 2, "reducedCf": 2, "reducedLf": 2, "replacementCorps": "RU_CORPS" },
+    { "id": "RU_CAU", "nation": "Russia", "name": "RU Caucasus Army", "kind": "Army", "fullCf": 3, "fullLf": 2, "reducedCf": 2, "reducedLf": 2, "replacementCorps": "RU_CORPS" },
+    { "id": "RU_CORPS", "nation": "Russia", "name": "RU Corps", "kind": "Corps", "fullCf": 1, "fullLf": 1, "reducedCf": 0, "reducedLf": 1 },
+
+    { "id": "AH_ARMY", "nation": "Austria-Hungary", "name": "AH Army", "kind": "Army", "fullCf": 3, "fullLf": 2, "reducedCf": 1, "reducedLf": 2, "replacementCorps": "AH_CORPS" },
+    { "id": "AH_CORPS", "nation": "Austria-Hungary", "name": "AH Corps", "kind": "Corps", "fullCf": 1, "fullLf": 1, "reducedCf": 0, "reducedLf": 1 },
+
+    { "id": "IT_ARMY", "nation": "Italy", "name": "IT Army", "kind": "Army", "fullCf": 2, "fullLf": 2, "reducedCf": 1, "reducedLf": 2, "replacementCorps": "IT_CORPS" },
+    { "id": "IT_CORPS", "nation": "Italy", "name": "IT Corps", "kind": "Corps", "fullCf": 1, "fullLf": 1, "reducedCf": 0, "reducedLf": 1 },
+
+    { "id": "BE_ARMY", "nation": "Belgium", "name": "BE Army", "kind": "Army", "fullCf": 2, "fullLf": 3, "reducedCf": 1, "reducedLf": 3, "replacementCorps": "BE_CORPS" },
+    { "id": "BE_CORPS", "nation": "Belgium", "name": "BE Corps", "kind": "Corps", "fullCf": 1, "fullLf": 1, "reducedCf": 0, "reducedLf": 1 },
+
+    { "id": "SB_ARMY", "nation": "Serbia", "name": "SB Army", "kind": "Army", "fullCf": 2, "fullLf": 2, "reducedCf": 1, "reducedLf": 2, "replacementCorps": "SB_CORPS" },
+    { "id": "SB_CORPS", "nation": "Serbia", "name": "SB Corps", "kind": "Corps", "fullCf": 1, "fullLf": 1, "reducedCf": 0, "reducedLf": 1 },
+
+    { "id": "TU_ARMY", "nation": "Turkey", "name": "TU Army", "kind": "Army", "fullCf": 1, "fullLf": 2, "reducedCf": 1, "reducedLf": 2, "replacementCorps": "TU_CORPS" },
+    { "id": "TU_CORPS", "nation": "Turkey", "name": "TU Corps", "kind": "Corps", "fullCf": 1, "fullLf": 1, "reducedCf": 0, "reducedLf": 1 },
+
+    { "id": "BR_ARMY", "nation": "Britain", "name": "BR Army", "kind": "Army", "fullCf": 4, "fullLf": 3, "reducedCf": 3, "reducedLf": 3, "replacementCorps": "BR_CORPS" },
+    { "id": "BR_MEF", "nation": "Britain", "name": "BR MEF Army", "kind": "Army", "fullCf": 1, "fullLf": 2, "reducedCf": 1, "reducedLf": 2, "replacementCorps": "BR_CORPS" },
+    { "id": "BR_NE", "nation": "Britain", "name": "BR NE Army", "kind": "Army", "fullCf": 4, "fullLf": 3, "reducedCf": 3, "reducedLf": 3, "replacementCorps": "BR_CORPS" },
+    { "id": "BR_BEF_ARMY", "nation": "Britain", "name": "BR BEF Army", "kind": "Army", "fullCf": 5, "fullLf": 3, "reducedCf": 4, "reducedLf": 3, "replacementCorps": "BR_BEF_CORPS" },
+    { "id": "BR_CORPS", "nation": "Britain", "name": "BR Corps", "kind": "Corps", "fullCf": 2, "fullLf": 1, "reducedCf": 1, "reducedLf": 1 },
+    { "id": "BR_BEF_CORPS", "nation": "Britain", "name": "BR BEF Corps", "kind": "Corps", "fullCf": 2, "fullLf": 2, "reducedCf": 2, "reducedLf": 1 },
+
+    { "id": "US_ARMY", "nation": "United States", "name": "US Army", "kind": "Army", "fullCf": 5, "fullLf": 3, "reducedCf": 3, "reducedLf": 3, "replacementCorps": "US_CORPS" },
+    { "id": "US_CORPS", "nation": "United States", "name": "US Corps", "kind": "Corps", "fullCf": 2, "fullLf": 1, "reducedCf": 1, "reducedLf": 1 },
+
+    { "id": "RO_CORPS", "nation": "Romania", "name": "RO Corps", "kind": "Corps", "fullCf": 1, "fullLf": 1, "reducedCf": 0, "reducedLf": 1 },
+    { "id": "BU_CORPS", "nation": "Bulgaria", "name": "BU Corps", "kind": "Corps", "fullCf": 2, "fullLf": 1, "reducedCf": 0, "reducedLf": 1 },
+    { "id": "MN_CORPS", "nation": "Montenegro", "name": "MN Corps", "kind": "Corps", "fullCf": 1, "fullLf": 1, "reducedCf": 0, "reducedLf": 1 },
+    { "id": "SN_CORPS", "nation": "Senussi", "name": "SN Corps", "kind": "Corps", "fullCf": 1, "fullLf": 1, "reducedCf": 0, "reducedLf": 1 },
+    { "id": "ANA_CORPS", "nation": "Arab Northern Army", "name": "ANA Corps", "kind": "Corps", "fullCf": 1, "fullLf": 1, "reducedCf": 0, "reducedLf": 1 },
+    { "id": "PT_CORPS", "nation": "Portugal", "name": "PT Corps", "kind": "Corps", "fullCf": 1, "fullLf": 1, "reducedCf": 0, "reducedLf": 1 }
+  ]
+}

@@ -1,0 +1,85 @@
+@using AbeGaming.GameLogic
+@using AbeGaming.GameLogic.PoG
+
+<div class="small">
+    @for (int i = 0; i < Units.Count; i++)
+    {
+        int index = i;
+        PoGUnit unit = Units[index];
+        <div class="d-flex align-items-center gap-1 mb-1" id="@($"{IdPrefix}Unit{index}")">
+            <select class="form-select form-select-sm" style="min-width: 0;" id="@($"{IdPrefix}Unit{index}Type")"
+                    value="@unit.TypeId" @onchange="e => OnTypeChanged(index, e)">
+                @foreach (IGrouping<string, PoGUnitType> nation in PoGUnitCatalog.All.GroupBy(t => t.Nation))
+                {
+                    <optgroup label="@nation.Key">
+                        @foreach (PoGUnitType type in nation)
+                        {
+                            <option value="@type.Id">@type.Name (@type.FullCf-@type.FullLf / @type.ReducedCf-@type.ReducedLf)</option>
+                        }
+                    </optgroup>
+                }
+            </select>
+            <div class="form-check mb-0" title="The unit is on its reduced side.">
+                <input class="form-check-input" type="checkbox" id="@($"{IdPrefix}Unit{index}Reduced")"
+                       checked="@unit.Reduced" @onchange="e => OnReducedChanged(index, e)" />
+                <label class="form-check-label" for="@($"{IdPrefix}Unit{index}Reduced")">Red.</label>
+            </div>
+            @if (unit.Type.Kind == PoGUnitKind.Army)
+            {
+                <div class="form-check mb-0" title="A full strength replacement Corps is in the Reserve Box: it replaces this Army if it is eliminated from its reduced side (12.4.4).">
+                    <input class="form-check-input" type="checkbox" id="@($"{IdPrefix}Unit{index}Reserve")"
+                           checked="@unit.ReserveCorpsAvailable" @onchange="e => OnReserveChanged(index, e)" />
+                    <label class="form-check-label" for="@($"{IdPrefix}Unit{index}Reserve")">Res.</label>
+                </div>
+            }
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" title="Remove this unit"
+                    id="@($"{IdPrefix}Unit{index}Remove")" @onclick="() => Remove(index)">x</button>
+        </div>
+    }
+    @if (Units.Count < MaxUnits)
+    {
+        <button type="button" class="btn btn-sm btn-outline-primary py-0" id="@($"{IdPrefix}AddUnit")" @onclick="Add">+ Add unit</button>
+    }
+    <div class="text-muted mt-1" id="@($"{IdPrefix}Summary")">
+        Combat Strength <strong>@CombatFactors</strong> on the <strong>@FireTableName</strong> table
+    </div>
+</div>
+
+@code {
+    [Parameter] public EquatableList<PoGUnit> Units { get; set; } = EquatableList<PoGUnit>.Empty;
+    [Parameter] public EventCallback<EquatableList<PoGUnit>> UnitsChanged { get; set; }
+
+    /// <summary>Extra CF counted with these units, e.g. the defender's fort (12.2.3).</summary>
+    [Parameter] public int FortCf { get; set; }
+
+    [Parameter] public int MaxUnits { get; set; } = PoGDetailedForces.MaxAttackers;
+
+    /// <summary>Unit type added by "+ Add unit".</summary>
+    [Parameter] public string DefaultTypeId { get; set; } = "GE_ARMY";
+
+    /// <summary>Prefix for element ids, e.g. "pogAttacker" gives "pogAttackerUnit0Type".</summary>
+    [Parameter] public string IdPrefix { get; set; } = string.Empty;
+
+    private PoGSideForce Force => PoGSideForce.FromUnits(Units, FortCf);
+
+    private int CombatFactors => Force.CombatFactors;
+
+    private string FireTableName => Force.FireTable == FireTable.Army ? "Army" : "Corps/Fort";
+
+    private Task Update(IEnumerable<PoGUnit> units) => UnitsChanged.InvokeAsync(new EquatableList<PoGUnit>(units));
+
+    private Task Replace(int index, PoGUnit unit) => Update(Units.Select((u, i) => i == index ? unit : u));
+
+    private Task OnTypeChanged(int index, ChangeEventArgs e) =>
+        e.Value?.ToString() is string typeId ? Replace(index, Units[index] with { TypeId = typeId }) : Task.CompletedTask;
+
+    private Task OnReducedChanged(int index, ChangeEventArgs e) =>
+        e.Value is bool reduced ? Replace(index, Units[index] with { Reduced = reduced }) : Task.CompletedTask;
+
+    private Task OnReserveChanged(int index, ChangeEventArgs e) =>
+        e.Value is bool reserve ? Replace(index, Units[index] with { ReserveCorpsAvailable = reserve }) : Task.CompletedTask;
+
+    private Task Remove(int index) => Update(Units.Where((_, i) => i != index));
+
+    private Task Add() => Update([.. Units, new PoGUnit(DefaultTypeId)]);
+}

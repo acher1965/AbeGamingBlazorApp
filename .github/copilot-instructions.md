@@ -59,9 +59,16 @@ The solution file is `AbeGamingBlazorApp.slnx` (XML solution format).
   Effects Chart rows, and rule 15.1.6 (an unoccupied fort gets no trench benefit).
 - The fire tables and TEC are in `RulesAndTables/PoGCRTs.png`. All 114 fire-table cells were verified
   against the code on 2026-10-01 (POG-RULES-REVIEW-2026-10-01.md).
-- The calculator works with combat factors, not individual units, so flank-attack return fire, the
+- Factor mode works with combat factors, not individual units, so flank-attack return fire, the
   "full-strength attacker remains" condition for retreats and the "one step left" condition for
-  cancelling a retreat are approximations (see the review's Notes section).
+  cancelling a retreat are approximations. Detailed mode (`PoGBattle.Detailed`) removes them: units
+  come from `PoG/PoGUnitTypes.json` (embedded resource, loaded by `PoGUnitCatalog`; values supplied by
+  the project owner - do not edit them without being asked), losses are allocated by
+  `PoGSideForce.TakeLosses`, and resolution is in `PoGCRT.Detailed.cs`. Factor mode must stay unchanged.
+- `PoGDetailedModeTests.cs` pins every catalog row and reproduces the rulebook's Tannenberg and Tarnopol
+  flank attacks and the Sedan, Nancy and Cambrai loss allocations exactly. Keep it passing.
+- `PoGBattle` holds unit lists in `EquatableList<T>` so battles keep value equality; the page shows
+  results only while `LastStatsBattle == CurrentBattle`.
 - For a rule change, add an outcome test for a specific die roll that checks hits, retreats and column shifts
   (see `Outcome_CorpsTableBaseline_UsesExpectedHitsAndRetreat`), plus a test that invalid inputs throw
   (see `Outcome_TrenchBlocksFlank_Throws`).

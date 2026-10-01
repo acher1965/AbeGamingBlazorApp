@@ -1,3 +1,4 @@
+@using AbeGaming.GameLogic
 @using AbeGaming.GameLogic.PoG
 
 <div class="card h-100">
@@ -5,6 +6,19 @@
         <strong class="small">@Icon@SideName</strong>
     </div>
     <div class="card-body py-2">
+        @if (IsDetailed)
+        {
+            <div class="mb-2">
+                <PoGUnitListInput Units="Units"
+                                  UnitsChanged="UnitsChanged"
+                                  FortCf="FortCf"
+                                  MaxUnits="MaxUnits"
+                                  DefaultTypeId="@DefaultUnitTypeId"
+                                  IdPrefix="@UnitIdPrefix" />
+            </div>
+        }
+        else
+        {
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
                 Table <InfoTip Text="Corps table if all firing units are corps/forts; Army table if any army fires." />
@@ -34,6 +48,7 @@
                        max="16" />
             </div>
         </div>
+        }
 
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
@@ -57,6 +72,15 @@
 </div>
 
 @code {
+    /// <summary>Detailed mode: show the unit list instead of the Table and Factors inputs.</summary>
+    [Parameter] public bool IsDetailed { get; set; }
+    [Parameter] public EquatableList<PoGUnit> Units { get; set; } = EquatableList<PoGUnit>.Empty;
+    [Parameter] public EventCallback<EquatableList<PoGUnit>> UnitsChanged { get; set; }
+    [Parameter] public int FortCf { get; set; }
+    [Parameter] public int MaxUnits { get; set; } = PoGDetailedForces.MaxAttackers;
+    [Parameter] public string DefaultUnitTypeId { get; set; } = "GE_ARMY";
+    [Parameter] public string UnitIdPrefix { get; set; } = string.Empty;
+
     [Parameter] public string SideName { get; set; } = "Attacker";
     [Parameter] public string Icon { get; set; } = "🗡️";
     [Parameter] public string HeaderColor { get; set; } = "primary";
