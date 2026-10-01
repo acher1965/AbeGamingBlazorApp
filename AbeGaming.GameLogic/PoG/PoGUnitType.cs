@@ -1,0 +1,20 @@
+namespace AbeGaming.GameLogic.PoG
+{
+    /// <summary>
+    /// One kind of Paths of Glory combat unit: its CF and LF on the full and the reduced side.
+    /// </summary>
+    /// <param name="ReplacementCorps">
+    /// For an Army, the id of the Corps that replaces it when it is eliminated from its reduced
+    /// side, if one is in the Reserve Box (12.4.4, 12.4.4.3); null for a Corps.
+    /// </param>
+    public record PoGUnitType(
+        string Id,
+        string Nation,
+        string Name,
+        PoGUnitKind Kind,
+        int FullCf,
+        int FullLf,
+        int ReducedCf,
+        int ReducedLf,
+        string? ReplacementCorps);
+}

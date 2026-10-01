@@ -7,4 +7,8 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="PoG\PoGUnitTypes.json" LogicalName="AbeGaming.GameLogic.PoG.PoGUnitTypes.json" />
+  </ItemGroup>
+
 </Project>

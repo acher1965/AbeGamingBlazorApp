@@ -64,6 +64,27 @@
             }
         </div>
 
+        @if (Stats.IsDetailed)
+        {
+            <hr class="my-2" />
+            <div class="row small" id="pogDetailedStats">
+                <div class="col-6">
+                    Attacker steps lost: <strong>@Stats.MeanAttackerStepsLost.ToString("F2")</strong>
+                </div>
+                <div class="col-6">
+                    Defender steps lost: <strong>@Stats.MeanDefenderStepsLost.ToString("F2")</strong>
+                    @if (Stats.DefenderEliminatedProbability > 0)
+                    {
+                        <div>💀Defenders eliminated: <strong>@Stats.DefenderEliminatedProbability.ToString("P1")</strong></div>
+                    }
+                    @if (Stats.FortDestroyedProbability > 0)
+                    {
+                        <div>🏰Fort destroyed: <strong>@Stats.FortDestroyedProbability.ToString("P1")</strong></div>
+                    }
+                </div>
+            </div>
+        }
+
         <hr class="my-2" />
         @{
             double maxHitsToDefenderProbability = Stats.HitsStats.HitsToD_Prblty.Count == 0

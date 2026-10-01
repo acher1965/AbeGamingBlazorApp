@@ -23,10 +23,12 @@ namespace AbeGaming.GameLogic.PoG
         };
 
         /// <summary>
-        /// True if the defending space holds a fort but no defending units (taken as no defending
-        /// combat factors). Such a fort cannot be flanked and gets no trench benefit (15.1.6).
+        /// True if the defending space holds a fort but no defending units. Such a fort cannot be
+        /// flanked and gets no trench benefit (15.1.6). In factor mode "no units" is taken as no
+        /// defending combat factors; in detailed mode it is an empty defender list.
         /// </summary>
         public static bool IsUnoccupiedFort(this PoGBattle battle) =>
-            battle.Defender.StrengthFactors <= 0 && battle.FortressLevel.CombatFactors() > 0;
+            battle.FortressLevel.CombatFactors() > 0
+            && (battle.Detailed is null ? battle.Defender.StrengthFactors <= 0 : battle.Detailed.Defenders.Count == 0);
     }
 }

@@ -48,7 +48,7 @@
                 <input class="form-check-input" type="checkbox" id="pogAttemptFlank" @bind="AttemptFlankAttack" disabled="@(!CanConfigureFlank)" />
                 <label class="form-check-label small" for="pogAttemptFlank">
                     Attempt flank
-                    <InfoTip Text="Requires attack from 2+ spaces. Flank succeeds on 4+ after flank DRM." />
+                    <InfoTip Text="Requires attack from 2+ spaces. Flank succeeds on 4+ after flank DRM. Without 'Detailed units', the side firing second fires with its factors minus the Loss Number it took - an approximation." />
                 </label>
             </div>
             <div class="form-check form-check-inline mb-0">
@@ -56,6 +56,13 @@
                 <label class="form-check-label small" for="pogAllAttackersInSinai">
                     All attackers in Sinai
                     <InfoTip Text="Applies -3 DRM to attacker per rule 12.2.7." />
+                </label>
+            </div>
+            <div class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" id="pogDetailedUnits" @bind="IsDetailed" />
+                <label class="form-check-label small" for="pogDetailedUnits">
+                    Detailed units
+                    <InfoTip Text="@DetailedTip" />
                 </label>
             </div>
         </div>
@@ -80,6 +87,11 @@
                       FactorsInfoTip="Total attacking factors."
                       OosInfoTip="OOS units may not attack."
                       FactorsInputId="pogAttackerFactors"
+                      IsDetailed="IsDetailed"
+                      @bind-Units="AttackerUnits"
+                      MaxUnits="PoGDetailedForces.MaxAttackers"
+                      DefaultUnitTypeId="GE_ARMY"
+                      UnitIdPrefix="pogAttacker"
                       @bind-FireTable="AttackerFireTable"
                       @bind-Factors="AttackerFactors"
                       @bind-DRM="AttackerDrm" />
@@ -91,6 +103,12 @@
                       FactorsInfoTip="Total defending factors excluding fortress bonus."
                       OosInfoTip="OOS defenders cannot benefit from combat cards."
                       FactorsInputId="pogDefenderFactors"
+                      IsDetailed="IsDetailed"
+                      @bind-Units="DefenderUnits"
+                      FortCf="@FortressLevel.CombatFactors()"
+                      MaxUnits="PoGDetailedForces.MaxDefenders"
+                      DefaultUnitTypeId="FR_ARMY"
+                      UnitIdPrefix="pogDefender"
                       @bind-FireTable="DefenderFireTable"
                       @bind-Factors="DefenderFactors"
                       @bind-DRM="DefenderDrm" />
@@ -181,6 +199,29 @@
                         </div>
                         <div>🗡️Hits to Defender: <strong>@BattleResult.HitsByAttacker</strong></div>
                         <div>🛡️Hits to Attacker: <strong>@BattleResult.HitsByDefender</strong></div>
+                        @if (LastBattleResultBattle?.Detailed is not null)
+                        {
+                            <div id="pogDetailedResult">
+                                Steps lost: attacker <strong>@BattleResult.AttackerStepsLost</strong>,
+                                defender <strong>@BattleResult.DefenderStepsLost</strong>
+                                @if (BattleResult.DefenderFireTable is FireTable defenderTable && defenderTable != InitialDefenderFireTable(LastBattleResultBattle))
+                                {
+                                    <span class="badge bg-info text-dark ms-1">Defender fired on the @defenderTable table</span>
+                                }
+                                @if (BattleResult.DefenderEliminated)
+                                {
+                                    <span class="badge bg-dark ms-1">Defenders eliminated</span>
+                                }
+                                @if (BattleResult.FortDestroyed)
+                                {
+                                    <span class="badge bg-dark ms-1">Fort destroyed</span>
+                                }
+                                @if (BattleResult.Winner == Winner.Attacker && !BattleResult.AttackerHasFullStrengthUnit)
+                                {
+                                    <span class="badge bg-warning text-dark ms-1">No full strength attacker left: no retreat or advance</span>
+                                }
+                            </div>
+                        }
                         @if (BattleResult.FlankAttackAttempted)
                         {
                             <div>
@@ -295,7 +336,23 @@
         Trench,
         AttemptFlankAttack,
         FlankAttackDrm,
-        IsAllAttackersInSinai);
+        IsAllAttackersInSinai,
+        IsDetailed ? new PoGDetailedForces(AttackerUnits, DefenderUnits) : null);
+
+    public const string DetailedTip =
+        "List each side's units instead of total factors. Losses are then taken step by step as in the rules (12.4): " +
+        "a reduced Army eliminated is replaced by a Corps if one is in the Reserve Box, the side firing second after a flank attack " +
+        "fires with its real survivors (possibly on the Corps table), a retreat needs a full strength attacker left (12.5.1), " +
+        "and cancelling a retreat needs a defending step left (12.5.3). Without it, these are approximated from the factors.";
+
+    /// <summary>The table the defender starts on in a detailed-mode battle.</summary>
+    private static FireTable InitialDefenderFireTable(PoGBattleModel battle) =>
+        PoGSideForce.FromUnits(battle.Detailed!.Defenders, battle.FortressLevel.CombatFactors()).FireTable;
+
+    // Detailed mode: the units of each side (defaults: the rulebook's Tannenberg example).
+    private bool IsDetailed;
+    private EquatableList<PoGUnit> AttackerUnits = new([new PoGUnit("GE_ARMY"), new PoGUnit("GE_CORPS")]);
+    private EquatableList<PoGUnit> DefenderUnits = new([new PoGUnit("RU_ARMY")]);
 
     private async Task ScrollToResults()
     {

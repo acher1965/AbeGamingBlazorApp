@@ -16,6 +16,9 @@ namespace AbeGaming.GameLogic.PoG
 
         public static bool IsBattleDefinitionConsistent(PoGBattle battle, out string? errorMessage)
         {
+            if (battle.Detailed is PoGDetailedForces detailed && !IsDetailedForcesConsistent(battle, detailed, out errorMessage))
+                return false;
+
             if (!battle.AttemptFlankAttack)
             {
                 errorMessage = null;
@@ -24,9 +27,12 @@ namespace AbeGaming.GameLogic.PoG
 
             int trench = ClampTrench(battle.Trench);
 
-            if (battle.Attacker.FireTable != FireTable.Army)
+            bool attackerHasArmy = battle.Detailed is null
+                ? battle.Attacker.FireTable == FireTable.Army
+                : battle.Detailed.Attackers.Any(u => u.Type.Kind == PoGUnitKind.Army);
+            if (!attackerHasArmy)
             {
-                errorMessage = "Flank attack requires attacker army fire table.";
+                errorMessage = "Flank attack requires at least one attacking Army (12.3.1).";
                 return false;
             }
 
@@ -50,6 +56,22 @@ namespace AbeGaming.GameLogic.PoG
 
             errorMessage = null;
             return true;
+        }
+
+        private static bool IsDetailedForcesConsistent(PoGBattle battle, PoGDetailedForces detailed, out string? errorMessage)
+        {
+            if (detailed.Attackers.Count == 0)
+                errorMessage = "The attacker needs at least one unit.";
+            else if (detailed.Attackers.Count > PoGDetailedForces.MaxAttackers)
+                errorMessage = $"At most {PoGDetailedForces.MaxAttackers} attacking units.";
+            else if (detailed.Defenders.Count > PoGDetailedForces.MaxDefenders)
+                errorMessage = $"At most {PoGDetailedForces.MaxDefenders} defending units (stacking limit).";
+            else if (detailed.Defenders.Count == 0 && battle.FortressLevel.CombatFactors() == 0)
+                errorMessage = "The defender needs at least one unit or a fort.";
+            else
+                errorMessage = null;
+
+            return errorMessage is null;
         }
     }
 }

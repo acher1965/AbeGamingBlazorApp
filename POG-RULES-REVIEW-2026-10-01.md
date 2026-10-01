@@ -123,3 +123,58 @@ changed.
 
 The approximations in the Notes section are still there. You asked whether they can be
 improved; the answer, with options, comes with this release.
+
+## Detailed units mode (2026-10-01, v1.4.0)
+
+You asked whether the approximations could be improved, especially the first one. They
+now can be: there is an optional **Detailed units** mode, using the unit values you
+supplied.
+
+**How it works:**
+- **Units:** each side lists its units: unit type, full or reduced, and, for Armies,
+  whether a replacement Corps is in the Reserve Box. The values come from
+  `AbeGaming.GameLogic/PoG/PoGUnitTypes.json`, an embedded configuration file, and a test
+  pins every row against your list.
+- **Strength:** Combat Strength and Fire Table come from the units, plus the fort for the
+  defender.
+- **Losses** are taken step by step (12.4.3): exactly the Loss Number if possible,
+  otherwise as much as possible, never more. A reduced Army that is eliminated is
+  replaced by a Corps from the Reserve Box (12.4.4); the BEF Army is replaced only by the
+  BEF Corps, and the MEF and NE Armies by a BR Corps. The fort takes losses only after
+  every unit is gone (12.4.6).
+- **The three approximations are now exact:**
+  - after a flank attack, the side firing second fires with its real survivors,
+    possibly on the Corps table;
+  - a retreat needs a full-strength attacker left (12.5.1);
+  - cancelling a retreat needs a defending step left after the extra loss (12.5.3).
+  Only full-strength units advance, and against a fort with no units the attacker
+  advances only if the fort is destroyed.
+- **Rulebook check:** the rulebook's examples now reproduce exactly, including the parts
+  factor mode got wrong. At Tannenberg the replacement Corps fires on the Corps table and
+  the Russians can cancel the retreat. At Tarnopol the Russians take no loss because
+  their smallest LF is 2. At Sedan, Nancy and Cambrai the losses are allocated exactly
+  as the sample game describes.
+- **Factor mode is unchanged.** All its tests pass untouched, and the flank tooltip now
+  points out its approximation.
+
+**Assumptions (please review):**
+1. **Which steps to lose, when several choices fulfil the same Loss Number.** The owner is
+   assumed to choose, in order:
+   1. the best return fire, if the side still has to fire in this combat;
+   2. keeping a full-strength unit;
+   3. keeping the most steps;
+   4. keeping the most CF.
+
+   This reproduces every allocation in the sample game.
+2. **A fort's LF equals its printed CF.** Fort LF values aren't in the rules files.
+3. **The "Res." checkbox means a full-strength replacement Corps is available.** A
+   reduced Corps in the Reserve Box isn't modelled. If two Armies of the same nation
+   share one Corps in the Reserve Box, ticking it on both counts that Corps twice.
+
+**Not modelled:**
+- British, BEF/MEF and CAU loss priority (12.4.5).
+- Forced permanent elimination when the full Loss Number can't be met (12.4.4.2).
+- The MN Corps never advancing, and being eliminated if forced to retreat.
+- AUS and CND Corps: they aren't in your list, and the rulebook's Cambrai example shows
+  the Canadian Corps at 2-1-4 reduced, which isn't a BR Corps. Add their values if you
+  want them.
