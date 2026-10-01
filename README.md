@@ -6,9 +6,9 @@ A Progressive Web App (PWA) built with Blazor WebAssembly to provide helpful too
 
 ## Features
 
-Both calculators are currently in **BETA**: feedback is welcome (see the Contact page in the app).
-Each one can roll a single battle result, or compute the probabilities of victory, the
-distribution of losses and other expected values for a given battle setup.
+The Napoleonic Wars calculators are currently in **BETA**: feedback is welcome (see the Contact
+page in the app). Each calculator can roll a single battle result, or compute the probabilities
+of victory, the distribution of losses and other expected values for a given battle setup.
 
 ### For The People Battle Calculator
 A battle resolution calculator for GMT Games' acclaimed American Civil War card-driven strategy game "For The People". 
@@ -31,6 +31,31 @@ The calculator handles:
 - Fortresses
 - Flank attacks, including the extra-attacking-space DRM
 - Out-of-supply units and the Sinai attacker penalty
+
+### The Napoleonic Wars Battle, Naval Battle and Siege Calculators
+Three calculators for GMT Games' multiplayer card-driven strategy game "The Napoleonic Wars", each
+on its own page.
+
+The Battle calculator (rule 11) handles:
+- Each side's dice pool: Units, Commander Battle Rating, nationality bonus, battle event dice
+- Terrain crossed by the attacker, failed evasions, a defender that cannot retreat, and defending
+  Armies not formed into an Army Group
+- Two Rounds, kill/disrupt priority, rout, Overrun, Flag Overrun and the rout Resource roll
+- Exact statistics for small and medium battles; larger battles fall back to a Monte Carlo
+  estimate, and the result says which one you got
+
+The Naval Battle calculator (rule 13) handles:
+- Fleets of any mix of nations, with each nation's dice per Squadron and Squadrons under Refit
+- Sinking by "6"s split evenly across nations, and "5"s reducing a Fleet's later dice
+- Failed evasions, and battles in an enemy Port or Fortress-Port with shore battery fire
+- Exact statistics for small and medium battles, Monte Carlo above that, as for land battles
+
+The Siege calculator (rule 12) handles:
+- The Besieging Army's dice pool: Command Rating cap, Commander Battle Rating, nationality bonus,
+  and spare Units replacing losses in later Rounds (rule 12.33)
+- The Fortress's own strength (2 normally, 4 for Gibraltar) and its Zone modifier (rule 12.32)
+- Multi-round Sieges within one Impulse, Overrun, and the "besiegers eliminated" edge case
+- Exact statistics (no Monte Carlo needed - the Siege's state space is small and strictly bounded)
 
 ## Technology Stack
 
@@ -93,6 +118,7 @@ AbeGamingBlazorApp.slnx
 ├── AbeGaming.GameLogic/                 # Game rules engine (no UI dependencies)
 │   ├── FtP/                             # For The People: CRT, battle model, exact stats, Monte Carlo
 │   ├── PoG/                             # Paths of Glory: CRTs, battle model, exact stats
+│   ├── TNW/                             # The Napoleonic Wars: shared dice pool, Battle, Naval, Siege
 │   └── Dice.cs, HitStats.cs, ...        # Shared helpers
 ├── AbeGamingBlazorApp/                  # Blazor WebAssembly PWA
 │   ├── Components/                      # Reusable UI parts (side inputs, stats displays, InfoTip)
@@ -100,6 +126,9 @@ AbeGamingBlazorApp.slnx
 │   │   ├── Home.razor                   # Landing page
 │   │   ├── FtpBattlePage.razor          # For The People calculator
 │   │   ├── PoGBattle.razor              # Paths of Glory calculator
+│   │   ├── TnwBattlePage.razor          # The Napoleonic Wars: Battle calculator
+│   │   ├── TnwNavalPage.razor           # The Napoleonic Wars: Naval Battle calculator
+│   │   ├── TnwSiegePage.razor           # The Napoleonic Wars: Siege calculator
 │   │   ├── About.razor, Contact.razor   # Info pages
 │   │   ├── Install.razor                # PWA install instructions
 │   │   └── ChangeList.razor             # Git commit history
@@ -154,16 +183,17 @@ The version is displayed in the app's navigation menu.
 
 ## Useful Links
 
-- [GMT Games](https://www.gmtgames.com/) - Publisher of "For The People" and "Paths of Glory"
+- [GMT Games](https://www.gmtgames.com/) - Publisher of "For The People", "Paths of Glory", and "The Napoleonic Wars"
 - [For The People on BoardGameGeek](https://boardgamegeek.com/boardgame/833/for-the-people)
 - [Paths of Glory on BoardGameGeek](https://boardgamegeek.com/boardgame/91/paths-of-glory)
+- [The Napoleonic Wars on BoardGameGeek](https://boardgamegeek.com/boardgame/36399/the-napoleonic-wars-second-edition)
 - [Blazor Documentation](https://learn.microsoft.com/aspnet/core/blazor/)
 
 ## License
 
 This project is provided as-is for educational and personal use. 
 
-"For The People" and "Paths of Glory" are trademarks of GMT Games LLC. These tools are unofficial fan-made calculators and are not affiliated with or endorsed by GMT Games.
+"For The People", "Paths of Glory", and "The Napoleonic Wars" are trademarks of GMT Games LLC. These tools are unofficial fan-made calculators and are not affiliated with or endorsed by GMT Games.
 
 ## Changelog
 

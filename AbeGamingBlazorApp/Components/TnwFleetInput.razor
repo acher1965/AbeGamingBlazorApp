@@ -1,0 +1,103 @@
+@using AbeGaming.GameLogic.TNW
+
+<div class="card h-100">
+    <div class="card-header py-1 bg-@HeaderColor text-white d-flex justify-content-between">
+        <strong class="small">@Icon@SideName</strong>
+        <span class="small" id="@($"{IdPrefix}Round1Dice")">Round 1 dice: @Round1Dice</span>
+    </div>
+    <div class="card-body py-2">
+        <table class="table table-sm table-borderless mb-1 small align-middle">
+            <thead>
+                <tr class="text-muted">
+                    <th class="fw-normal">Nation <InfoTip Text="Dice per Squadron: British 3; French, Danish, Swedish 2; Russian, Turkish, Spanish 1 (rule 13.4)." /></th>
+                    <th class="fw-normal">Squadrons</th>
+                    <th class="fw-normal">Refit <InfoTip Text="How many of those Squadrons are under Refit: each rolls one die less, to no less than 0 (rule 13.4)." /></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (TnwNavalNation nation in TnwNavalNationExtensions.All)
+                {
+                    <tr>
+                        <td>@nation.DisplayName() <span class="text-muted">(@nation.DicePerSquadron())</span></td>
+                        <td>
+                            <input type="number"
+                                   class="form-control form-control-sm"
+                                   id="@($"{IdPrefix}{nation}Squadrons")"
+                                   value="@Fleet.Total(nation)"
+                                   @onchange="e => OnSquadronsChanged(nation, e)"
+                                   onfocus="this.select()"
+                                   min="0"
+                                   max="@TnwFleetComposition.MaxCount" />
+                        </td>
+                        <td>
+                            <input type="number"
+                                   class="form-control form-control-sm"
+                                   id="@($"{IdPrefix}{nation}Refit")"
+                                   value="@Fleet.Count(nation, true)"
+                                   @onchange="e => OnRefitChanged(nation, e)"
+                                   onfocus="this.select()"
+                                   min="0"
+                                   max="@Fleet.Total(nation)" />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="form-check mb-0">
+            <input class="form-check-input" type="checkbox" id="@($"{IdPrefix}EvasionDie")"
+                   checked="@EvasionDie" disabled="@(!EvasionAllowed)" @onchange="OnEvasionDieChanged" />
+            <label class="form-check-label small" for="@($"{IdPrefix}EvasionDie")">
+                Enemy failed to evade <InfoTip Text="The other Fleet failed an evasion attempt against this one: +1 die in Round 1 (rule 13.33). Fleets in Port cannot evade (13.34)." />
+            </label>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string SideName { get; set; } = "Active Fleet";
+    [Parameter] public string Icon { get; set; } = "";
+    [Parameter] public string HeaderColor { get; set; } = "primary";
+
+    /// <summary>Prefix for element ids, e.g. "tnwActive" gives "tnwActiveBritainSquadrons".</summary>
+    [Parameter] public string IdPrefix { get; set; } = string.Empty;
+
+    /// <summary>Round 1 dice as computed by the page, shown in the header for a quick check.</summary>
+    [Parameter] public int Round1Dice { get; set; }
+
+    [Parameter] public TnwFleetComposition Fleet { get; set; }
+    [Parameter] public EventCallback<TnwFleetComposition> FleetChanged { get; set; }
+
+    [Parameter] public bool EvasionDie { get; set; }
+    [Parameter] public EventCallback<bool> EvasionDieChanged { get; set; }
+
+    [Parameter] public bool EvasionAllowed { get; set; } = true;
+
+    private async Task OnSquadronsChanged(TnwNavalNation nation, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int value))
+        {
+            int total = TnwNavalBattleInputRules.ClampSquadrons(value);
+            await FleetChanged.InvokeAsync(Fleet.WithSquadrons(nation, total, Fleet.Count(nation, true)));
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnRefitChanged(TnwNavalNation nation, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int value))
+        {
+            await FleetChanged.InvokeAsync(Fleet.WithSquadrons(nation, Fleet.Total(nation), value));
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnEvasionDieChanged(ChangeEventArgs e)
+    {
+        if (e.Value is bool value)
+        {
+            await EvasionDieChanged.InvokeAsync(value);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+}

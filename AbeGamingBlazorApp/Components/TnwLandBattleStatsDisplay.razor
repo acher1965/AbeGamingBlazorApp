@@ -1,0 +1,109 @@
+@* TnwLandBattleStatsDisplay.razor - Displays TnwLandBattleStats (exact or Monte Carlo) *@
+@using AbeGaming.GameLogic.TNW
+
+<div class="card border-primary mb-3">
+    <div class="card-header bg-primary text-white py-2">
+        <strong>@Title</strong>
+    </div>
+    <div class="card-body py-2">
+        <div class="row g-2">
+            <div class="col-6">
+                <div class="d-flex justify-content-between small">
+                    <span>⚔️Attacker Wins:</span>
+                    <strong class="text-success">@(Stats.AttackerWinProbability.ToString("P1"))</strong>
+                </div>
+                <div class="progress mb-1" style="height: 8px;">
+                    <div class="progress-bar bg-success" style="width: @(Stats.AttackerWinProbability * 100)%"></div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="d-flex justify-content-between small">
+                    <span>🛡️Defender Wins:</span>
+                    <strong class="text-danger">@(Stats.DefenderWinProbability.ToString("P1"))</strong>
+                </div>
+                <div class="progress mb-1" style="height: 8px;">
+                    <div class="progress-bar bg-danger" style="width: @(Stats.DefenderWinProbability * 100)%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="small text-muted">
+            <InfoTip Text="@SecondRoundTip">🔁Second Round: @(Stats.SecondRoundProbability.ToString("P1"))</InfoTip>
+        </div>
+
+        <hr class="my-2" />
+        <div class="row small">
+            @foreach ((TnwLandBattleSideStats side, string sideName) in new[] { (Stats.Attacker, "Attacker"), (Stats.Defender, "Defender") })
+            {
+                <div class="col-6">
+                    <div>
+                        Losses: <strong>@(side.MeanUnitsLost.ToString("F1"))</strong>
+                        <span class="text-muted">(+/-@(side.StdDevUnitsLost.ToString("F1")))</span>
+                    </div>
+                    @if (side.RoutedProbability > 0)
+                    {
+                        <span class="me-2" style="white-space: nowrap;"><InfoTip Text="@RoutedTip(sideName)">🏃Routed: @(side.RoutedProbability.ToString("P1"))</InfoTip></span>
+                    }
+                    @if (side.EliminatedProbability > 0)
+                    {
+                        <span class="me-2" style="white-space: nowrap;"><InfoTip Text="@EliminatedTip(sideName)">💀Eliminated: @(side.EliminatedProbability.ToString("P1"))</InfoTip></span>
+                    }
+                    @if (side.CommanderKilledProbability > 0)
+                    {
+                        <span class="me-2" style="white-space: nowrap;"><InfoTip Text="@CommanderKilledTip">🎖️💀: @(side.CommanderKilledProbability.ToString("P1"))</InfoTip></span>
+                    }
+                    @if (side.FlagOverrunProbability > 0)
+                    {
+                        <span class="me-2" style="white-space: nowrap;"><InfoTip Text="@FlagOverrunTip(sideName)">🚩: @(side.FlagOverrunProbability.ToString("P1"))</InfoTip></span>
+                    }
+                    @if (side.ResourceGainProbability > 0)
+                    {
+                        <span style="white-space: nowrap;"><InfoTip Text="@ResourceTip(sideName)">💰: @(side.ResourceGainProbability.ToString("P1"))</InfoTip></span>
+                    }
+                </div>
+            }
+        </div>
+
+        <hr class="my-2" />
+        <div class="row">
+            @foreach (TnwLandBattleSideStats side in new[] { Stats.Attacker, Stats.Defender })
+            {
+                double maxProbability = side.UnitsLostDistribution.Count == 0 ? 0 : side.UnitsLostDistribution.Values.Max();
+                <div class="col-6 mb-2">
+                    <div class="small text-muted mb-1">Loss Distribution📊</div>
+                    <div class="d-flex flex-wrap gap-1">
+                        @foreach (KeyValuePair<int, double> entry in side.UnitsLostDistribution.OrderBy(x => x.Key))
+                        {
+                            bool isMax = entry.Value == maxProbability;
+                            <span class="badge dist-badge" title="@($"Loses {entry.Key} Unit(s): {entry.Value:P1}")"><span class="dist-hits">@entry.Key</span>: <span class="dist-prob @(isMax ? "fw-bold" : "")">@(entry.Value.ToString("P0"))</span></span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    public const string SecondRoundTip =
+        "Round 1 ended with equal casualties, so a second Round was fought. If still tied, the attacker retreats (rule 11.32).";
+    public const string CommanderKilledTip = "Commander killed (only once no Unit is left to absorb the kill).";
+
+    [Parameter, EditorRequired]
+    public TnwLandBattleStats Stats { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = "";
+
+    private static string RoutedTip(string side) =>
+        $"{side} loses by 3+ casualties and is routed: its disrupted Units and leaders are eliminated (rule 11.5).";
+
+    private static string EliminatedTip(string side) =>
+        $"Every {side} piece is eliminated - an Overrun (rule 11.6).";
+
+    private static string FlagOverrunTip(string side) =>
+        $"{side} wins with more kills than the loser had pieces: a free Flag in the battle Duchy, unless it is a Fortress (rule 11.7).";
+
+    private static string ResourceTip(string side) =>
+        $"{side} routs an enemy Army and gains a Resource (a die roll at or under the routed Commander's Battle Rating, rule 11.5).";
+}

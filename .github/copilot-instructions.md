@@ -11,6 +11,9 @@ The solution file is `AbeGamingBlazorApp.slnx` (XML solution format).
 - `AbeGaming.GameLogic/` - rules engine
   - `FtP/` - For The People: CRT, battle model and input rules, exact stats, Monte Carlo simulation
   - `PoG/` - Paths of Glory: CRTs, battle model and input rules, exact stats (`PoGExactStats.Calculate`)
+  - `TNW/` - The Napoleonic Wars: `TnwDicePool` (shared trinomial dice math), `TnwLandBattle*`
+    (Battle calculator, rule 11), `TnwSiege*` (Siege calculator, rule 12), `TnwNavalBattle*` and
+    `TnwFleet*` (Naval Battle calculator, rule 13). Each battle type has its own page
 - `AbeGamingBlazorApp/` - Blazor WebAssembly PWA (`Pages/`, `Components/`, `Layout/`, `wwwroot/`)
 - `AbeGaming.GameLogic.Tests/` - xUnit tests for the rules engine
 - `AbeGaming.BlazorApp.Component.Tests/` - bUnit component tests
@@ -45,3 +48,60 @@ The solution file is `AbeGamingBlazorApp.slnx` (XML solution format).
   rather than hardcoding values, unless you have derived the expected value independently from the rules.
 - UI clamping and input behaviour for PoG components is covered by bUnit tests (`PoGSideInputTests.cs`)
   and Playwright tests (`PoGBattleE2ETests.cs`).
+
+## Tests for TNW Siege
+
+- TNW's Siege calculator (rule 12) has a small, strictly bounded state space (at most
+  `TnwSiegeMethods.FortressStrength` Rounds - 2 normally, 4 for Gibraltar), so it ships with exact
+  stats only, no Monte Carlo cross-check - see `TNW-FEASIBILITY-2026-09-27.md` if that report is
+  still present.
+- `TnwSiegeRulesTests.cs` reproduces the rulebook's own worked example (Castanos besieging Lisbon,
+  12.3) verbatim as a golden test, plus the edges that are easy to miss on a first read of the
+  rules: the Fortress does not fall if the besiegers are wiped out the same Round it would
+  otherwise fall (12.3), and kills take priority over disrupts when capacity runs out (11.3).
+- Two assumptions the rulebook leaves open, fixed for the calculator to compute against (see
+  TNW-FEASIBILITY-2026-09-27.md §7 for the reasoning): excess casualties fall on Units before the
+  Commander, and Land Battle's discretionary bonus-cancellation (11.33) does not apply to Sieges.
+  Revisit both if a rule change or an official ruling settles them differently.
+- Only one Army sieges, so a Commander is always present. At most `CommandRating` Units roll per
+  Round; any further Units in the Duchy replace the Army's losses in later Rounds (12.33) and cannot
+  be hit by the Fortress while waiting. The playtester's Napoleon example (14 dice in both Rounds)
+  is a golden test.
+- `TnwSiegeMethods.ResolveRound` is the single source of truth for one Siege Round; both the exact
+  stats (`TnwSiegeExactStats`) and the single-roll simulation (`TnwSiegeMethods.RollOnce`) call it,
+  so they cannot disagree with each other by construction.
+
+## Tests for TNW Land Battle
+
+- `TnwLandBattleMethods` holds one pure path (`DiceForRound`, `ApplyHits`, `Verdict`, `Conclude`)
+  shared by the exact enumeration, the Monte Carlo simulation and "Roll 1 Battle", as for Siege.
+- Exact stats get expensive with large dice pools: every tied Round-1 state pair needs a joint
+  enumeration of both sides' Round-2 rolls. `TnwLandBattleExactStats.TryCalculate` estimates the
+  work before Round 2 and declines above `DefaultWorkBudget` (1M evaluations, about 1.3 s in the
+  browser, around 11 v 11); `TnwLandBattleStatsCalculator` then falls back to Monte Carlo and the
+  result is labelled accordingly. Re-measure in the browser before raising the budget.
+- `ExactStats_And_MonteCarlo_ProduceSimilarResults` cross-checks the two engines on small battles,
+  using a seeded `Random` so it is deterministic - keep it passing after any rules change.
+- Victory and rout are decided on casualties as rolled (uncapped), following the rulebook's naval
+  example (13.4); a side wiped out by kills loses regardless of totals (11.32).
+- Assumptions (see TNW-FEASIBILITY-2026-09-27.md §9): kills fall on already-disrupted Units first,
+  then undisrupted Units, then the Commander; each disrupt beyond the Commander cancels one
+  nationality bonus die; event dice apply to Round 1 only; a losing attacker can always retreat.
+
+## Tests for TNW Naval Battle
+
+- Same structure as Land Battle: one pure path in `TnwNavalBattleMethods`, exact stats with a work
+  budget and a Monte Carlo fallback, and `ExactStats_And_MonteCarlo_ProduceSimilarResults`.
+- The rulebook's naval example (13.4, British vs French and Spanish) is the golden test,
+  `RulebookExample_FullBattle_TieThenTie_ActiveBritishLose`, step by step: 13 vs 6 dice, the Spanish
+  Squadron sunk first, 9 vs 3 dice in Round 2, and the Active Fleet losing the second tie.
+- `TnwFleetComposition` packs the per-nation counts into one `ulong` so battle definitions keep value
+  equality - the page shows results only while `LastStatsBattle == CurrentBattle`. Don't replace it
+  with an array or list.
+- Performance matters here: the first version took 13 s in the browser. Sinkings follow a fixed
+  allocation rule, so the Fleet after k sinkings is precomputed once per starting Fleet
+  (`LossSequence`), and `TotalSquadrons` sums the packed counts in constant time. Re-measure in the
+  browser after touching `ApplyHits`, `Verdict` or `Conclude`.
+- Assumptions (see TNW-FEASIBILITY-2026-09-27.md §10): among the nations with fewest losses, the
+  owner sinks the Squadron rolling fewest dice, Refit first; shore battery dice are never reduced by
+  "5"s; fortified straits (13.8) and Squadrons under Build are out of scope.

@@ -1,0 +1,248 @@
+@page "/tnwbattle"
+@using AbeGaming.GameLogic.TNW
+@inject IJSRuntime JS
+
+<PageTitle>TNW Battle Calculator</PageTitle>
+
+<h1 class="h3 mb-3">The Napoleonic Wars - Battle Calculator</h1>
+
+<div class="card mb-2">
+    <div class="card-body py-2">
+        <div class="row g-2">
+            <div class="col-6 col-md-4">
+                <label class="form-label form-label-sm mb-1">
+                    Terrain crossed
+                    <InfoTip Text="Terrain the attacker crossed to enter the Duchy. The defender gets +1 (Rough), +2 (Pass) or +3 (Marsh) dice in Round 1, only if the Duchy is Friendly to it (rule 11.22)." />
+                </label>
+                <select id="tnwTerrain" class="form-select form-select-sm" @bind="Terrain">
+                    @foreach (TnwTerrain option in Enum.GetValues<TnwTerrain>())
+                    {
+                        <option value="@option">@option</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-4">
+                <label class="form-label form-label-sm mb-1">
+                    Failed evasions
+                    <InfoTip Text="Defender evasion attempts that failed: +1 attacker die each in Round 1, and the defender loses any terrain bonus (rules 10.2, 11.22)." />
+                </label>
+                <input id="tnwFailedEvasions" type="number" class="form-control form-control-sm" @bind="FailedEvasions" onfocus="this.select()" min="0" max="3" />
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-3 mt-2">
+            <div class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" id="tnwDefenderCannotRetreat" @bind="DefenderCannotRetreat" />
+                <label class="form-check-label small" for="tnwDefenderCannotRetreat">
+                    Defender cannot retreat
+                    <InfoTip Text="If the defender loses it is eliminated instead of retreating - an Overrun (rules 11.42, 11.6)." />
+                </label>
+            </div>
+            <div class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" id="tnwDefenderWithoutArmyGroup" @bind="DefenderWithoutArmyGroup" />
+                <label class="form-check-label small" for="tnwDefenderWithoutArmyGroup">
+                    Defender not an Army Group
+                    <InfoTip Text="Several defending Armies not formed into an Army Group defend together with a Commander Battle Rating of 0; his printed rating still counts if routed (rule 9.7)." />
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-2 mb-2">
+    <div class="col-6">
+        <TnwBattleSideInput SideName="Attacker"
+                            Icon="⚔️"
+                            HeaderColor="primary"
+                            IdPrefix="tnwAttacker"
+                            @bind-Units="AttackerUnits"
+                            @bind-CommanderBattleRating="AttackerCommander"
+                            @bind-Composition="AttackerComposition"
+                            @bind-EventDice="AttackerEventDice" />
+    </div>
+    <div class="col-6">
+        <TnwBattleSideInput SideName="Defender"
+                            Icon="🛡️"
+                            HeaderColor="danger"
+                            IdPrefix="tnwDefender"
+                            @bind-Units="DefenderUnits"
+                            @bind-CommanderBattleRating="DefenderCommander"
+                            @bind-Composition="DefenderComposition"
+                            @bind-EventDice="DefenderEventDice" />
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="alert alert-danger py-2 mb-2">@ErrorMessage</div>
+}
+
+<div class="d-grid gap-2 mb-3">
+    <button id="tnwCalculateStats" class="btn btn-primary btn-lg" @onclick="CalculateStats" disabled="@IsRunning">
+        @if (IsRunning)
+        {
+            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+            <span>Calculating...</span>
+        }
+        else
+        {
+            <span>📈Calculate Stats</span>
+        }
+    </button>
+    <button id="tnwRollOnce" class="btn btn-secondary" @onclick="RollOnce" disabled="@IsRunning">
+        🎲Roll 1 Battle
+    </button>
+</div>
+
+<div id="resultsSection">
+    @if (Stats is not null && LastStatsBattle == CurrentBattle)
+    {
+        <TnwLandBattleStatsDisplay Stats="Stats" Title="@StatsTitle(Stats)" />
+    }
+
+    @if (RollResult is not null && LastRollBattle == CurrentBattle)
+    {
+        TnwLandBattleOutcome outcome = RollResult.Outcome;
+        <div class="card @(outcome.AttackerWins ? "border-success" : "border-danger") mb-3">
+            <div class="card-header py-2">
+                <strong>Single Battle Result</strong>
+            </div>
+            <div class="card-body py-2">
+                <p class="fs-5 fw-bold mb-1">
+                    @if (outcome.AttackerWins)
+                    {
+                        <span class="text-success">⚔️Attacker Wins@(outcome.LoserRouted ? " - defender routed" : "")</span>
+                    }
+                    else
+                    {
+                        <span class="text-danger">🛡️Defender Wins@(outcome.LoserRouted ? " - attacker routed" : "")</span>
+                    }
+                </p>
+                <div class="small">
+                    Units lost - attacker: <strong>@outcome.AttackerUnitsLost</strong>, defender: <strong>@outcome.DefenderUnitsLost</strong>
+                    @if (outcome.AttackerCommanderKilled)
+                    {
+                        <span class="badge bg-warning text-dark ms-1">Attacking Commander killed</span>
+                    }
+                    @if (outcome.DefenderCommanderKilled)
+                    {
+                        <span class="badge bg-warning text-dark ms-1">Defending Commander killed</span>
+                    }
+                    @if (outcome.AttackerEliminated || outcome.DefenderEliminated)
+                    {
+                        <span class="badge bg-dark ms-1">Overrun</span>
+                    }
+                    @if (outcome.FlagOverrun)
+                    {
+                        <span class="badge bg-info text-dark ms-1">Flag Overrun</span>
+                    }
+                    @if (RollResult.ResourceDieRoll is int resourceDie)
+                    {
+                        <span class="badge @(RollResult.ResourceGained ? "bg-success" : "bg-secondary") ms-1">
+                            Resource roll @resourceDie: @(RollResult.ResourceGained ? "gained" : "not gained")
+                        </span>
+                    }
+                </div>
+                <div class="small text-muted mt-1">
+                    @foreach (TnwLandBattleRoundLog log in RollResult.RoundLog)
+                    {
+                        <div>
+                            Round @log.Round: attacker @log.AttackerDice dice -> @log.AttackerSixes six(es), @log.AttackerFives five(s);
+                            defender @log.DefenderDice dice -> @log.DefenderSixes six(es), @log.DefenderFives five(s)
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private TnwTerrain Terrain = TnwTerrain.None;
+
+    private int _failedEvasions;
+    private int FailedEvasions
+    {
+        get => _failedEvasions;
+        set => _failedEvasions = TnwLandBattleInputRules.ClampFailedEvasions(value);
+    }
+
+    private bool DefenderCannotRetreat;
+    private bool DefenderWithoutArmyGroup;
+
+    private int AttackerUnits = 6;
+    private int AttackerCommander = 3;
+    private TnwForceComposition AttackerComposition = TnwForceComposition.Power;
+    private int AttackerEventDice;
+
+    private int DefenderUnits = 5;
+    private int DefenderCommander = 2;
+    private TnwForceComposition DefenderComposition = TnwForceComposition.Power;
+    private int DefenderEventDice;
+
+    private TnwLandBattleStats? Stats;
+    private TnwLandBattleRollResult? RollResult;
+    private TnwLandBattle? LastStatsBattle;
+    private TnwLandBattle? LastRollBattle;
+    private string? ErrorMessage;
+    private bool IsRunning;
+
+    private TnwLandBattle CurrentBattle => new(
+        new TnwBattleSide(AttackerUnits, AttackerCommander, AttackerComposition, AttackerEventDice),
+        new TnwBattleSide(DefenderUnits, DefenderCommander, DefenderComposition, DefenderEventDice),
+        Terrain,
+        FailedEvasions,
+        DefenderCannotRetreat,
+        DefenderWithoutArmyGroup);
+
+    private static string StatsTitle(TnwLandBattleStats stats) => stats.IsExact
+        ? "📈Exact Stats"
+        : $"🎲Monte Carlo Stats ({stats.MonteCarloTrials:N0} trials - too many dice for exact)";
+
+    private bool TryGetValidBattle(out TnwLandBattle battle)
+    {
+        battle = CurrentBattle;
+        if (!TnwLandBattleInputRules.IsBattleDefinitionConsistent(battle, out string? error))
+        {
+            ErrorMessage = error;
+            return false;
+        }
+
+        ErrorMessage = null;
+        return true;
+    }
+
+    private async Task ScrollToResults()
+    {
+        await JS.InvokeVoidAsync("abegamingUi.scrollIntoViewById", "resultsSection");
+    }
+
+    private async Task CalculateStats()
+    {
+        RollResult = null;
+        LastRollBattle = null;
+        if (!TryGetValidBattle(out TnwLandBattle battle))
+            return;
+
+        IsRunning = true;
+        StateHasChanged();
+
+        Stats = await Task.Run(() => TnwLandBattleStatsCalculator.Calculate(battle));
+        LastStatsBattle = battle;
+
+        IsRunning = false;
+        StateHasChanged();
+        await ScrollToResults();
+    }
+
+    private async Task RollOnce()
+    {
+        Stats = null;
+        LastStatsBattle = null;
+        if (!TryGetValidBattle(out TnwLandBattle battle))
+            return;
+
+        RollResult = TnwLandBattleMethods.RollOnce(battle);
+        LastRollBattle = battle;
+        await ScrollToResults();
+    }
+}

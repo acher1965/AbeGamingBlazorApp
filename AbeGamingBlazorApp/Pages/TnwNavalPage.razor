@@ -1,0 +1,221 @@
+@page "/tnwnaval"
+@using AbeGaming.GameLogic.TNW
+@inject IJSRuntime JS
+
+<PageTitle>TNW Naval Battle Calculator</PageTitle>
+
+<h1 class="h3 mb-3">The Napoleonic Wars - Naval Battle Calculator</h1>
+
+<div class="card mb-2">
+    <div class="card-body py-2">
+        <div style="max-width: 22rem;">
+            <label class="form-label form-label-sm mb-1">
+                Location
+                <InfoTip Text="At sea, or the Active Fleet entering an enemy Port. A Port's shore batteries fire 2 dice (4 if a Fortress) before the battle and again with the defending Fleet each Round; if the Port loses, its Fleet is eliminated (rule 13.5)." />
+            </label>
+            <select id="tnwNavalLocation" class="form-select form-select-sm" @bind="Location">
+                <option value="@TnwNavalBattleLocation.OpenSea">Open sea</option>
+                <option value="@TnwNavalBattleLocation.EnemyPort">Enemy Port (2 shore dice)</option>
+                <option value="@TnwNavalBattleLocation.EnemyFortressPort">Enemy Fortress-Port (4 shore dice)</option>
+            </select>
+        </div>
+        <div class="small text-muted mt-1">
+            The default setup is the rulebook's example (13.4): four British Squadrons against two French and two Spanish that failed to evade.
+        </div>
+    </div>
+</div>
+
+<div class="row g-2 mb-2">
+    <div class="col-12 col-md-6">
+        <TnwFleetInput SideName="Active Fleet"
+                       Icon="⛵"
+                       HeaderColor="primary"
+                       IdPrefix="tnwActive"
+                       Round1Dice="@ActiveRound1Dice"
+                       EvasionAllowed="@(!Location.IsPort())"
+                       @bind-Fleet="ActiveFleet"
+                       @bind-EvasionDie="ActiveEvasionDie" />
+    </div>
+    <div class="col-12 col-md-6">
+        <TnwFleetInput SideName="@(Location.IsPort() ? "Fleet in Port" : "Inactive Fleet")"
+                       Icon="⚓"
+                       HeaderColor="danger"
+                       IdPrefix="tnwInactive"
+                       Round1Dice="@InactiveRound1Dice"
+                       EvasionAllowed="@(!Location.IsPort())"
+                       @bind-Fleet="InactiveFleet"
+                       @bind-EvasionDie="InactiveEvasionDie" />
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="alert alert-danger py-2 mb-2">@ErrorMessage</div>
+}
+
+<div class="d-grid gap-2 mb-3">
+    <button id="tnwNavalCalculateStats" class="btn btn-primary btn-lg" @onclick="CalculateStats" disabled="@IsRunning">
+        @if (IsRunning)
+        {
+            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+            <span>Calculating...</span>
+        }
+        else
+        {
+            <span>📈Calculate Stats</span>
+        }
+    </button>
+    <button id="tnwNavalRollOnce" class="btn btn-secondary" @onclick="RollOnce" disabled="@IsRunning">
+        🎲Roll 1 Battle
+    </button>
+</div>
+
+<div id="resultsSection">
+    @if (Stats is not null && LastStatsBattle == CurrentBattle)
+    {
+        <TnwNavalBattleStatsDisplay Stats="Stats" Title="@StatsTitle(Stats)" />
+    }
+
+    @if (RollResult is not null && LastRollBattle == CurrentBattle)
+    {
+        TnwNavalBattleOutcome outcome = RollResult.Outcome;
+        <div class="card @(outcome.ActiveWins ? "border-success" : "border-danger") mb-3">
+            <div class="card-header py-2">
+                <strong>Single Battle Result</strong>
+            </div>
+            <div class="card-body py-2">
+                <p class="fs-5 fw-bold mb-1">
+                    @if (outcome.ActiveWins)
+                    {
+                        <span class="text-success">⛵Active Fleet Wins</span>
+                    }
+                    else
+                    {
+                        <span class="text-danger">⚓Inactive Fleet Wins</span>
+                    }
+                </p>
+                <div class="small">
+                    Squadrons lost - Active: <strong>@outcome.ActiveSquadronsLost</strong>, Inactive: <strong>@outcome.InactiveSquadronsLost</strong>
+                    @if (outcome.ActiveEliminated)
+                    {
+                        <span class="badge bg-dark ms-1">Active Fleet eliminated</span>
+                    }
+                    @if (outcome.InactiveEliminated)
+                    {
+                        <span class="badge bg-dark ms-1">Inactive Fleet eliminated</span>
+                    }
+                </div>
+                <div class="small text-muted mt-1">
+                    @foreach (TnwNavalRoundLog log in RollResult.RoundLog)
+                    {
+                        <div>
+                            @if (log.Round == 0)
+                            {
+                                <span>Shore batteries: @log.InactiveDice dice -> @log.InactiveSixes six(es), @log.InactiveFives five(s)</span>
+                            }
+                            else
+                            {
+                                <span>
+                                    Round @log.Round: Active @log.ActiveDice dice -> @log.ActiveSixes six(es), @log.ActiveFives five(s);
+                                    Inactive @log.InactiveDice dice -> @log.InactiveSixes six(es), @log.InactiveFives five(s)
+                                </span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private TnwNavalBattleLocation _location = TnwNavalBattleLocation.OpenSea;
+    private TnwNavalBattleLocation Location
+    {
+        get => _location;
+        set
+        {
+            _location = value;
+            if (_location.IsPort())
+            {
+                // Fleets in Port cannot evade (13.34).
+                ActiveEvasionDie = false;
+                InactiveEvasionDie = false;
+            }
+        }
+    }
+
+    private TnwFleetComposition ActiveFleet = TnwFleetComposition.Empty.WithSquadrons(TnwNavalNation.Britain, 4, 0);
+    private TnwFleetComposition InactiveFleet = TnwFleetComposition.Empty
+        .WithSquadrons(TnwNavalNation.France, 2, 0)
+        .WithSquadrons(TnwNavalNation.Spain, 2, 0);
+    private bool ActiveEvasionDie = true;
+    private bool InactiveEvasionDie;
+
+    private TnwNavalBattleStats? Stats;
+    private TnwNavalBattleRollResult? RollResult;
+    private TnwNavalBattle? LastStatsBattle;
+    private TnwNavalBattle? LastRollBattle;
+    private string? ErrorMessage;
+    private bool IsRunning;
+
+    private TnwNavalBattle CurrentBattle => new(ActiveFleet, InactiveFleet, Location, ActiveEvasionDie, InactiveEvasionDie);
+
+    private int ActiveRound1Dice => TnwNavalBattleMethods.DiceForRound(
+        CurrentBattle, isActive: true, TnwNavalBattleMethods.InitialState(ActiveFleet), 1);
+
+    private int InactiveRound1Dice => TnwNavalBattleMethods.DiceForRound(
+        CurrentBattle, isActive: false, TnwNavalBattleMethods.InitialState(InactiveFleet), 1);
+
+    private static string StatsTitle(TnwNavalBattleStats stats) => stats.IsExact
+        ? "📈Exact Stats"
+        : $"🎲Monte Carlo Stats ({stats.MonteCarloTrials:N0} trials - too many dice for exact)";
+
+    private bool TryGetValidBattle(out TnwNavalBattle battle)
+    {
+        battle = CurrentBattle;
+        if (!TnwNavalBattleInputRules.IsBattleDefinitionConsistent(battle, out string? error))
+        {
+            ErrorMessage = error;
+            return false;
+        }
+
+        ErrorMessage = null;
+        return true;
+    }
+
+    private async Task ScrollToResults()
+    {
+        await JS.InvokeVoidAsync("abegamingUi.scrollIntoViewById", "resultsSection");
+    }
+
+    private async Task CalculateStats()
+    {
+        RollResult = null;
+        LastRollBattle = null;
+        if (!TryGetValidBattle(out TnwNavalBattle battle))
+            return;
+
+        IsRunning = true;
+        StateHasChanged();
+
+        Stats = await Task.Run(() => TnwNavalBattleStatsCalculator.Calculate(battle));
+        LastStatsBattle = battle;
+
+        IsRunning = false;
+        StateHasChanged();
+        await ScrollToResults();
+    }
+
+    private async Task RollOnce()
+    {
+        Stats = null;
+        LastStatsBattle = null;
+        if (!TryGetValidBattle(out TnwNavalBattle battle))
+            return;
+
+        RollResult = TnwNavalBattleMethods.RollOnce(battle);
+        LastRollBattle = battle;
+        await ScrollToResults();
+    }
+}
