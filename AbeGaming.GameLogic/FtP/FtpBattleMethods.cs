@@ -22,7 +22,7 @@ namespace AbeGaming.GameLogic.FtP
 
             Ratio ratio = smaller == 0 ? Ratio.TenToOnePlus : (larger / smaller) switch
             {
-                >= 10 when inAttackerFavour => Ratio.TenToOnePlus,
+                >= 10 => Ratio.TenToOnePlus,
                 >= 5 => Ratio.FiveToOnePlus,
                 >= 4 => Ratio.FourToOne,
                 >= 3 => Ratio.ThreeToOne,
@@ -39,15 +39,22 @@ namespace AbeGaming.GameLogic.FtP
             _ => BattleSize.Large
         };
 
+        /// <summary>
+        /// Rule 5.72: at 10-1 or greater with no fort there is no battle - the smaller force is
+        /// eliminated, whichever side it is on. Not applied to amphibious assaults.
+        /// </summary>
         public static bool IsOverrun(this FtpBattle battle)
         {
-            // Overrun only applies to non-amphibious battles
             if (battle.Amphibious is not null)
                 return false;
 
-            (Ratio ratio, bool inAttackerFavour) = battle.BattleRatio();
-            return ratio == Ratio.TenToOnePlus && inAttackerFavour && !battle.FortPresent;
+            (Ratio ratio, _) = battle.BattleRatio();
+            return ratio == Ratio.TenToOnePlus && !battle.FortPresent;
         }
+
+        /// <summary>True if the battle is an overrun (5.72) and the attacker is the force eliminated.</summary>
+        public static bool IsAttackerOverrun(this FtpBattle battle) =>
+            battle.IsOverrun() && !battle.BattleRatio().InAttackerFavour;
 
         /// <summary>
         /// One battle outcome
@@ -107,14 +114,20 @@ namespace AbeGaming.GameLogic.FtP
             bool defenderWipedOut = finalHitsToDefender >= battle.DefenderSize;
             bool attackerWipedOut = finalHitsToAttacker >= battle.AttackerSize;
 
-            if (defenderWipedOut && attackerWipedOut)
+            // 7.34: both sides eliminated - the winner keeps 1 SP; in a tie without an asterisk
+            // both keep 1 SP (and the attacker loses). Play note 18.0: not in an amphibious
+            // assault on a fort, where the fort is a surviving zero-SP defender, so 7.33 applies.
+            bool bothEliminatedRuleApplies = defenderWipedOut && attackerWipedOut
+                && !(isAmphibious && battle.FortPresent);
+            if (bothEliminatedRuleApplies)
             {
-                if (winner == Winner.Attacker)
+                bool tieWithoutAsterisk = hitsToDefender == hitsToAttacker && !star;
+                if (winner == Winner.Attacker || tieWithoutAsterisk)
                 {
                     finalHitsToAttacker = battle.AttackerSize - 1;
                     attackerWipedOut = false;
                 }
-                else if (winner == Winner.Defender)
+                if (winner == Winner.Defender)
                 {
                     finalHitsToDefender = Math.Max(0, battle.DefenderSize - 1);
                     defenderWipedOut = false;
@@ -122,7 +135,7 @@ namespace AbeGaming.GameLogic.FtP
             }
 
             //corrections to attacker can stay logic
-            // and continue moving logic 
+            // and continue moving logic
             bool attackerCanContinueMoving = false;
             if (defenderWipedOut && winner == Winner.Defender && !battle.FortPresent)
             {
@@ -140,6 +153,13 @@ namespace AbeGaming.GameLogic.FtP
                 && (battle.AttackerSize >= 2 * battle.DefenderSize)
                 && !isAmphibious)
                 attackerCanContinueMoving = true;
+
+            // 7.33: an attacker that wins but is eliminated neither stays nor moves on.
+            // 5.73, 7.32: only an Army or Corps move continues after a battle; an overrun is
+            // not a battle, so the overrunning force may always continue (5.72).
+            bool overrun = battle.IsOverrun();
+            attackerCanStay &= !attackerWipedOut;
+            attackerCanContinueMoving &= !attackerWipedOut && (overrun || !battle.IsDivisionMove);
 
             //leader death logic            
             int? attackerLeaderDeathDieRoll = null;
@@ -171,9 +191,11 @@ namespace AbeGaming.GameLogic.FtP
                                        star,
                                        attackerLeaderDeathDieRoll,
                                        defenderLeaderDeathDieRoll,
-                                       battle.IsOverrun(),
-                                       battle.AttackerElitesCommitted > 0 && hitsToAttacker > 1,
-                                       battle.DefenderElitesCommitted > 0 && hitsToDefender > 1);
+                                       overrun,
+                                       // 7.82: an elite is lost if the force takes two or more SP losses
+                                       // (losses taken, not the CRT result); no battle in an overrun.
+                                       !overrun && battle.AttackerElitesCommitted > 0 && finalHitsToAttacker > 1,
+                                       !overrun && battle.DefenderElitesCommitted > 0 && finalHitsToDefender > 1);
         }
 
         public static FtpStats ExactStats(this FtpBattle battle)

@@ -366,10 +366,11 @@ namespace AbeGaming.GameLogic.Tests
             (_, FtpStats stats) = FtpMonteCarlo.Run(battle, trialsExponent);
 
             // Assert - expected values from Monte Carlo with full rules
-            // 1v1: Attacker almost always loses (capped to 1 hit wipes them out)
+            // 1v1: Attacker almost always loses; a 1-1 tie without an asterisk (5/12) leaves
+            // both sides 1 SP (rule 7.34), so the attacker loses 1 SP with probability 5/12.
             Assert.Equal(0.083, stats.AttackerWinProbability, tolerance: 0.02);
             Assert.Equal(0.917, stats.DefenderWinProbability, tolerance: 0.02);
-            Assert.Equal(0.833, stats.HitsStats.MeanHtoA, tolerance: 0.02);
+            Assert.Equal(0.417, stats.HitsStats.MeanHtoA, tolerance: 0.02);
             Assert.Equal(0.083, stats.HitsStats.MeanHtoD, tolerance: 0.02);
             Assert.Equal(0.0, stats.StarResultProbability, tolerance: 0.01);
         }
@@ -768,23 +769,26 @@ namespace AbeGaming.GameLogic.Tests
                 0.5
             };
 
-            // Large battle 2v20 - extreme defender advantage
+            // Large battle 2v20 - defender is 10-1: an overrun of the attacker, no battle (5.72).
+            // Changed 2026-10-01: the overrun now applies when the defender is the larger force.
             yield return new object[] {
                 CreateBattle(2, 20),
                 BattleSize.Large,
                 0.0, 1.0,
-                2.0, 2.3333333333333335,
-                0.0, 0.7453559924999291,
+                2.0, 0.0,
+                0.0, 0.0,
                 0.0
             };
 
-            // Small battle 1v1 - minimum battle
+            // Small battle 1v1 - minimum battle.
+            // Changed 2026-10-01 for rule 7.34: a 1-1 tie without an asterisk (probability 5/12)
+            // leaves both sides 1 SP, so the attacker loses 1 SP with probability 5/12, not 10/12.
             yield return new object[] {
                 CreateBattle(1, 1),
                 BattleSize.Small,
                 0.08333333333333333, 0.9166666666666666,
-                0.8333333333333334, 0.08333333333333333,
-                0.3726779962499649, 0.2763853991962833,
+                0.4166666666666667, 0.08333333333333333,
+                0.4930066485916347, 0.2763853991962833,
                 0.0
             };
 

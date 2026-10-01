@@ -27,6 +27,19 @@ The solution file is `AbeGamingBlazorApp.slnx` (XML solution format).
 - Preview deployments are enabled for the develop branch, allowing mobile testing via Cloudflare's preview URLs before merging to master/production.
 - Versioning and release tags are described in the "Versioning" section of `README.md`.
 
+## FtP Rulebook Tests
+
+- `FtpRulebookCasesTests.cs` holds correctness tests whose expected results come from the 2024
+  rulebook, not from the code: the worked examples (Gettysburg, Thomas vs Longstreet, Sherman at
+  Little Rock, Fort Pulaski), the cases in play note 18.0 on amphibious assaults, and the rules
+  fixed in the 2026-10-01 review (7.33, 7.34, 7.71/7.72, 7.82, 5.72 both ways, 7.32 Division moves).
+- The golden values below are regression tests only: they were captured from the code. If a rules
+  fix changes them, regenerate them and explain the rule in a comment next to the changed values.
+- Rules decisions: in an amphibious assault on a fort the fort is a surviving zero-SP defender, so
+  7.34 (both sides eliminated) does not apply; land battles at a fort still use 7.34. The 10-1
+  overrun eliminates the smaller force whichever side it is on, but is not applied to amphibious
+  assaults.
+
 ## Golden Regression Tests for FtP Battle Stats
 - Create a temporary console project to get exact values: 
   - `dotnet new console -n GetGoldenTemp -o GetGoldenTemp` 

@@ -28,7 +28,7 @@ public class FtpSideInputTests : BunitContext
     }
 
     [Fact]
-    public void OnSizeChanged_AmphibiousArmyMove_ClampsAttackerToNine()
+    public void OnSizeChanged_AmphibiousArmyMove_ClampsAttackerToFifteen()
     {
         int? emittedSize = null;
 
@@ -43,8 +43,9 @@ public class FtpSideInputTests : BunitContext
             .Add(p => p.Size, 3)
             .Add(p => p.SizeChanged, EventCallback.Factory.Create<int>(this, value => emittedSize = value)));
 
-        cut.Find("#testAttackerSp").Change("12");
+        // Army-size naval move (rule 6.15a): up to an Army's 15 SPs.
+        cut.Find("#testAttackerSp").Change("20");
 
-        Assert.Equal(9, emittedSize);
+        Assert.Equal(15, emittedSize);
     }
 }
