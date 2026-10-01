@@ -33,12 +33,12 @@
             <div class="col-6 col-md-4">
                 <label class="form-label form-label-sm mb-1">
                     Fortress
-                    <InfoTip Text="Fortress combat factor is added to defender factors in this calculator." />
+                    <InfoTip Text="The fort's printed CF, added to the defender's factors (12.2.3). A besieged fort keeps its CF. A fort with no defending units cannot be flanked and gets no trench benefit (15.1.6)." />
                 </label>
                 <select id="pogFortressLevel" class="form-select form-select-sm" @bind="FortressLevel">
                     @foreach (FortressLevel option in Enum.GetValues<FortressLevel>())
                     {
-                        <option value="@option">@option</option>
+                        <option value="@option">@option.DisplayName()</option>
                     }
                 </select>
             </div>

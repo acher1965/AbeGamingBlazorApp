@@ -7,10 +7,11 @@ namespace AbeGaming.GameLogic.PoG
             if (!PoGBattleInputRules.IsBattleDefinitionConsistent(battle, out string? errorMessage))
                 throw new InvalidOperationException(errorMessage);
 
-            int normalizedTrench = PoGBattleInputRules.ClampTrench(battle.Trench);
+            // 15.1.6: a fort with no friendly units in its space gets no benefit from a trench.
+            int normalizedTrench = battle.IsUnoccupiedFort() ? 0 : PoGBattleInputRules.ClampTrench(battle.Trench);
             int attackerBaseFactors = PoGBattleInputRules.ClampFactors(battle.Attacker.StrengthFactors);
             int defenderBaseFactors = PoGBattleInputRules.ClampFactors(
-                battle.Defender.StrengthFactors + FortressCombatFactors(battle.FortressLevel));
+                battle.Defender.StrengthFactors + battle.FortressLevel.CombatFactors());
 
             int attackerModifiedDieRoll = PoGBattleInputRules.ClampModifiedDieRoll(
                 PoGBattleInputRules.ClampDieRoll(attackerDieRoll)
@@ -121,17 +122,6 @@ namespace AbeGaming.GameLogic.PoG
             || terrain == Terrain.Desert
             || terrain == Terrain.Mountain
             || terrain == Terrain.Marsh;
-
-        private static int FortressCombatFactors(FortressLevel fortressLevel) => fortressLevel switch
-        {
-            FortressLevel.None => 0,
-            FortressLevel.Destroyed => 0,
-            FortressLevel.LevelOne => 1,
-            FortressLevel.Besieged => 1,
-            FortressLevel.LevelTwo => 2,
-            FortressLevel.LevelThree => 3,
-            _ => 0
-        };
 
         private static int OffensiveColumnShift(Terrain terrain, int trench)
         {

@@ -42,9 +42,7 @@ namespace AbeGaming.GameLogic.PoG
                 return false;
             }
 
-            bool unoccupiedFortBlocksFlank = battle.Defender.StrengthFactors <= 0
-                && FortressCombatFactors(battle.FortressLevel) > 0;
-            if (unoccupiedFortBlocksFlank)
+            if (battle.IsUnoccupiedFort())
             {
                 errorMessage = "Flank attack is not allowed against an unoccupied fortified space.";
                 return false;
@@ -53,16 +51,5 @@ namespace AbeGaming.GameLogic.PoG
             errorMessage = null;
             return true;
         }
-
-        private static int FortressCombatFactors(FortressLevel fortressLevel) => fortressLevel switch
-        {
-            FortressLevel.None => 0,
-            FortressLevel.Destroyed => 0,
-            FortressLevel.LevelOne => 1,
-            FortressLevel.Besieged => 1,
-            FortressLevel.LevelTwo => 2,
-            FortressLevel.LevelThree => 3,
-            _ => 0
-        };
     }
 }
