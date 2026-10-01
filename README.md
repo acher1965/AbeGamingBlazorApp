@@ -6,9 +6,9 @@ A Progressive Web App (PWA) built with Blazor WebAssembly to provide helpful too
 
 ## Features
 
-All calculators are currently in **BETA**: feedback is welcome (see the Contact page in the app).
-Each one can roll a single battle result, or compute the probabilities of victory, the
-distribution of losses and other expected values for a given battle setup.
+The Napoleonic Wars calculators are currently in **BETA**: feedback is welcome (see the Contact
+page in the app). Each calculator can roll a single battle result, or compute the probabilities
+of victory, the distribution of losses and other expected values for a given battle setup.
 
 ### For The People Battle Calculator
 A battle resolution calculator for GMT Games' acclaimed American Civil War card-driven strategy game "For The People". 
