@@ -6,7 +6,7 @@ namespace AbeGaming.GameLogic.Tests
     {
         [Theory]
         [InlineData(false, false, 15)]
-        [InlineData(true, true, 9)]
+        [InlineData(true, true, 15)]
         [InlineData(true, false, 3)]
         public void AttackerMaxSize_ReturnsExpectedValue(bool isAmphibious, bool isArmyMove, int expected)
         {
@@ -17,6 +17,7 @@ namespace AbeGaming.GameLogic.Tests
         [Theory]
         [InlineData(9, true, false, 3)]
         [InlineData(9, true, true, 9)]
+        [InlineData(25, true, true, 15)]
         [InlineData(25, false, false, 15)]
         [InlineData(0, true, false, 1)]
         public void ClampAttackerSize_AppliesBounds(int value, bool isAmphibious, bool isArmyMove, int expected)

@@ -1,5 +1,9 @@
 namespace AbeGaming.GameLogic.FtP
 {
+    /// <param name="IsDivisionMove">
+    /// The attacker is a Division move (1-3 SPs, no general). Only an Army or Corps move can
+    /// continue moving after winning a battle (rules 5.73, 7.32).
+    /// </param>
     public record FtpBattle(
         bool ResourceOrCapital,
         bool FortPresent,
@@ -13,5 +17,6 @@ namespace AbeGaming.GameLogic.FtP
         int DefenderElitesCommitted,
         bool AttackerOOS,
         bool DefenderOOS,
-        FtpAmphibious? Amphibious);
+        FtpAmphibious? Amphibious,
+        bool IsDivisionMove = false);
 }

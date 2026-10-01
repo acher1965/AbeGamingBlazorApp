@@ -17,9 +17,11 @@ namespace AbeGaming.GameLogic.FtP
             int attackerDieRoll,
             int defenderDieRoll)
         {
-            //Get out if it is not an overrun
+            // Overrun (5.72): no battle, the smaller force is eliminated.
             if (battle.IsOverrun())
-                return (battle.DefenderSize, 0, false, 0, 0);
+                return battle.IsAttackerOverrun()
+                    ? (0, battle.AttackerSize, false, 0, 0)
+                    : (battle.DefenderSize, 0, false, 0, 0);
 
             (int aDRM, int dDRM, Ratio ratio, bool inAttackerFavour, BattleSize size) = Extract(battle);
             int modifiedRollA = attackerDieRoll + aDRM;
@@ -30,14 +32,18 @@ namespace AbeGaming.GameLogic.FtP
             // Leaders death changes: determine leader death roll threshold
             // Rolled modified 10 or greater: Leader killed on 1-3
             // Rolled less than 10: Leader killed on 1
-            int defenderLeaderDeathTop = (!inAttackerFavour && ratio > Ratio.Low)
+            // 7.71: no defender roll at odds of 1-3 or worse, or if the attacker is out of supply.
+            // 7.72: no attacker roll at odds of 3-1 or better, or if the defender is out of supply.
+            bool noDefenderCasualtyRoll = (!inAttackerFavour && ratio > Ratio.Low) || battle.AttackerOOS;
+            bool noAttackerCasualtyRoll = (inAttackerFavour && ratio > Ratio.Low) || battle.DefenderOOS;
+            int defenderLeaderDeathTop = noDefenderCasualtyRoll
                 ? 0
                 : modifiedRollD >= 10
                     ? 3
                     : modifiedRollA >= 10
                         ? 1
                         : 0;
-            int attackerLeaderDeathTop = (inAttackerFavour && ratio > Ratio.Low)
+            int attackerLeaderDeathTop = noAttackerCasualtyRoll
                 ? 0
                 : modifiedRollA >= 10
                     ? 3

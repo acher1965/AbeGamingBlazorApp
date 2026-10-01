@@ -7,7 +7,9 @@ namespace AbeGaming.GameLogic.FtP
             if (!isAmphibious)
                 return 15;
 
-            return amphibiousIsArmyMove ? 9 : 3;
+            // 6.12: a naval move carries up to 3 SPs; 6.15a: an Army-size naval move has no
+            // stated limit beyond an Army's 15 SPs (6.15b's riverine move is limited to 9).
+            return amphibiousIsArmyMove ? 15 : 3;
         }
 
         public static int DefenderMinSize(bool isAmphibious, bool fortPresent)
