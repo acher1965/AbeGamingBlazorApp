@@ -31,8 +31,9 @@ The calculator handles:
 - Fortresses
 - Flank attacks, including the extra-attacking-space DRM
 - Out-of-supply units and the Sinai attacker penalty
-- An optional **Detailed units** mode: list each side's Armies and Corps (full or reduced, with or
-  without a replacement Corps in the Reserve Box) and losses are taken step by step as in the rules.
+- An optional **Detailed units** mode: choose the attacking side, list each side's Armies and Corps
+  (full or reduced, with or without a replacement Corps in the Reserve Box) and losses are taken step
+  by step as in the rules, including the British and RU CAU loss priority (12.4.5).
   This makes flank-attack return fire, retreats (a full strength attacker must remain) and
   cancelling a retreat exact rather than approximated from the factors. The unit values are in
   `AbeGaming.GameLogic/PoG/PoGUnitTypes.json`.

@@ -171,10 +171,32 @@ supplied.
    reduced Corps in the Reserve Box isn't modelled. If two Armies of the same nation
    share one Corps in the Reserve Box, ticking it on both counts that Corps twice.
 
-**Not modelled:**
-- British, BEF/MEF and CAU loss priority (12.4.5).
-- Forced permanent elimination when the full Loss Number can't be met (12.4.4.2).
-- The MN Corps never advancing, and being eliminated if forced to retreat.
-- AUS and CND Corps: they aren't in your list, and the rulebook's Cambrai example shows
-  the Canadian Corps at 2-1-4 reduced, which isn't a BR Corps. Add their values if you
-  want them.
+**Not modelled:** the MN Corps never advancing, and being eliminated if forced to retreat
+(agreed on 2026-10-02 to leave as it is).
+
+## Follow-up on develop (2026-10-02)
+
+- **Attacker loss priority (12.4.5)** is now modelled. The attacker's first step comes from
+  the highest unit on the list that can take it without exceeding the Loss Number: the
+  BEF Army, then the BEF Corps, then the MEF Army or RU CAU Army, then an AUS or CND Corps.
+  The rest of the Loss Number is then taken as usual. As the rule says, this takes
+  precedence over meeting the Loss Number exactly (12.4.3). The ranks are the
+  `attackerLossPriority` field in `PoGUnitTypes.json`; equal ranks are the owner's choice.
+  - Tests: the sample game at Sedan (the BEF Army is reduced, though every other Army could
+    also have taken the 3), Combat Example 2 (the reduced Canadian Corps takes the first
+    loss), and checks that the priority is not applied to a defender.
+  - Assumption: the rule does not rank the BEF against the RU CAU Army. They are put at
+    ranks 1 and 3; the two never fight together in practice.
+- **Armies without a reserve Corps (12.4.4.2)** is now modelled. When the Loss Number
+  can't be met, but could have been with a reduced Corps in the Reserve Box, an Army
+  without one is eliminated for good. It is applied only as a choice among the allocations
+  12.4.3 allows. Both rulebook cases are tests, including one where reducing both Armies
+  would have given better return fire.
+- **AUS and CND Corps** are added at 2-1-4 full and 2-1-4 reduced. They are grouped with
+  Britain, as is PT, since they are British (12.1.11.2).
+- **Sides:** each unit has a `faction`. The page has an "Attacker" choice (Central Powers
+  or Allied Powers); each side's list offers only its own units, and the defender is the
+  other side. MN is Allied, as the MN unit counts as Serbian (12.1.11.2). The display order is
+  GE, AH, TU, BU, SN, then UK (with AUS, CND, PT), FR, RU, IT, SB, MN, BE, RO, ANA, US.
+- **Starting setup:** three full GE Armies, each with a reserve Corps, attack three full FR
+  Armies, each with a reserve Corps. Changing the attacking side mirrors it.

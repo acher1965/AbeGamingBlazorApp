@@ -75,3 +75,33 @@ main {
         padding-right: 1.5rem !important;
     }
 }
+
+/* A phone held in landscape (wide but short): when a page asks for it (LayoutState), use the
+   narrow-screen layout - a top bar with the menu button - instead of the sidebar. */
+@media (min-width: 641px) and (orientation: landscape) and (max-height: 500px) {
+    .page.compact-nav-landscape {
+        flex-direction: column;
+    }
+
+    .page.compact-nav-landscape .sidebar {
+        width: auto;
+        height: auto;
+        position: static;
+    }
+
+    .page.compact-nav-landscape ::deep .navbar-toggler {
+        display: inline-block;
+    }
+
+    .page.compact-nav-landscape ::deep .nav-scrollable.collapse {
+        display: none;
+    }
+
+    .page.compact-nav-landscape ::deep .nav-scrollable {
+        height: auto;
+    }
+
+    .page.compact-nav-landscape article {
+        padding-left: 1.5rem !important;
+    }
+}

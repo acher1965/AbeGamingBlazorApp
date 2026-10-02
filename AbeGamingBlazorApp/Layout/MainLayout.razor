@@ -1,5 +1,7 @@
-﻿@inherits LayoutComponentBase
-<div class="page">
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject LayoutState LayoutState
+<div class="page @(LayoutState.CompactNavOnLandscapePhone ? "compact-nav-landscape" : null)">
     <div class="sidebar">
         <NavMenu />
     </div>
@@ -10,3 +12,14 @@
         </article>
     </main>
 </div>
+
+@code {
+    /// <summary>Re-renders when a page changes the layout settings.</summary>
+    protected override void OnInitialized() => LayoutState.Changed += OnLayoutStateChanged;
+
+    // async void: an event handler; any exception surfaces through the renderer rather than being lost.
+    private async void OnLayoutStateChanged() => await InvokeAsync(StateHasChanged);
+
+    /// <summary>Stops observing the layout settings.</summary>
+    public void Dispose() => LayoutState.Changed -= OnLayoutStateChanged;
+}

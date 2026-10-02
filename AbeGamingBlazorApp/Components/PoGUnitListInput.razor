@@ -9,7 +9,7 @@
         <div class="d-flex align-items-center gap-1 mb-1" id="@($"{IdPrefix}Unit{index}")">
             <select class="form-select form-select-sm" style="min-width: 0;" id="@($"{IdPrefix}Unit{index}Type")"
                     value="@unit.TypeId" @onchange="e => OnTypeChanged(index, e)">
-                @foreach (IGrouping<string, PoGUnitType> nation in PoGUnitCatalog.All.GroupBy(t => t.Nation))
+                @foreach (IGrouping<string, PoGUnitType> nation in PoGUnitCatalog.ForFaction(Faction).GroupBy(t => t.Nation))
                 {
                     <optgroup label="@nation.Key">
                         @foreach (PoGUnitType type in nation)
@@ -54,8 +54,8 @@
 
     [Parameter] public int MaxUnits { get; set; } = PoGDetailedForces.MaxAttackers;
 
-    /// <summary>Unit type added by "+ Add unit".</summary>
-    [Parameter] public string DefaultTypeId { get; set; } = "GE_ARMY";
+    /// <summary>The side these units belong to: only its unit types are offered, and "+ Add unit" adds its default unit.</summary>
+    [Parameter] public PoGFaction Faction { get; set; }
 
     /// <summary>Prefix for element ids, e.g. "pogAttacker" gives "pogAttackerUnit0Type".</summary>
     [Parameter] public string IdPrefix { get; set; } = string.Empty;
@@ -81,5 +81,5 @@
 
     private Task Remove(int index) => Update(Units.Where((_, i) => i != index));
 
-    private Task Add() => Update([.. Units, new PoGUnit(DefaultTypeId)]);
+    private Task Add() => Update([.. Units, new PoGUnit(PoGUnitCatalog.Faction(Faction).DefaultUnit)]);
 }

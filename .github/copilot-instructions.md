@@ -64,9 +64,15 @@ The solution file is `AbeGamingBlazorApp.slnx` (XML solution format).
   cancelling a retreat are approximations. Detailed mode (`PoGBattle.Detailed`) removes them: units
   come from `PoG/PoGUnitTypes.json` (embedded resource, loaded by `PoGUnitCatalog`; values supplied by
   the project owner - do not edit them without being asked), losses are allocated by
-  `PoGSideForce.TakeLosses`, and resolution is in `PoGCRT.Detailed.cs`. Factor mode must stay unchanged.
+  `PoGSideForce.TakeLosses` (12.4.3-12.4.6, including the attacker's 12.4.5 loss priority and
+  12.4.4.2), and resolution is in `PoGCRT.Detailed.cs`. Factor mode must stay unchanged.
+- The JSON file order is the display order. Each unit has a `faction`, and the page offers each side
+  only its own faction's units. `attackerLossPriority` holds the 12.4.5 ranks.
 - `PoGDetailedModeTests.cs` pins every catalog row and reproduces the rulebook's Tannenberg and Tarnopol
-  flank attacks and the Sedan, Nancy and Cambrai loss allocations exactly. Keep it passing.
+  flank attacks, Combat Example 2, the 12.4.4.2 cases and the Sedan, Nancy and Cambrai loss
+  allocations exactly. Keep it passing.
+- `LayoutState` (scoped service) lets a page ask `MainLayout` for the narrow-screen nav on a phone held
+  in landscape; the PoG page does so while "Detailed units" is ticked and resets it in `Dispose`.
 - `PoGBattle` holds unit lists in `EquatableList<T>` so battles keep value equality; the page shows
   results only while `LastStatsBattle == CurrentBattle`.
 - For a rule change, add an outcome test for a specific die roll that checks hits, retreats and column shifts

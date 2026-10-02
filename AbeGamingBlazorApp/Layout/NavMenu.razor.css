@@ -101,6 +101,48 @@
     color: white;
 }
 
+/* The TNW group button looks like the links around it. */
+.nav-item .nav-group-toggle {
+    color: #d7d7d7;
+    border-radius: 4px;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    line-height: 3rem;
+    width: 100%;
+    border: 0;
+    background: none;
+    text-align: left;
+}
+
+    .nav-item .nav-group-toggle.active {
+        background-color: rgba(255,255,255,0.37);
+        color: white;
+    }
+
+    .nav-item .nav-group-toggle:hover {
+        background-color: rgba(255,255,255,0.1);
+        color: white;
+    }
+
+/* A small chevron drawn with borders: pointing down when closed, up when open. */
+.nav-group-chevron {
+    margin-left: auto;
+    width: 0.5rem;
+    height: 0.5rem;
+    border: solid currentColor;
+    border-width: 0 2px 2px 0;
+    transform: translateY(-25%) rotate(45deg);
+}
+
+    .nav-group-chevron.open {
+        transform: translateY(25%) rotate(-135deg);
+    }
+
+.nav-subitem {
+    padding-left: 2.25rem !important;
+}
+
 .nav-item ::deep .beta-tag {
     margin-left: 0.45rem;
     padding: 0.1rem 0.35rem;

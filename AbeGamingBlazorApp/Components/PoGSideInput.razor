@@ -13,7 +13,7 @@
                                   UnitsChanged="UnitsChanged"
                                   FortCf="FortCf"
                                   MaxUnits="MaxUnits"
-                                  DefaultTypeId="@DefaultUnitTypeId"
+                                  Faction="Faction"
                                   IdPrefix="@UnitIdPrefix" />
             </div>
         }
@@ -78,7 +78,8 @@
     [Parameter] public EventCallback<EquatableList<PoGUnit>> UnitsChanged { get; set; }
     [Parameter] public int FortCf { get; set; }
     [Parameter] public int MaxUnits { get; set; } = PoGDetailedForces.MaxAttackers;
-    [Parameter] public string DefaultUnitTypeId { get; set; } = "GE_ARMY";
+    /// <summary>Detailed mode: the side whose unit types are offered.</summary>
+    [Parameter] public PoGFaction Faction { get; set; }
     [Parameter] public string UnitIdPrefix { get; set; } = string.Empty;
 
     [Parameter] public string SideName { get; set; } = "Attacker";

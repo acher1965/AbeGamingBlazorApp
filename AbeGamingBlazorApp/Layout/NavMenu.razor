@@ -1,4 +1,7 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@implements IDisposable
+@inject NavigationManager Navigation
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">AbeGaming</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -25,20 +28,32 @@
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="tnwbattle">
-                <span class="bi bi-lightning-charge-fill-nav-menu" aria-hidden="true"></span> TNW Battle <span class="beta-tag">BETA</span>
-            </NavLink>
+            @* stopPropagation: opening the submenu must not close the narrow-screen menu. *@
+            <button type="button" id="navTnwToggle" class="nav-link nav-group-toggle @(IsTnwPage && !tnwExpanded ? "active" : null)"
+                    aria-expanded="@(tnwExpanded ? "true" : "false")"
+                    @onclick="ToggleTnwSubmenu" @onclick:stopPropagation="true">
+                <span class="bi bi-lightning-charge-fill-nav-menu" aria-hidden="true"></span> TNW <span class="beta-tag">BETA</span>
+                <span class="nav-group-chevron @(tnwExpanded ? "open" : null)" aria-hidden="true"></span>
+            </button>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="tnwnaval">
-                <span class="bi bi-water-nav-menu" aria-hidden="true"></span> TNW Naval <span class="beta-tag">BETA</span>
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="tnwsiege">
-                <span class="bi bi-shield-lock-fill-nav-menu" aria-hidden="true"></span> TNW Siege <span class="beta-tag">BETA</span>
-            </NavLink>
-        </div>
+        @if (tnwExpanded)
+        {
+            <div class="nav-item nav-subitem px-3">
+                <NavLink class="nav-link" href="tnwbattle">
+                    <span class="bi bi-lightning-charge-fill-nav-menu" aria-hidden="true"></span> Battle
+                </NavLink>
+            </div>
+            <div class="nav-item nav-subitem px-3">
+                <NavLink class="nav-link" href="tnwnaval">
+                    <span class="bi bi-water-nav-menu" aria-hidden="true"></span> Naval Battle
+                </NavLink>
+            </div>
+            <div class="nav-item nav-subitem px-3">
+                <NavLink class="nav-link" href="tnwsiege">
+                    <span class="bi bi-shield-lock-fill-nav-menu" aria-hidden="true"></span> Siege
+                </NavLink>
+            </div>
+        }
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="about">
                 <span class="bi bi-info-circle-fill-nav-menu" aria-hidden="true"></span> About
@@ -66,14 +81,44 @@
 </div>
 
 @code {
+    private const string TnwRoutePrefix = "tnw";
+
     private bool collapseNavMenu = true;
+    private bool tnwExpanded;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
     private static string AppVersion => typeof(NavMenu).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
 
+    /// <summary>True on one of The Napoleonic Wars pages.</summary>
+    private bool IsTnwPage => Navigation.ToBaseRelativePath(Navigation.Uri).StartsWith(TnwRoutePrefix, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Opens the TNW submenu when the app starts on a TNW page, and on every later visit to one.</summary>
+    protected override void OnInitialized()
+    {
+        tnwExpanded = IsTnwPage;
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        if (IsTnwPage && !tnwExpanded)
+        {
+            tnwExpanded = true;
+            StateHasChanged();
+        }
+    }
+
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
     }
+
+    private void ToggleTnwSubmenu()
+    {
+        tnwExpanded = !tnwExpanded;
+    }
+
+    /// <summary>Stops observing navigation.</summary>
+    public void Dispose() => Navigation.LocationChanged -= OnLocationChanged;
 }
