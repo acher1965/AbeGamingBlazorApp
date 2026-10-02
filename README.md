@@ -1,19 +1,16 @@
 # AbeGaming - Board Game Tools
 
-A Progressive Web App (PWA) built with Blazor WebAssembly to provide helpful tools for board gaming enthusiasts.
+A Progressive Web App (PWA) built with Blazor WebAssembly to provide helpful tools for boardgamers.
 
 🌐 **Live Site:** [abegaming.org](https://abegaming.org)
 
 ## Features
 
-The Napoleonic Wars calculators are currently in **BETA**: feedback is welcome (see the Contact
-page in the app). Each calculator can roll a single battle result, or compute the probabilities
+Feedback is welcome (see the Contact page in the app). Each calculator can roll a single battle result, or compute the probabilities
 of victory, the distribution of losses and other expected values for a given battle setup.
+The Napoleonic Wars calculators are currently in **BETA**. 
 
 ### For The People Battle Calculator
-A battle resolution calculator for GMT Games' acclaimed American Civil War card-driven strategy game "For The People". 
-
-The calculator handles:
 - Land battle resolution with full Combat Results Table (CRT) implementation
 - Die roll modifications (DRM) for leaders, elites, fortifications, and supply status
 - Amphibious assaults
@@ -23,9 +20,6 @@ The calculator handles:
 - Exact statistics, cross-checked against a Monte Carlo simulation in the test suite
 
 ### Paths of Glory Battle Calculator
-The same kind of tool for GMT Games' World War I card-driven strategy game "Paths of Glory".
-
-The calculator handles:
 - Corps and Army fire tables, with factors and DRM for each side
 - Terrain (clear, forest, marsh, mountain, desert) and trench column shifts
 - Fortresses
@@ -40,8 +34,7 @@ The calculator handles:
   sidebar for the menu button to leave room for the unit lists.
 
 ### The Napoleonic Wars Battle, Naval Battle and Siege Calculators
-Three calculators for GMT Games' multiplayer card-driven strategy game "The Napoleonic Wars", each
-on its own page, grouped under a single "TNW" entry in the navigation menu and on the Home page.
+Three calculators each on its own page, grouped under a single "TNW" entry in the navigation menu and on the Home page.
 
 The Battle calculator (rule 11) handles:
 - Each side's dice pool: Units, Commander Battle Rating, nationality bonus, battle event dice
@@ -207,5 +200,3 @@ This project is provided as-is for educational and personal use.
 Recent changes can be viewed on the [Change List](https://abegaming.org/changelist) page, which automatically updates from git commits.
 
 ---
-
-**Made with ☕ and 🎲 by a board gaming enthusiast**
