@@ -2,7 +2,9 @@
 @using AbeGaming.GameLogic
 @using AbeGaming.GameLogic.PoG
 @using PoGBattleModel = AbeGaming.GameLogic.PoG.PoGBattle
+@implements IDisposable
 @inject IJSRuntime JS
+@inject LayoutState LayoutState
 
 <PageTitle>PoG Battle Calculator</PageTitle>
 
@@ -65,6 +67,19 @@
                     <InfoTip Text="@DetailedTip" />
                 </label>
             </div>
+            @if (IsDetailed)
+            {
+                <div class="d-flex align-items-center gap-1">
+                    <label class="small mb-0" for="pogAttackerFaction">Attacker</label>
+                    <select id="pogAttackerFaction" class="form-select form-select-sm w-auto" value="@AttackerFaction" @onchange="OnAttackerFactionChanged">
+                        @foreach (PoGFaction faction in Enum.GetValues<PoGFaction>())
+                        {
+                            <option value="@faction">@PoGUnitCatalog.Faction(faction).Name</option>
+                        }
+                    </select>
+                    <InfoTip Text="Each side lists only its own units; the defender is the other side. Changing it restarts both lists." />
+                </div>
+            }
         </div>
         @if (AttemptFlankAttack)
         {
@@ -90,7 +105,7 @@
                       IsDetailed="IsDetailed"
                       @bind-Units="AttackerUnits"
                       MaxUnits="PoGDetailedForces.MaxAttackers"
-                      DefaultUnitTypeId="GE_ARMY"
+                      Faction="AttackerFaction"
                       UnitIdPrefix="pogAttacker"
                       @bind-FireTable="AttackerFireTable"
                       @bind-Factors="AttackerFactors"
@@ -107,7 +122,7 @@
                       @bind-Units="DefenderUnits"
                       FortCf="@FortressLevel.CombatFactors()"
                       MaxUnits="PoGDetailedForces.MaxDefenders"
-                      DefaultUnitTypeId="FR_ARMY"
+                      Faction="AttackerFaction.Opponent()"
                       UnitIdPrefix="pogDefender"
                       @bind-FireTable="DefenderFireTable"
                       @bind-Factors="DefenderFactors"
@@ -341,7 +356,8 @@
 
     public const string DetailedTip =
         "List each side's units instead of total factors. Losses are then taken step by step as in the rules (12.4): " +
-        "a reduced Army eliminated is replaced by a Corps if one is in the Reserve Box, the side firing second after a flank attack " +
+        "a reduced Army eliminated is replaced by a Corps if one is in the Reserve Box (Res.), an attacking BEF, MEF, RU CAU, AUS or CND unit " +
+        "takes the first loss (12.4.5), the side firing second after a flank attack " +
         "fires with its real survivors (possibly on the Corps table), a retreat needs a full strength attacker left (12.5.1), " +
         "and cancelling a retreat needs a defending step left (12.5.3). Without it, these are approximated from the factors.";
 
@@ -349,10 +365,41 @@
     private static FireTable InitialDefenderFireTable(PoGBattleModel battle) =>
         PoGSideForce.FromUnits(battle.Detailed!.Defenders, battle.FortressLevel.CombatFactors()).FireTable;
 
-    // Detailed mode: the units of each side (defaults: the rulebook's Tannenberg example).
-    private bool IsDetailed;
-    private EquatableList<PoGUnit> AttackerUnits = new([new PoGUnit("GE_ARMY"), new PoGUnit("GE_CORPS")]);
-    private EquatableList<PoGUnit> DefenderUnits = new([new PoGUnit("RU_ARMY")]);
+    // Detailed mode: the units of each side.
+    private const int StartingUnitsPerSide = 3;
+
+    private bool _isDetailed;
+    private bool IsDetailed
+    {
+        get => _isDetailed;
+        set
+        {
+            _isDetailed = value;
+            // The unit lists need the whole width of a phone in landscape.
+            LayoutState.CompactNavOnLandscapePhone = value;
+        }
+    }
+
+    private PoGFaction AttackerFaction = PoGFaction.CentralPowers;
+    private EquatableList<PoGUnit> AttackerUnits = StartingUnits(PoGFaction.CentralPowers);
+    private EquatableList<PoGUnit> DefenderUnits = StartingUnits(PoGFaction.AlliedPowers);
+
+    /// <summary>The starting setup of a side: three full strength default Armies, each with a reserve Corps.</summary>
+    private static EquatableList<PoGUnit> StartingUnits(PoGFaction faction) =>
+        new(Enumerable.Repeat(new PoGUnit(PoGUnitCatalog.Faction(faction).DefaultUnit), StartingUnitsPerSide));
+
+    private void OnAttackerFactionChanged(ChangeEventArgs e)
+    {
+        if (!Enum.TryParse(e.Value?.ToString(), out PoGFaction faction) || faction == AttackerFaction)
+            return;
+
+        AttackerFaction = faction;
+        AttackerUnits = StartingUnits(faction);
+        DefenderUnits = StartingUnits(faction.Opponent());
+    }
+
+    /// <summary>Gives the sidebar back to other pages.</summary>
+    public void Dispose() => LayoutState.CompactNavOnLandscapePhone = false;
 
     private async Task ScrollToResults()
     {

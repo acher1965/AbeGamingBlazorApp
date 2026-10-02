@@ -60,6 +60,8 @@ public class PoGDetailedModeTests
     [InlineData("SN_CORPS", 1, 1, 0, 1, null)]
     [InlineData("ANA_CORPS", 1, 1, 0, 1, null)]
     [InlineData("PT_CORPS", 1, 1, 0, 1, null)]
+    [InlineData("AUS_CORPS", 2, 1, 2, 1, null)] // supplied 2026-10-02
+    [InlineData("CND_CORPS", 2, 1, 2, 1, null)]
     public void Catalog_MatchesTheSuppliedUnitList(string id, int fullCf, int fullLf, int reducedCf, int reducedLf, string? replacement)
     {
         PoGUnitType type = PoGUnitCatalog.Get(id);
@@ -72,7 +74,42 @@ public class PoGDetailedModeTests
     [Fact]
     public void Catalog_HasExactlyTheSuppliedUnitTypes()
     {
-        Assert.Equal(32, PoGUnitCatalog.All.Count);
+        Assert.Equal(34, PoGUnitCatalog.All.Count);
+    }
+
+    [Fact]
+    public void Catalog_NationsInTheRequestedDisplayOrder_EachOnOneSide()
+    {
+        // MN counts as Serbian (12.1.11.2), so it is Allied; AUS, CND and PT are grouped with Britain.
+        string[] centralPowers = ["Germany", "Austria-Hungary", "Turkey", "Bulgaria", "Senussi"];
+        string[] alliedPowers = ["Britain", "France", "Russia", "Italy", "Serbia", "Montenegro", "Belgium", "Romania", "Arab Northern Army", "United States"];
+
+        Assert.Equal(centralPowers, PoGUnitCatalog.ForFaction(PoGFaction.CentralPowers).Select(t => t.Nation).Distinct());
+        Assert.Equal(alliedPowers, PoGUnitCatalog.ForFaction(PoGFaction.AlliedPowers).Select(t => t.Nation).Distinct());
+        Assert.Equal(PoGUnitCatalog.All.Count, PoGUnitCatalog.ForFaction(PoGFaction.CentralPowers).Count + PoGUnitCatalog.ForFaction(PoGFaction.AlliedPowers).Count);
+        Assert.Equal("Britain", PoGUnitCatalog.Get("PT_CORPS").Nation);
+    }
+
+    [Fact]
+    public void Catalog_FactionDefaults()
+    {
+        Assert.Equal("GE_ARMY", PoGUnitCatalog.Faction(PoGFaction.CentralPowers).DefaultUnit);
+        Assert.Equal("FR_ARMY", PoGUnitCatalog.Faction(PoGFaction.AlliedPowers).DefaultUnit);
+        Assert.Equal(PoGFaction.AlliedPowers, PoGFaction.CentralPowers.Opponent());
+    }
+
+    [Theory]
+    [InlineData("BR_BEF_ARMY", 1)]
+    [InlineData("BR_BEF_CORPS", 2)]
+    [InlineData("BR_MEF", 3)]
+    [InlineData("RU_CAU", 3)]
+    [InlineData("AUS_CORPS", 4)]
+    [InlineData("CND_CORPS", 4)]
+    [InlineData("BR_ARMY", null)]
+    [InlineData("BR_CORPS", null)]
+    public void Catalog_AttackerLossPriorities(string id, int? priority)
+    {
+        Assert.Equal(priority, PoGUnitCatalog.Get(id).AttackerLossPriority);
     }
 
     // ---- Step-loss allocation (12.4.3, 12.4.4), from the sample game ----
@@ -145,6 +182,124 @@ public class PoGDetailedModeTests
         Assert.False(four.FortIntact);
         Assert.True(three.FortIntact);
         Assert.False(three.AnyUnitAlive);
+    }
+
+    // ---- Attacker loss priority (12.4.5) ----
+
+    [Fact]
+    public void SampleGameSedan_BefArmyTakesTheFirstLoss()
+    {
+        // "The Central Powers die roll is 1 which causes a loss number of 3. The BR BEF Army must take
+        // the first loss if possible [See 12.4.5], and so is reduced." Every other Army could also
+        // have taken exactly 3.
+        PoGSideForce allies = PoGSideForce.FromUnits([
+            Unit("FR_ARMY", reduced: true), Unit("FR_ARMY"), Unit("BR_BEF_ARMY"), Unit("BR_ARMY"), Unit("FR_CORPS")]);
+
+        PoGSideForce after = allies.TakeLosses(3, attackerLossPriority: true);
+
+        Assert.Equal(
+            [PoGUnitStage.Reduced, PoGUnitStage.Full, PoGUnitStage.Reduced, PoGUnitStage.Full, PoGUnitStage.Full],
+            after.Units.Select(u => u.Stage));
+    }
+
+    [Fact]
+    public void CombatExample2_CanadianCorpsTakesTheFirstLoss_ThenTheBritishArmies()
+    {
+        // July 1916: BR 3rd and 4th Armies, the reduced CND Corps and the FR 6th Army (13 CF) attack
+        // the GE 2nd Army and 2 Corps behind a level 2 trench; the Germans (+1 DRM) roll 5 for 7 on
+        // the 12-14 column and the Allies roll 4 for 4 on the 6-8 column.
+        PoGBattle battle = Detailed(
+            [Unit("BR_ARMY"), Unit("BR_ARMY"), Unit("CND_CORPS", reduced: true), Unit("FR_ARMY")],
+            [Unit("GE_ARMY"), Unit("GE_CORPS"), Unit("GE_CORPS")],
+            trench: 2, defenderDrm: 1);
+
+        PoGBattleResult result = battle.Outcome(attackerDieRoll: 4, defenderDieRoll: 5);
+
+        Assert.Equal(7, result.HitsByDefender);
+        Assert.Equal(4, result.HitsByAttacker);
+        Assert.Equal(Winner.Defender, result.Winner);
+        Assert.Equal(3, result.AttackerStepsLost);
+        Assert.Equal(2, result.DefenderStepsLost);
+
+        // "the first loss must come from the Canadian Corps, which is eliminated".
+        PoGSideForce allies = PoGSideForce.FromUnits(battle.Detailed!.Attackers).TakeLosses(7, attackerLossPriority: true);
+        Assert.Equal(PoGUnitStage.Eliminated, allies.Units[2].Stage);
+    }
+
+    [Fact]
+    public void LossPriority_TakesPrecedenceOverTheOwnersChoice_ButOnlyForTheAttacker()
+    {
+        // LN 3: the owner would rather eliminate the reduced FR Army (replaced by a full Corps) and
+        // keep the BEF Army at full strength, but an attacking BEF Army must take the first loss.
+        PoGSideForce force = PoGSideForce.FromUnits([Unit("BR_BEF_ARMY"), Unit("FR_ARMY", reduced: true)]);
+
+        PoGSideForce attacking = force.TakeLosses(3, attackerLossPriority: true);
+        PoGSideForce defending = force.TakeLosses(3);
+
+        Assert.Equal(PoGUnitStage.Reduced, attacking.Units[0].Stage);
+        Assert.Equal(PoGUnitStage.Full, defending.Units[0].Stage);
+        Assert.Equal(PoGUnitStage.ReplacementFull, defending.Units[1].Stage);
+    }
+
+    [Fact]
+    public void LossPriority_SkipsAUnitThatWouldExceedTheLossNumber()
+    {
+        // LN 2: the BEF Army (LF 3) cannot take it, so the next on the list, the AUS Corps (LF 1),
+        // takes the first loss - even though the RU Army alone would have met 2 in one step. The
+        // rest is then taken as well as possible: the AUS Corps' second step.
+        PoGSideForce force = PoGSideForce.FromUnits([Unit("BR_BEF_ARMY"), Unit("RU_ARMY"), Unit("AUS_CORPS")]);
+
+        PoGSideForce after = force.TakeLosses(2, attackerLossPriority: true);
+
+        Assert.Equal([PoGUnitStage.Full, PoGUnitStage.Full, PoGUnitStage.Eliminated], after.Units.Select(u => u.Stage));
+    }
+
+    [Fact]
+    public void LossPriority_RuCaucasusArmyBeforeTheAustralians()
+    {
+        PoGSideForce force = PoGSideForce.FromUnits([Unit("AUS_CORPS"), Unit("RU_CAU")]);
+
+        PoGSideForce after = force.TakeLosses(2, attackerLossPriority: true);
+
+        Assert.Equal([PoGUnitStage.Full, PoGUnitStage.Reduced], after.Units.Select(u => u.Stage));
+    }
+
+    // ---- Armies without a replacement Corps (12.4.4.2) ----
+
+    [Fact]
+    public void RulebookCase_TwoFullArmiesLf3_LossNumber7_OneArmyEliminated()
+    {
+        PoGSideForce french = PoGSideForce.FromUnits([Unit("FR_ARMY", reserve: false), Unit("FR_ARMY", reserve: false)]);
+
+        PoGSideForce after = french.TakeLosses(7);
+
+        Assert.Equal(1, after.Units.Count(u => u.Stage == PoGUnitStage.Eliminated));
+        Assert.Equal(1, after.Units.Count(u => u.Stage == PoGUnitStage.Full));
+    }
+
+    [Fact]
+    public void RulebookCase_TwoFullArmiesLf2_LossNumber5_OneArmyEliminated_EvenWhenReducingBothFiresBetter()
+    {
+        // Reducing both RU Armies (2 + 2 CF) would return more fire than one full Army (3 CF), so
+        // without 12.4.4.2 a defender that fires second would choose it. 2 + 2 + 1 would have met
+        // the 5 with a reduced RU Corps in the Reserve Box, so an Army must be eliminated.
+        PoGSideForce russians = PoGSideForce.FromUnits([Unit("RU_ARMY", reserve: false), Unit("RU_ARMY", reserve: false)]);
+
+        PoGSideForce after = russians.TakeLosses(5, f => f.CombatFactors);
+
+        Assert.Equal(1, after.Units.Count(u => u.Stage == PoGUnitStage.Eliminated));
+        Assert.Equal(1, after.Units.Count(u => u.Stage == PoGUnitStage.Full));
+    }
+
+    [Fact]
+    public void ArmiesWithAReserveCorps_MeetTheLossNumber_NoArmyLostForGood()
+    {
+        // With a reserve Corps the 5 is met exactly (2 + 2 + 1), so 12.4.4.2 does not apply.
+        PoGSideForce russians = PoGSideForce.FromUnits([Unit("RU_ARMY"), Unit("RU_ARMY", reserve: false)]);
+
+        PoGSideForce after = russians.TakeLosses(5, f => f.CombatFactors);
+
+        Assert.DoesNotContain(after.Units, u => u.IsPermanentlyEliminatedArmy);
     }
 
     // ---- Full combats: these were approximations in factor mode ----

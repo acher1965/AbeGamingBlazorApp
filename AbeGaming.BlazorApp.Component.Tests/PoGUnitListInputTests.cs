@@ -10,9 +10,14 @@ public class PoGUnitListInputTests : BunitContext
 {
     private EquatableList<PoGUnit>? _emitted;
 
-    private IRenderedComponent<PoGUnitListInput> RenderList(EquatableList<PoGUnit> units, int maxUnits = PoGDetailedForces.MaxAttackers, int fortCf = 0) =>
+    private IRenderedComponent<PoGUnitListInput> RenderList(
+        EquatableList<PoGUnit> units,
+        int maxUnits = PoGDetailedForces.MaxAttackers,
+        int fortCf = 0,
+        PoGFaction faction = PoGFaction.AlliedPowers) =>
         Render<PoGUnitListInput>(parameters => parameters
             .Add(p => p.Units, units)
+            .Add(p => p.Faction, faction)
             .Add(p => p.MaxUnits, maxUnits)
             .Add(p => p.FortCf, fortCf)
             .Add(p => p.IdPrefix, "t")
@@ -21,7 +26,7 @@ public class PoGUnitListInputTests : BunitContext
     [Fact]
     public void Summary_ShowsCombatStrengthAndTable_ForTannenberg()
     {
-        IRenderedComponent<PoGUnitListInput> attackers = RenderList(new([new PoGUnit("GE_ARMY"), new PoGUnit("GE_CORPS")]));
+        IRenderedComponent<PoGUnitListInput> attackers = RenderList(new([new PoGUnit("GE_ARMY"), new PoGUnit("GE_CORPS")]), faction: PoGFaction.CentralPowers);
         IRenderedComponent<PoGUnitListInput> defenders = RenderList(new([new PoGUnit("RU_CORPS")]), fortCf: 2);
 
         Assert.Contains("7", attackers.Find("#tSummary").TextContent);
@@ -50,11 +55,27 @@ public class PoGUnitListInputTests : BunitContext
         cut.Find("#tUnit0Reduced").Change(true);
         Assert.True(_emitted![0].Reduced);
 
-        cut.Find("#tUnit0Type").Change("GE_CORPS");
-        Assert.Equal("GE_CORPS", _emitted![0].TypeId);
+        cut.Find("#tUnit0Type").Change("RU_CORPS");
+        Assert.Equal("RU_CORPS", _emitted![0].TypeId);
 
         cut.Find("#tUnit0Remove").Click();
         Assert.Empty(_emitted!);
+    }
+
+    [Theory]
+    [InlineData(PoGFaction.CentralPowers, "GE_ARMY", "FR_ARMY")]
+    [InlineData(PoGFaction.AlliedPowers, "FR_ARMY", "GE_ARMY")]
+    public void OnlyTheSidesOwnUnitsAreOffered_AndAddUsesItsDefault(PoGFaction faction, string own, string other)
+    {
+        IRenderedComponent<PoGUnitListInput> cut = RenderList(new([new PoGUnit(own)]), faction: faction);
+
+        List<string?> offered = [.. cut.FindAll("#tUnit0Type option").Select(o => o.GetAttribute("value"))];
+        Assert.Contains(own, offered);
+        Assert.DoesNotContain(other, offered);
+        Assert.Equal(PoGUnitCatalog.ForFaction(faction).Count, offered.Count);
+
+        cut.Find("#tAddUnit").Click();
+        Assert.Equal(own, _emitted![1].TypeId);
     }
 
     [Fact]

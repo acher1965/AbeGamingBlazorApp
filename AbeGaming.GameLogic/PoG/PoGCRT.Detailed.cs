@@ -3,7 +3,7 @@ namespace AbeGaming.GameLogic.PoG
     /// <summary>
     /// Detailed (unit-level) combat resolution. Same procedure as the factor mode (12.2), but
     /// Combat Strength and Fire Table come from the units, losses are taken step by step
-    /// (12.4), and the aftermath uses the unit-level conditions: a retreat needs a full strength
+    /// (12.4, with the attacker's loss priority of 12.4.5), and the aftermath uses the unit-level conditions: a retreat needs a full strength
     /// attacking unit left (12.5.1), cancelling a retreat needs a defending step left after the
     /// extra loss (12.5.3), and only full strength units advance (12.7.1).
     /// </summary>
@@ -59,7 +59,7 @@ namespace AbeGaming.GameLogic.PoG
                 hitsByAttacker = ForceHits(attacker, attackerShift, attackerModifiedDieRoll);
                 hitsByDefender = ForceHits(defender, defenderShift, defenderModifiedDieRoll);
                 defenderAfter = defender.TakeLosses(hitsByAttacker);
-                attackerAfter = attacker.TakeLosses(hitsByDefender);
+                attackerAfter = attacker.TakeLosses(hitsByDefender, attackerLossPriority: true);
             }
             else if (flankSucceeded)
             {
@@ -69,13 +69,13 @@ namespace AbeGaming.GameLogic.PoG
                 defenderColumn = ForceColumn(defenderAfter, defenderShift);
                 defenderFireTable = defenderAfter.FireTable;
                 hitsByDefender = ForceHits(defenderAfter, defenderShift, defenderModifiedDieRoll);
-                attackerAfter = attacker.TakeLosses(hitsByDefender);
+                attackerAfter = attacker.TakeLosses(hitsByDefender, attackerLossPriority: true);
             }
             else
             {
                 // A failed flank attack: the defender fires first.
                 hitsByDefender = ForceHits(defender, defenderShift, defenderModifiedDieRoll);
-                attackerAfter = attacker.TakeLosses(hitsByDefender, f => ExpectedHits(f, attackerShift, attackerDrm));
+                attackerAfter = attacker.TakeLosses(hitsByDefender, f => ExpectedHits(f, attackerShift, attackerDrm), attackerLossPriority: true);
                 attackerColumn = ForceColumn(attackerAfter, attackerShift);
                 hitsByAttacker = ForceHits(attackerAfter, attackerShift, attackerModifiedDieRoll);
                 defenderAfter = defender.TakeLosses(hitsByAttacker);
