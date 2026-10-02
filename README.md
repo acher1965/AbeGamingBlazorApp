@@ -36,11 +36,12 @@ The calculator handles:
   by step as in the rules, including the British and RU CAU loss priority (12.4.5).
   This makes flank-attack return fire, retreats (a full strength attacker must remain) and
   cancelling a retreat exact rather than approximated from the factors. The unit values are in
-  `AbeGaming.GameLogic/PoG/PoGUnitTypes.json`.
+  `AbeGaming.GameLogic/PoG/PoGUnitTypes.json`. On a phone held in landscape, this mode swaps the
+  sidebar for the menu button to leave room for the unit lists.
 
 ### The Napoleonic Wars Battle, Naval Battle and Siege Calculators
 Three calculators for GMT Games' multiplayer card-driven strategy game "The Napoleonic Wars", each
-on its own page.
+on its own page, grouped under a single "TNW" entry in the navigation menu and on the Home page.
 
 The Battle calculator (rule 11) handles:
 - Each side's dice pool: Units, Commander Battle Rating, nationality bonus, battle event dice
