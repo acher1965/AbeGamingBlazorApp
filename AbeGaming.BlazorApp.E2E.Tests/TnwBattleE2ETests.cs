@@ -30,6 +30,21 @@ namespace AbeGaming.BlazorApp.E2E.Tests
         }
 
         [Fact]
+        public async Task DefaultSetup_IsNamedLandBattle_TwoUnitsNoCommanderEachSide()
+        {
+            using IPlaywright playwright = await Playwright.CreateAsync();
+            await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+            IPage page = await OpenPage(browser);
+
+            Assert.Contains("Land Battle", await page.TitleAsync());
+            Assert.Contains("Land Battle", await page.TextContentAsync("h1") ?? string.Empty);
+            Assert.Equal("2", await page.InputValueAsync("#tnwAttackerUnits"));
+            Assert.Equal("2", await page.InputValueAsync("#tnwDefenderUnits"));
+            Assert.Equal("0", await page.InputValueAsync("#tnwAttackerCommander"));
+            Assert.Equal("0", await page.InputValueAsync("#tnwDefenderCommander"));
+        }
+
+        [Fact]
         public async Task SmallBattle_RendersExactStats()
         {
             using IPlaywright playwright = await Playwright.CreateAsync();

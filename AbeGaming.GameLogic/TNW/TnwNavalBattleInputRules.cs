@@ -28,6 +28,18 @@ namespace AbeGaming.GameLogic.TNW
                 return false;
             }
 
+            if (battle.ActiveHasFischer && battle.Active.Total(TnwNavalNation.Denmark) == 0)
+            {
+                errorMessage = "Admiral Fischer requires at least one Danish Squadron in the Active Fleet.";
+                return false;
+            }
+
+            if (battle.InactiveHasFischer && battle.Inactive.Total(TnwNavalNation.Denmark) == 0)
+            {
+                errorMessage = "Admiral Fischer requires at least one Danish Squadron in the Inactive Fleet.";
+                return false;
+            }
+
             errorMessage = null;
             return true;
         }

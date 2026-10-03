@@ -2,17 +2,16 @@
 @using AbeGaming.GameLogic.TNW
 @inject IJSRuntime JS
 
-<PageTitle>TNW Battle Calculator</PageTitle>
+<PageTitle>TNW Land Battle Calculator</PageTitle>
 
-<h1 class="h3 mb-3">The Napoleonic Wars - Battle Calculator</h1>
+<h1 class="h3 mb-3">The Napoleonic Wars - Land Battle Calculator</h1>
 
 <div class="card mb-2">
     <div class="card-body py-2">
         <div class="row g-2">
             <div class="col-6 col-md-4">
                 <label class="form-label form-label-sm mb-1">
-                    Terrain crossed
-                    <InfoTip Text="Terrain the attacker crossed to enter the Duchy. The defender gets +1 (Rough), +2 (Pass) or +3 (Marsh) dice in Round 1, only if the Duchy is Friendly to it (rule 11.22)." />
+                    <InfoTip Text="Terrain the attacker crossed to enter the Duchy. The defender gets +1 (Rough), +2 (Pass) or +3 (Marsh) dice in Round 1, only if the Duchy is Friendly to it (rule 11.22).">Terrain crossed</InfoTip>
                 </label>
                 <select id="tnwTerrain" class="form-select form-select-sm" @bind="Terrain">
                     @foreach (TnwTerrain option in Enum.GetValues<TnwTerrain>())
@@ -23,8 +22,7 @@
             </div>
             <div class="col-6 col-md-4">
                 <label class="form-label form-label-sm mb-1">
-                    Failed evasions
-                    <InfoTip Text="Defender evasion attempts that failed: +1 attacker die each in Round 1, and the defender loses any terrain bonus (rules 10.2, 11.22)." />
+                    <InfoTip Text="Defender evasion attempts that failed: +1 attacker die each in Round 1, and the defender loses any terrain bonus (rules 10.2, 11.22).">Failed evasions</InfoTip>
                 </label>
                 <input id="tnwFailedEvasions" type="number" class="form-control form-control-sm" @bind="FailedEvasions" onfocus="this.select()" min="0" max="3" />
             </div>
@@ -33,15 +31,13 @@
             <div class="form-check form-check-inline mb-0">
                 <input class="form-check-input" type="checkbox" id="tnwDefenderCannotRetreat" @bind="DefenderCannotRetreat" />
                 <label class="form-check-label small" for="tnwDefenderCannotRetreat">
-                    Defender cannot retreat
-                    <InfoTip Text="If the defender loses it is eliminated instead of retreating - an Overrun (rules 11.42, 11.6)." />
+                    <InfoTip Text="If the defender loses it is eliminated instead of retreating - an Overrun (rules 11.42, 11.6).">Defender cannot retreat</InfoTip>
                 </label>
             </div>
             <div class="form-check form-check-inline mb-0">
                 <input class="form-check-input" type="checkbox" id="tnwDefenderWithoutArmyGroup" @bind="DefenderWithoutArmyGroup" />
                 <label class="form-check-label small" for="tnwDefenderWithoutArmyGroup">
-                    Defender not an Army Group
-                    <InfoTip Text="Several defending Armies not formed into an Army Group defend together with a Commander Battle Rating of 0; his printed rating still counts if routed (rule 9.7)." />
+                    <InfoTip Text="Several defending Armies not formed into an Army Group defend together with a Commander Battle Rating of 0; his printed rating still counts if routed (rule 9.7).">Defender not an Army Group</InfoTip>
                 </label>
             </div>
         </div>
@@ -169,13 +165,13 @@
     private bool DefenderCannotRetreat;
     private bool DefenderWithoutArmyGroup;
 
-    private int AttackerUnits = 6;
-    private int AttackerCommander = 3;
+    private int AttackerUnits = 2;
+    private int AttackerCommander;
     private TnwForceComposition AttackerComposition = TnwForceComposition.Power;
     private int AttackerEventDice;
 
-    private int DefenderUnits = 5;
-    private int DefenderCommander = 2;
+    private int DefenderUnits = 2;
+    private int DefenderCommander;
     private TnwForceComposition DefenderComposition = TnwForceComposition.Power;
     private int DefenderEventDice;
 

@@ -9,6 +9,17 @@ namespace AbeGaming.BlazorApp.E2E.Tests
             ?? "http://localhost:5211";
 
         [Fact]
+        public async Task DefaultSetup_BattleRatingStartsAtOne()
+        {
+            using IPlaywright playwright = await Playwright.CreateAsync();
+            await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+            IPage page = await browser.NewPageAsync();
+            await page.GotoAsync($"{BaseUrl}/tnwsiege", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 30000 });
+
+            Assert.Equal("1", await page.InputValueAsync("#tnwSiegeCommanderBattleRating"));
+        }
+
+        [Fact]
         public async Task ExactStats_RendersFallProbability()
         {
             using IPlaywright playwright = await Playwright.CreateAsync();

@@ -7,7 +7,7 @@
     <div class="card-body py-2">
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
-                Command Rating <InfoTip Text="The Commander's Command Rating (4, 6 or 8): the most Units that roll each Siege Round (rule 12.33)." />
+                <InfoTip Text="The Commander's Command Rating (4, 6 or 8): the most Units that roll each Siege Round (rule 12.33).">Command Rating</InfoTip>
             </label>
             <div class="col-7">
                 <select class="form-select form-select-sm" id="tnwSiegeCommandRating" value="@CommandRating" @onchange="OnCommandRatingChanged">
@@ -21,7 +21,7 @@
 
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
-                Battle Rating <InfoTip Text="The Commander's Battle Rating (1 to 4): that many bonus dice while he is undisrupted." />
+                <InfoTip Text="The Commander's Battle Rating (1 to 4): that many bonus dice while he is undisrupted.">Battle Rating</InfoTip>
             </label>
             <div class="col-7">
                 <input type="number"
@@ -37,7 +37,7 @@
 
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
-                Units available <InfoTip Text="All Units in the Duchy, excluding the Commander (other leaders count as 1 Unit). Only up to the Command Rating roll; the rest replace losses in later Rounds (rule 12.33)." />
+                <InfoTip Text="All Units in the Duchy, excluding the Commander (other leaders count as 1 Unit). Only up to the Command Rating roll; the rest replace losses in later Rounds (rule 12.33).">Units available</InfoTip>
             </label>
             <div class="col-7">
                 <input type="number"
@@ -53,7 +53,7 @@
 
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
-                Nationality <InfoTip Text="Armies are single-nationality. French: +2 bonus dice. Other Power: +1. Minor: none (rule 11.21)." />
+                <InfoTip Text="Armies are single-nationality. French: +2 bonus dice. Other Power: +1. Minor: none (rule 11.21).">Nationality</InfoTip>
             </label>
             <div class="col-7">
                 <select class="form-select form-select-sm" id="tnwSiegeComposition" value="@Composition" @onchange="OnCompositionChanged">

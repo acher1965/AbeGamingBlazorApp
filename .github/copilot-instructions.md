@@ -132,6 +132,11 @@ The solution file is `AbeGamingBlazorApp.slnx` (XML solution format).
 - `TnwFleetComposition` packs the per-nation counts into one `ulong` so battle definitions keep value
   equality - the page shows results only while `LastStatsBattle == CurrentBattle`. Don't replace it
   with an array or list.
+- The optional "Gallant Danes" event (Admiral Fischer) is `TnwNavalBattle.ActiveHasFischer` /
+  `InactiveHasFischer`: that side's Danish Squadrons roll one extra die each
+  (`TnwFleetComposition.DiceWithFischer`), and `TnwFleetState.FischerSixVoided` tracks the
+  once-per-battle voided "6" so `ApplyHits` only cancels one, across Rounds and shore battery fire.
+  The page's checkbox (`TnwFleetInput`) is disabled, and cleared, without a Danish Squadron.
 - Performance matters here: the first version took 13 s in the browser. Sinkings follow a fixed
   allocation rule, so the Fleet after k sinkings is precomputed once per starting Fleet
   (`LossSequence`), and `TotalSquadrons` sums the packed counts in constant time. Re-measure in the

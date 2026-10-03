@@ -14,43 +14,37 @@
             <div class="form-check form-check-inline mb-0">
                 <input class="form-check-input" type="checkbox" id="resourceOrCapital" @bind="ResourceOrCapital" />
                 <label class="form-check-label small" for="resourceOrCapital">
-                    Resource/Capital
-                    <InfoTip Text="No Star results when attacking a Resource or Capital" />
+                    <InfoTip Text="No Star results when attacking a Resource or Capital">Resource/Capital</InfoTip>
                 </label>
             </div>
             <div class="form-check form-check-inline mb-0">
                 <input class="form-check-input" type="checkbox" id="fortPresent" @bind="FortPresent" />
                 <label class="form-check-label small" for="fortPresent">
-                    Fort
-                    <InfoTip Text="Defender gets +2 DRM. Prevents Overrun." />
+                    <InfoTip Text="Defender gets +2 DRM. Prevents Overrun.">Fort</InfoTip>
                 </label>
             </div>
             <div class="form-check form-check-inline mb-0">
                 <input class="form-check-input" type="checkbox" id="isInterception" @bind="IsInterception" />
                 <label class="form-check-label small" for="isInterception">
-                    Interception
-                    <InfoTip Text="Defender gets +2 DRM when intercepting" />
+                    <InfoTip Text="Defender gets +2 DRM when intercepting">Interception</InfoTip>
                 </label>
             </div>
             <div class="form-check form-check-inline mb-0">
                 <input class="form-check-input" type="checkbox" id="isDefenderLeaderPresent" @bind="IsDefenderLeaderPresent" />
                 <label class="form-check-label small" for="isDefenderLeaderPresent">
-                    Def. Leader
-                    <InfoTip Text="For attacker continuation logic. Leader death is always calculated assuming leaders are present." />
+                    <InfoTip Text="For attacker continuation logic. Leader death is always calculated assuming leaders are present.">Def. Leader</InfoTip>
                 </label>
             </div>
             <div class="form-check form-check-inline mb-0">
                 <input class="form-check-input" type="checkbox" id="isDivisionMove" @bind="IsDivisionMove" />
                 <label class="form-check-label small" for="isDivisionMove">
-                    Division move
-                    <InfoTip Text="The attacker is a Division move (1-3 SPs, no general). Only an Army or Corps move can continue moving after winning a battle (rules 5.73, 7.32), so this turns off the 'can continue' result. An overrun is not a battle, so it still allows moving on (5.72)." />
+                    <InfoTip Text="The attacker is a Division move (1-3 SPs, no general). Only an Army or Corps move can continue moving after winning a battle (rules 5.73, 7.32), so this turns off the 'can continue' result. An overrun is not a battle, so it still allows moving on (5.72).">Division move</InfoTip>
                 </label>
             </div>
             <div class="form-check form-check-inline mb-0">
                 <input class="form-check-input" type="checkbox" id="isAmphibious" @bind="IsAmphibious" />
                 <label class="form-check-label small" for="isAmphibious">
-                    ⚓Amphibious
-                    <InfoTip Text="Amphibious assault - allows 0 defender SP" />
+                    <InfoTip Text="Amphibious assault - allows 0 defender SP">⚓Amphibious</InfoTip>
                 </label>
             </div>
         </div>

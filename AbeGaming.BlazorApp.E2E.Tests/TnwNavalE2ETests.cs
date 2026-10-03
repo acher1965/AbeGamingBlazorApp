@@ -22,14 +22,58 @@ namespace AbeGaming.BlazorApp.E2E.Tests
         }
 
         [Fact]
-        public async Task DefaultSetup_IsTheRulebookExample_13Versus6Dice()
+        public async Task DefaultSetup_IsTheRulebookFleets_NoEvasionFailureTickedByDefault()
         {
             using IPlaywright playwright = await Playwright.CreateAsync();
             await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
             IPage page = await OpenPage(browser);
 
+            // Four British Squadrons (3 dice each) vs two French (2) and two Spanish (1), neither side
+            // ticked as having forced a failed evasion.
+            Assert.False(await page.IsCheckedAsync("#tnwActiveEvasionDie"));
+            Assert.False(await page.IsCheckedAsync("#tnwInactiveEvasionDie"));
+            Assert.Contains("12", await page.TextContentAsync("#tnwActiveRound1Dice") ?? string.Empty);
+            Assert.Contains("6", await page.TextContentAsync("#tnwInactiveRound1Dice") ?? string.Empty);
+        }
+
+        [Fact]
+        public async Task TickingEnemyFailedToEvade_ReproducesTheFullRulebookExample_13Versus6Dice()
+        {
+            using IPlaywright playwright = await Playwright.CreateAsync();
+            await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+            IPage page = await OpenPage(browser);
+
+            await page.CheckAsync("#tnwActiveEvasionDie");
+
             Assert.Contains("13", await page.TextContentAsync("#tnwActiveRound1Dice") ?? string.Empty);
             Assert.Contains("6", await page.TextContentAsync("#tnwInactiveRound1Dice") ?? string.Empty);
+        }
+
+        [Fact]
+        public async Task Fischer_DisabledWithoutDanishSquadrons_EnabledOnceAddedAndIncreasesDice()
+        {
+            using IPlaywright playwright = await Playwright.CreateAsync();
+            await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+            IPage page = await OpenPage(browser);
+
+            Assert.True(await page.IsDisabledAsync("#tnwActiveFischer"));
+
+            await page.FillAsync("#tnwActiveDenmarkSquadrons", "2");
+            await page.PressAsync("#tnwActiveDenmarkSquadrons", "Tab");
+            Assert.False(await page.IsDisabledAsync("#tnwActiveFischer"));
+
+            // Four British (3 each) + two Danish (2 each) = 16 dice before Fischer.
+            Assert.Contains("16", await page.TextContentAsync("#tnwActiveRound1Dice") ?? string.Empty);
+
+            await page.CheckAsync("#tnwActiveFischer");
+
+            // Fischer adds one die per Danish Squadron: 16 + 2 = 18.
+            Assert.Contains("18", await page.TextContentAsync("#tnwActiveRound1Dice") ?? string.Empty);
+
+            await page.FillAsync("#tnwActiveDenmarkSquadrons", "0");
+            await page.PressAsync("#tnwActiveDenmarkSquadrons", "Tab");
+            Assert.True(await page.IsDisabledAsync("#tnwActiveFischer"));
+            Assert.False(await page.IsCheckedAsync("#tnwActiveFischer"));
         }
 
         [Fact]
@@ -67,6 +111,7 @@ namespace AbeGaming.BlazorApp.E2E.Tests
             using IPlaywright playwright = await Playwright.CreateAsync();
             await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
             IPage page = await OpenPage(browser);
+            await page.CheckAsync("#tnwActiveEvasionDie");
             Assert.True(await page.IsCheckedAsync("#tnwActiveEvasionDie"));
 
             await page.SelectOptionAsync("#tnwNavalLocation", "EnemyFortressPort");

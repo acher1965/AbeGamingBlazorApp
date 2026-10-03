@@ -56,6 +56,12 @@ namespace AbeGaming.GameLogic.TNW
             }
         }
 
+        /// <summary>
+        /// Battle dice with the "Gallant Danes" event (Admiral Fischer): each Danish Squadron
+        /// rolls one extra die (three instead of two, two instead of one under Refit).
+        /// </summary>
+        public int DiceWithFischer => Dice + Total(TnwNavalNation.Denmark);
+
         private static int[] BuildSlotDice()
         {
             TnwNavalNation[] nations = Enum.GetValues<TnwNavalNation>();

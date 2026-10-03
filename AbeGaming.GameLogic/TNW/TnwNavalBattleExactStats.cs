@@ -57,12 +57,12 @@ namespace AbeGaming.GameLogic.TNW
                 (int Sixes, int Fives, double Probability)[] activeRolls = Distribution(
                     distributions, TnwNavalBattleMethods.DiceForRound(battle, true, start, 1));
                 TnwFleetState[] activeAfter = inactiveRolls
-                    .Select(roll => TnwNavalBattleMethods.ApplyHits(battle.Active, start, roll.Sixes, roll.Fives))
+                    .Select(roll => TnwNavalBattleMethods.ApplyHits(battle.Active, start, roll.Sixes, roll.Fives, battle.ActiveHasFischer))
                     .ToArray();
 
                 foreach ((int activeSixes, int activeFives, double pActive) in activeRolls)
                 {
-                    TnwFleetState inactiveAfter = TnwNavalBattleMethods.ApplyHits(battle.Inactive, inactive0, activeSixes, activeFives);
+                    TnwFleetState inactiveAfter = TnwNavalBattleMethods.ApplyHits(battle.Inactive, inactive0, activeSixes, activeFives, battle.InactiveHasFischer);
                     for (int i = 0; i < inactiveRolls.Length; i++)
                     {
                         double probability = startProbability * pActive * inactiveRolls[i].Probability;
@@ -97,12 +97,12 @@ namespace AbeGaming.GameLogic.TNW
                 (int Sixes, int Fives, double Probability)[] inactiveRolls2 = Distribution(
                     distributions, TnwNavalBattleMethods.DiceForRound(battle, false, inactive, 2));
                 TnwFleetState[] activeAfter2 = inactiveRolls2
-                    .Select(roll => TnwNavalBattleMethods.ApplyHits(battle.Active, active, roll.Sixes, roll.Fives))
+                    .Select(roll => TnwNavalBattleMethods.ApplyHits(battle.Active, active, roll.Sixes, roll.Fives, battle.ActiveHasFischer))
                     .ToArray();
 
                 foreach ((int activeSixes, int activeFives, double pActive) in activeRolls2)
                 {
-                    TnwFleetState inactiveAfter2 = TnwNavalBattleMethods.ApplyHits(battle.Inactive, inactive, activeSixes, activeFives);
+                    TnwFleetState inactiveAfter2 = TnwNavalBattleMethods.ApplyHits(battle.Inactive, inactive, activeSixes, activeFives, battle.InactiveHasFischer);
                     for (int i = 0; i < inactiveRolls2.Length; i++)
                     {
                         TnwNavalRoundVerdict verdict = TnwNavalBattleMethods.Verdict(battle, activeAfter2[i], inactiveAfter2, 2);

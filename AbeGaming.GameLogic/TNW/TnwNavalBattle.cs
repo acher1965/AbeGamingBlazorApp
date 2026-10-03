@@ -8,10 +8,18 @@ namespace AbeGaming.GameLogic.TNW
     /// </summary>
     /// <param name="ActiveGetsEvasionDie">The Inactive Fleet failed to evade the Active Fleet's Patrol: +1 Active die in Round 1 (13.33).</param>
     /// <param name="InactiveGetsEvasionDie">The Active Fleet failed to evade an interception: +1 Inactive die in Round 1 (13.33).</param>
+    /// <param name="ActiveHasFischer">
+    /// The Active Fleet plays "Gallant Danes" (Admiral Fischer): its Danish Squadrons roll an
+    /// extra die each, and it may void one "6" rolled against it during the battle. Requires at
+    /// least one Danish Squadron in the Active Fleet.
+    /// </param>
+    /// <param name="InactiveHasFischer">As <paramref name="ActiveHasFischer"/>, for the Inactive Fleet.</param>
     public record TnwNavalBattle(
         TnwFleetComposition Active,
         TnwFleetComposition Inactive,
         TnwNavalBattleLocation Location,
         bool ActiveGetsEvasionDie,
-        bool InactiveGetsEvasionDie);
+        bool InactiveGetsEvasionDie,
+        bool ActiveHasFischer = false,
+        bool InactiveHasFischer = false);
 }
