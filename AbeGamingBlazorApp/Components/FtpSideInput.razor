@@ -10,7 +10,7 @@
         @* SP Input *@
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
-                SP <InfoTip Text="@SpInfoTip" />
+                <InfoTip Text="@SpInfoTip">SP</InfoTip>
             </label>
             <div class="col-7">
                 <input type="number" 
@@ -28,7 +28,7 @@
         @* DRM Input *@
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
-                DRM <InfoTip Text="Die Roll Modifier from Leaders and Cards. Leader death risk shown in results." />
+                <InfoTip Text="Die Roll Modifier from Leaders and Cards. Leader death risk shown in results.">DRM</InfoTip>
             </label>
             <div class="col-7">
                 <input type="number" 
@@ -44,7 +44,7 @@
         @* Elites Input *@
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
-                Elites <InfoTip Text="Elite units committed (max 2). Each gives +1 DRM. Elite loss risk shown in results." />
+                <InfoTip Text="Elite units committed (max 2). Each gives +1 DRM. Elite loss risk shown in results.">Elites</InfoTip>
             </label>
             <div class="col-7">
                 <input type="number" 
@@ -65,7 +65,7 @@
                    checked="@OOS"
                    @onchange="OnOOSChanged" />
             <label class="form-check-label small" for="@OosCheckboxId">
-                OOS <InfoTip Text="@OosInfoTip" />
+                <InfoTip Text="@OosInfoTip">OOS</InfoTip>
             </label>
         </div>
     </div>

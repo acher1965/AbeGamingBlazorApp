@@ -7,7 +7,7 @@
     <div class="card-body py-2">
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
-                Units <InfoTip Text="Every Unit in the battle, excluding the Commander. Other leaders count as 1 Unit each (rule 11.2)." />
+                <InfoTip Text="Every Unit in the battle, excluding the Commander. Other leaders count as 1 Unit each (rule 11.2).">Units</InfoTip>
             </label>
             <div class="col-7">
                 <input type="number"
@@ -23,7 +23,7 @@
 
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
-                Commander <InfoTip Text="The Commander's printed Battle Rating: that many bonus dice while he is undisrupted. None if no leader is present." />
+                <InfoTip Text="The Commander's printed Battle Rating: that many bonus dice while he is undisrupted. None if no leader is present.">Commander</InfoTip>
             </label>
             <div class="col-7">
                 <select class="form-select form-select-sm" id="@($"{IdPrefix}Commander")" value="@CommanderBattleRating" @onchange="OnCommanderChanged">
@@ -38,7 +38,7 @@
 
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
-                Nationality <InfoTip Text="Counted over all Units and leaders: more than half French +2 dice, at least half Minor +0, otherwise +1 (rule 11.21)." />
+                <InfoTip Text="Counted over all Units and leaders: more than half French +2 dice, at least half Minor +0, otherwise +1 (rule 11.21).">Nationality</InfoTip>
             </label>
             <div class="col-7">
                 <select class="form-select form-select-sm" id="@($"{IdPrefix}Composition")" value="@Composition" @onchange="OnCompositionChanged">
@@ -52,7 +52,7 @@
 
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
-                Event dice <InfoTip Text="Dice added or removed by battle events. Events affect only one Round, so these apply to Round 1 only (rule 11.1)." />
+                <InfoTip Text="Dice added or removed by battle events. Events affect only one Round, so these apply to Round 1 only (rule 11.1).">Event dice</InfoTip>
             </label>
             <div class="col-7">
                 <input type="number"

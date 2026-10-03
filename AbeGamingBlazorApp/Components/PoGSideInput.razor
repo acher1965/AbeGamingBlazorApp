@@ -21,7 +21,7 @@
         {
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
-                Table <InfoTip Text="Corps table if all firing units are corps/forts; Army table if any army fires." />
+                <InfoTip Text="Corps table if all firing units are corps/forts; Army table if any army fires.">Table</InfoTip>
             </label>
             <div class="col-7">
                 <select class="form-select form-select-sm" value="@FireTable" @onchange="OnFireTableChanged">
@@ -35,7 +35,7 @@
 
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
-                Factors <InfoTip Text="@FactorsInfoTip" />
+                <InfoTip Text="@FactorsInfoTip">Factors</InfoTip>
             </label>
             <div class="col-7">
                 <input type="number"
@@ -52,7 +52,7 @@
 
         <div class="row g-1 mb-1">
             <label class="col-5 col-form-label col-form-label-sm">
-                DRM <InfoTip Text="Total die roll modifier from cards/events and conditions. Terrain and trench column shifts are applied separately, not here." />
+                <InfoTip Text="Total die roll modifier from cards/events and conditions. Terrain and trench column shifts are applied separately, not here.">DRM</InfoTip>
             </label>
             <div class="col-7">
                 <input type="number"
@@ -66,7 +66,7 @@
         </div>
 
         <div class="small text-muted">
-            OOS <InfoTip Text="@OosInfoTip" />
+            <InfoTip Text="@OosInfoTip">OOS</InfoTip>
         </div>
     </div>
 </div>

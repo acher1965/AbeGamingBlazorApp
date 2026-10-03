@@ -8,13 +8,16 @@ namespace AbeGaming.BlazorApp.Component.Tests;
 public class TnwFleetInputTests : BunitContext
 {
     private TnwFleetComposition? _emitted;
+    private bool? _fischerEmitted;
 
-    private IRenderedComponent<TnwFleetInput> RenderFleet(TnwFleetComposition fleet, bool evasionAllowed = true) =>
+    private IRenderedComponent<TnwFleetInput> RenderFleet(TnwFleetComposition fleet, bool evasionAllowed = true, bool fischer = false) =>
         Render<TnwFleetInput>(parameters => parameters
             .Add(p => p.IdPrefix, "test")
             .Add(p => p.Fleet, fleet)
             .Add(p => p.EvasionAllowed, evasionAllowed)
-            .Add(p => p.FleetChanged, EventCallback.Factory.Create<TnwFleetComposition>(this, value => _emitted = value)));
+            .Add(p => p.Fischer, fischer)
+            .Add(p => p.FleetChanged, EventCallback.Factory.Create<TnwFleetComposition>(this, value => _emitted = value))
+            .Add(p => p.FischerChanged, EventCallback.Factory.Create<bool>(this, value => _fischerEmitted = value)));
 
     [Fact]
     public void ShowsOneRowPerNavalNation()
@@ -62,5 +65,35 @@ public class TnwFleetInputTests : BunitContext
         IRenderedComponent<TnwFleetInput> cut = RenderFleet(TnwFleetComposition.Empty, evasionAllowed: false);
 
         Assert.True(cut.Find("#testEvasionDie").HasAttribute("disabled"));
+    }
+
+    [Fact]
+    public void FischerCheckbox_DisabledWithoutADanishSquadron_EnabledWithOne()
+    {
+        IRenderedComponent<TnwFleetInput> withoutDenmark = RenderFleet(TnwFleetComposition.Empty.WithSquadrons(TnwNavalNation.Britain, 1, 0));
+        IRenderedComponent<TnwFleetInput> withDenmark = RenderFleet(TnwFleetComposition.Empty.WithSquadrons(TnwNavalNation.Denmark, 1, 0));
+
+        Assert.True(withoutDenmark.Find("#testFischer").HasAttribute("disabled"));
+        Assert.False(withDenmark.Find("#testFischer").HasAttribute("disabled"));
+    }
+
+    [Fact]
+    public void FischerCheckbox_ClearedWhenTheLastDanishSquadronIsRemoved()
+    {
+        IRenderedComponent<TnwFleetInput> cut = RenderFleet(TnwFleetComposition.Empty.WithSquadrons(TnwNavalNation.Denmark, 1, 0), fischer: true);
+
+        cut.Find("#testDenmarkSquadrons").Change("0");
+
+        Assert.Equal(0, _emitted!.Value.Total(TnwNavalNation.Denmark));
+        Assert.False(_fischerEmitted);
+    }
+
+    [Fact]
+    public void FischerTicked_ShowsThreeDiceForDenmark()
+    {
+        IRenderedComponent<TnwFleetInput> cut = RenderFleet(TnwFleetComposition.Empty.WithSquadrons(TnwNavalNation.Denmark, 1, 0), fischer: true);
+
+        string row = cut.FindAll("tbody tr")[(int)TnwNavalNation.Denmark].TextContent;
+        Assert.Contains("(3)", row);
     }
 }

@@ -12,8 +12,14 @@ public class TnwNavalBattleRulesTests
         return fleet;
     }
 
-    private static TnwNavalBattle AtSea(TnwFleetComposition active, TnwFleetComposition inactive, bool activeEvasionDie = false, bool inactiveEvasionDie = false) =>
-        new(active, inactive, TnwNavalBattleLocation.OpenSea, activeEvasionDie, inactiveEvasionDie);
+    private static TnwNavalBattle AtSea(
+        TnwFleetComposition active,
+        TnwFleetComposition inactive,
+        bool activeEvasionDie = false,
+        bool inactiveEvasionDie = false,
+        bool activeFischer = false,
+        bool inactiveFischer = false) =>
+        new(active, inactive, TnwNavalBattleLocation.OpenSea, activeEvasionDie, inactiveEvasionDie, activeFischer, inactiveFischer);
 
     private static TnwNavalBattle InPort(TnwFleetComposition active, TnwFleetComposition inactive, bool fortress = false) =>
         new(active, inactive, fortress ? TnwNavalBattleLocation.EnemyFortressPort : TnwNavalBattleLocation.EnemyPort, false, false);
@@ -123,6 +129,82 @@ public class TnwNavalBattleRulesTests
         Assert.Equal(2, fleet.Total(TnwNavalNation.France));
         Assert.Equal(2, fleet.Count(TnwNavalNation.France, underRefit: true));
         Assert.Equal(2, fleet.Dice);
+    }
+
+    // ---- Gallant Danes event (Admiral Fischer) ----
+
+    [Fact]
+    public void Fischer_DanishSquadronsRollOneExtraDieEach_ReadyAndUnderRefit()
+    {
+        TnwNavalBattle battle = AtSea(
+            Fleet((TnwNavalNation.Denmark, 3, 1)), Fleet((TnwNavalNation.Britain, 1, 0)), activeFischer: true);
+
+        // Without Fischer: 2 ready (2 each) + 1 Refit (1) = 5. With Fischer: 2 ready (3 each) + 1 Refit (2) = 8.
+        Assert.Equal(5, battle.Active.Dice);
+        Assert.Equal(8, battle.Active.DiceWithFischer);
+        Assert.Equal(8, TnwNavalBattleMethods.DiceForRound(battle, true, TnwNavalBattleMethods.InitialState(battle.Active), 1));
+    }
+
+    [Fact]
+    public void Fischer_DoesNotAffectNonDanishSquadronsOrTheOtherFleet()
+    {
+        TnwNavalBattle battle = AtSea(
+            Fleet((TnwNavalNation.Denmark, 1, 0), (TnwNavalNation.Britain, 1, 0)), Fleet((TnwNavalNation.Denmark, 1, 0)), activeFischer: true);
+
+        // Active: 3 (Danish, 2+1 bonus) + 3 (British, unaffected) = 6. Inactive has no Fischer: 2 (Danish, unaffected).
+        Assert.Equal(6, TnwNavalBattleMethods.DiceForRound(battle, true, TnwNavalBattleMethods.InitialState(battle.Active), 1));
+        Assert.Equal(2, TnwNavalBattleMethods.DiceForRound(battle, false, TnwNavalBattleMethods.InitialState(battle.Inactive), 1));
+    }
+
+    [Fact]
+    public void Fischer_VoidsOneSix_OncePerBattle()
+    {
+        TnwNavalBattle battle = AtSea(Fleet((TnwNavalNation.Denmark, 3, 0)), Fleet((TnwNavalNation.Britain, 1, 0)), activeFischer: true);
+        TnwFleetState danes = TnwNavalBattleMethods.InitialState(battle.Active);
+
+        // Round 1: two 6es rolled against the Danes - one is voided, one sinks a Squadron.
+        danes = TnwNavalBattleMethods.ApplyHits(battle.Active, danes, sixes: 2, fives: 0, fischerActive: true);
+        Assert.Equal(2, danes.Remaining.Total(TnwNavalNation.Denmark));
+        Assert.Equal(1, danes.HitsReceived);
+        Assert.True(danes.FischerSixVoided);
+
+        // Round 2: the void has already been used, so both 6es now count.
+        danes = TnwNavalBattleMethods.ApplyHits(battle.Active, danes, sixes: 2, fives: 0, fischerActive: true);
+        Assert.Equal(0, danes.Remaining.Total(TnwNavalNation.Denmark));
+        Assert.Equal(1 + 2, danes.HitsReceived);
+    }
+
+    [Fact]
+    public void Fischer_DoesNotVoidAnythingWhenNoSixIsRolled()
+    {
+        TnwFleetComposition fleet = Fleet((TnwNavalNation.Denmark, 1, 0));
+        TnwFleetState after = TnwNavalBattleMethods.ApplyHits(fleet, TnwNavalBattleMethods.InitialState(fleet), sixes: 0, fives: 2, fischerActive: true);
+
+        Assert.False(after.FischerSixVoided);
+        Assert.Equal(2, after.HitsReceived);
+    }
+
+    [Fact]
+    public void Fischer_WithoutTheFlag_SixesAreNeverVoided()
+    {
+        TnwFleetComposition fleet = Fleet((TnwNavalNation.Denmark, 1, 0));
+        TnwFleetState after = TnwNavalBattleMethods.ApplyHits(fleet, TnwNavalBattleMethods.InitialState(fleet), sixes: 1, fives: 0);
+
+        Assert.Equal(0, after.Remaining.TotalSquadrons);
+        Assert.Equal(1, after.HitsReceived);
+    }
+
+    [Fact]
+    public void IsBattleDefinitionConsistent_FischerRequiresADanishSquadron()
+    {
+        TnwFleetComposition noDanes = Fleet((TnwNavalNation.Britain, 1, 0));
+        TnwFleetComposition withDanes = Fleet((TnwNavalNation.Denmark, 1, 0));
+
+        Assert.False(TnwNavalBattleInputRules.IsBattleDefinitionConsistent(AtSea(noDanes, withDanes, activeFischer: true), out string? error));
+        Assert.NotNull(error);
+        Assert.False(TnwNavalBattleInputRules.IsBattleDefinitionConsistent(AtSea(withDanes, noDanes, inactiveFischer: true), out error));
+        Assert.NotNull(error);
+        Assert.True(TnwNavalBattleInputRules.IsBattleDefinitionConsistent(AtSea(withDanes, withDanes, activeFischer: true, inactiveFischer: true), out _));
     }
 
     // ---- Kill allocation ----
@@ -243,6 +325,7 @@ public class TnwNavalBattleRulesTests
         AtSea(Fleet((TnwNavalNation.Russia, 2, 1)), Fleet((TnwNavalNation.Ottoman, 3, 0)), inactiveEvasionDie: true),
         InPort(Fleet((TnwNavalNation.Britain, 2, 0)), Fleet((TnwNavalNation.France, 1, 0), (TnwNavalNation.Spain, 1, 0))),
         InPort(Fleet((TnwNavalNation.Britain, 3, 0)), TnwFleetComposition.Empty, fortress: true),
+        AtSea(Fleet((TnwNavalNation.Denmark, 2, 0)), Fleet((TnwNavalNation.Britain, 2, 0)), activeFischer: true),
     ];
 
     [Theory]

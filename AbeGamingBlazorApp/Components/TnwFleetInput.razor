@@ -9,16 +9,20 @@
         <table class="table table-sm table-borderless mb-1 small align-middle">
             <thead>
                 <tr class="text-muted">
-                    <th class="fw-normal">Nation <InfoTip Text="Dice per Squadron: British 3; French, Danish, Swedish 2; Russian, Turkish, Spanish 1 (rule 13.4)." /></th>
+                    <th class="fw-normal">
+                        <InfoTip Text="Dice per Squadron: British 3; French, Danish, Swedish 2; Russian, Turkish, Spanish 1 (rule 13.4).">Nation</InfoTip>
+                    </th>
                     <th class="fw-normal">Squadrons</th>
-                    <th class="fw-normal">Refit <InfoTip Text="How many of those Squadrons are under Refit: each rolls one die less, to no less than 0 (rule 13.4)." /></th>
+                    <th class="fw-normal">
+                        <InfoTip Text="How many of those Squadrons are under Refit: each rolls one die less, to no less than 0 (rule 13.4).">Refit</InfoTip>
+                    </th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (TnwNavalNation nation in TnwNavalNationExtensions.All)
                 {
                     <tr>
-                        <td>@nation.DisplayName() <span class="text-muted">(@nation.DicePerSquadron())</span></td>
+                        <td>@nation.DisplayName() <span class="text-muted">(@DiceLabel(nation))</span></td>
                         <td>
                             <input type="number"
                                    class="form-control form-control-sm"
@@ -48,7 +52,14 @@
             <input class="form-check-input" type="checkbox" id="@($"{IdPrefix}EvasionDie")"
                    checked="@EvasionDie" disabled="@(!EvasionAllowed)" @onchange="OnEvasionDieChanged" />
             <label class="form-check-label small" for="@($"{IdPrefix}EvasionDie")">
-                Enemy failed to evade <InfoTip Text="The other Fleet failed an evasion attempt against this one: +1 die in Round 1 (rule 13.33). Fleets in Port cannot evade (13.34)." />
+                <InfoTip Text="The other Fleet failed an evasion attempt against this one: +1 die in Round 1 (rule 13.33). Fleets in Port cannot evade (13.34).">Enemy failed to evade</InfoTip>
+            </label>
+        </div>
+        <div class="form-check mb-0">
+            <input class="form-check-input" type="checkbox" id="@($"{IdPrefix}Fischer")"
+                   checked="@Fischer" disabled="@(!FischerAllowed)" @onchange="OnFischerChanged" />
+            <label class="form-check-label small" for="@($"{IdPrefix}Fischer")">
+                <InfoTip Text="Gallant Danes event: Danish Squadrons roll three dice each instead of two (two instead of one under Refit), and the Fleet may void one '6' rolled against it during the battle. Requires a Danish Squadron.">Adm. Fischer</InfoTip>
             </label>
         </div>
     </div>
@@ -73,12 +84,25 @@
 
     [Parameter] public bool EvasionAllowed { get; set; } = true;
 
+    /// <summary>"Gallant Danes" event (Admiral Fischer): only usable with a Danish Squadron present.</summary>
+    [Parameter] public bool Fischer { get; set; }
+    [Parameter] public EventCallback<bool> FischerChanged { get; set; }
+
+    private bool FischerAllowed => Fleet.Total(TnwNavalNation.Denmark) > 0;
+
+    /// <summary>The dice shown next to a nation: three for Denmark while Fischer applies, otherwise the normal rate.</summary>
+    private int DiceLabel(TnwNavalNation nation) =>
+        Fischer && nation == TnwNavalNation.Denmark ? nation.DicePerSquadron() + 1 : nation.DicePerSquadron();
+
     private async Task OnSquadronsChanged(TnwNavalNation nation, ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out int value))
         {
             int total = TnwNavalBattleInputRules.ClampSquadrons(value);
-            await FleetChanged.InvokeAsync(Fleet.WithSquadrons(nation, total, Fleet.Count(nation, true)));
+            TnwFleetComposition updated = Fleet.WithSquadrons(nation, total, Fleet.Count(nation, true));
+            await FleetChanged.InvokeAsync(updated);
+            if (Fischer && nation == TnwNavalNation.Denmark && updated.Total(TnwNavalNation.Denmark) == 0)
+                await FischerChanged.InvokeAsync(false);
             await InvokeAsync(StateHasChanged);
         }
     }
@@ -97,6 +121,15 @@
         if (e.Value is bool value)
         {
             await EvasionDieChanged.InvokeAsync(value);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnFischerChanged(ChangeEventArgs e)
+    {
+        if (e.Value is bool value)
+        {
+            await FischerChanged.InvokeAsync(value);
             await InvokeAsync(StateHasChanged);
         }
     }

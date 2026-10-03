@@ -16,13 +16,16 @@ namespace AbeGaming.GameLogic.TNW
 
         /// <summary>
         /// Battle dice for one Fleet this Round (13.4): its Squadrons' dice (Refit ones one
-        /// less), minus one per "5" it has received, plus - Round 1 only - one die if the
-        /// enemy failed to evade it. In a Port battle the Inactive side also rolls the shore
-        /// batteries (13.5); assumption: the batteries are not a Fleet, so "5"s never reduce them.
+        /// less, Danish ones one more under "Gallant Danes" - Admiral Fischer), minus one per
+        /// "5" it has received, plus - Round 1 only - one die if the enemy failed to evade it.
+        /// In a Port battle the Inactive side also rolls the shore batteries (13.5); assumption:
+        /// the batteries are not a Fleet, so "5"s never reduce them.
         /// </summary>
         public static int DiceForRound(TnwNavalBattle battle, bool isActive, TnwFleetState state, int round)
         {
-            int dice = Math.Max(0, state.Remaining.Dice - state.FivesReceived);
+            bool fischer = isActive ? battle.ActiveHasFischer : battle.InactiveHasFischer;
+            int baseDice = fischer ? state.Remaining.DiceWithFischer : state.Remaining.Dice;
+            int dice = Math.Max(0, baseDice - state.FivesReceived);
 
             bool evasionDie = isActive ? battle.ActiveGetsEvasionDie : battle.InactiveGetsEvasionDie;
             if (round == 1 && evasionDie)
@@ -41,16 +44,25 @@ namespace AbeGaming.GameLogic.TNW
         /// the fewest dice (Refit ones first) - an assumption, matching the rulebook's example
         /// where the first loss is a Spanish rather than a French Squadron. Sixes beyond the
         /// last Squadron have no effect. Each "5" costs the Fleet one die in later Rounds.
+        /// "Gallant Danes" (Admiral Fischer) voids one "6" against the Fleet, once per battle,
+        /// before anything else is applied.
         /// </summary>
-        public static TnwFleetState ApplyHits(TnwFleetComposition initial, TnwFleetState state, int sixes, int fives)
+        public static TnwFleetState ApplyHits(TnwFleetComposition initial, TnwFleetState state, int sixes, int fives, bool fischerActive = false)
         {
+            bool sixVoided = state.FischerSixVoided;
+            if (fischerActive && !sixVoided && sixes > 0)
+            {
+                sixes--;
+                sixVoided = true;
+            }
+
             // The allocation is deterministic, so the Fleet after k sinkings is precomputed once
             // per starting Fleet; this keeps the exact enumeration and Monte Carlo fast.
             TnwFleetComposition[] afterSinkings = LossSequence(initial);
             int sunkSoFar = initial.TotalSquadrons - state.Remaining.TotalSquadrons;
             int sunk = Math.Min(afterSinkings.Length - 1, sunkSoFar + sixes);
 
-            return new TnwFleetState(afterSinkings[sunk], state.FivesReceived + fives, state.HitsReceived + sixes + fives);
+            return new TnwFleetState(afterSinkings[sunk], state.FivesReceived + fives, state.HitsReceived + sixes + fives, sixVoided);
         }
 
         private const int MaxCachedLossSequences = 256;
@@ -80,7 +92,7 @@ namespace AbeGaming.GameLogic.TNW
         /// "5"s already reduce the Active Fleet's Round 1 dice.
         /// </summary>
         public static TnwFleetState ShoreBatteryFire(TnwNavalBattle battle, TnwFleetState active, int sixes, int fives) =>
-            ApplyHits(battle.Active, active, sixes, fives);
+            ApplyHits(battle.Active, active, sixes, fives, battle.ActiveHasFischer);
 
         private static bool Eliminated(TnwFleetComposition initial, TnwFleetState state) =>
             initial.TotalSquadrons > 0 && state.Remaining.TotalSquadrons == 0;
@@ -154,8 +166,8 @@ namespace AbeGaming.GameLogic.TNW
                 (int inactiveSixes, int inactiveFives) = RollSixesAndFives(random, inactiveDice);
                 log?.Add(new TnwNavalRoundLog(round, activeDice, activeSixes, activeFives, inactiveDice, inactiveSixes, inactiveFives));
 
-                TnwFleetState newInactive = ApplyHits(battle.Inactive, inactive, activeSixes, activeFives);
-                active = ApplyHits(battle.Active, active, inactiveSixes, inactiveFives);
+                TnwFleetState newInactive = ApplyHits(battle.Inactive, inactive, activeSixes, activeFives, battle.InactiveHasFischer);
+                active = ApplyHits(battle.Active, active, inactiveSixes, inactiveFives, battle.ActiveHasFischer);
                 inactive = newInactive;
 
                 TnwNavalRoundVerdict verdict = Verdict(battle, active, inactive, round);

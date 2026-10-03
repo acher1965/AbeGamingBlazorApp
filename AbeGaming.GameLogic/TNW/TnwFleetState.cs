@@ -6,10 +6,15 @@ namespace AbeGaming.GameLogic.TNW
     /// <see cref="HitsReceived"/> counts every 5 and 6 rolled against the Fleet, including
     /// shore battery fire, as the victor is decided on rolled casualties (13.4, 11.32).
     /// </summary>
+    /// <param name="FischerSixVoided">
+    /// Whether this Fleet has already used Admiral Fischer's once-per-battle "void one 6"
+    /// (Gallant Danes event); false for a Fleet without the event.
+    /// </param>
     public readonly record struct TnwFleetState(
         TnwFleetComposition Remaining,
         int FivesReceived,
-        int HitsReceived);
+        int HitsReceived,
+        bool FischerSixVoided = false);
 
     /// <summary>What a naval Round's results mean for the battle (rules 13.4, 11.32).</summary>
     public enum TnwNavalRoundVerdict

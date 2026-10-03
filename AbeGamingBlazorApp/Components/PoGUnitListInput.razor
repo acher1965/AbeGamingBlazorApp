@@ -19,17 +19,21 @@
                     </optgroup>
                 }
             </select>
-            <div class="form-check mb-0" title="The unit is on its reduced side.">
+            <div class="form-check mb-0">
                 <input class="form-check-input" type="checkbox" id="@($"{IdPrefix}Unit{index}Reduced")"
                        checked="@unit.Reduced" @onchange="e => OnReducedChanged(index, e)" />
-                <label class="form-check-label" for="@($"{IdPrefix}Unit{index}Reduced")">Red.</label>
+                <label class="form-check-label" for="@($"{IdPrefix}Unit{index}Reduced")">
+                    <InfoTip Text="The unit is on its reduced side.">Red.</InfoTip>
+                </label>
             </div>
             @if (unit.Type.Kind == PoGUnitKind.Army)
             {
-                <div class="form-check mb-0" title="A full strength replacement Corps is in the Reserve Box: it replaces this Army if it is eliminated from its reduced side (12.4.4).">
+                <div class="form-check mb-0">
                     <input class="form-check-input" type="checkbox" id="@($"{IdPrefix}Unit{index}Reserve")"
                            checked="@unit.ReserveCorpsAvailable" @onchange="e => OnReserveChanged(index, e)" />
-                    <label class="form-check-label" for="@($"{IdPrefix}Unit{index}Reserve")">Res.</label>
+                    <label class="form-check-label" for="@($"{IdPrefix}Unit{index}Reserve")">
+                        <InfoTip Text="A full strength replacement Corps is in the Reserve Box: it replaces this Army if it is eliminated from its reduced side (12.4.4).">Res.</InfoTip>
+                    </label>
                 </div>
             }
             <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" title="Remove this unit"

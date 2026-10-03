@@ -15,8 +15,7 @@
         <div class="row g-2">
             <div class="col-12 col-md-4">
                 <label class="form-label form-label-sm mb-1">
-                    Terrain
-                    <InfoTip Text="Mountain/Swamp shift offensive fire 1L. Forest/Desert affect retreat/advance. Trench effects are cumulative." />
+                    <InfoTip Text="Mountain/Swamp shift offensive fire 1L. Forest/Desert affect retreat/advance. Trench effects are cumulative.">Terrain</InfoTip>
                 </label>
                 <select id="pogTerrain" class="form-select form-select-sm" @bind="Terrain">
                     @foreach (Terrain option in Enum.GetValues<Terrain>())
@@ -27,15 +26,13 @@
             </div>
             <div class="col-6 col-md-4">
                 <label class="form-label form-label-sm mb-1">
-                    Trench
-                    <InfoTip Text="Trench 1: offensive fire 1L, defensive fire 1R. Trench 2: offensive fire 2L, defensive fire 1R." />
+                    <InfoTip Text="Trench 1: offensive fire 1L, defensive fire 1R. Trench 2: offensive fire 2L, defensive fire 1R.">Trench</InfoTip>
                 </label>
                 <input id="pogTrench" type="number" class="form-control form-control-sm" @bind="Trench" onfocus="this.select()" min="0" max="2" />
             </div>
             <div class="col-6 col-md-4">
                 <label class="form-label form-label-sm mb-1">
-                    Fortress
-                    <InfoTip Text="The fort's printed CF, added to the defender's factors (12.2.3). A besieged fort keeps its CF. A fort with no defending units cannot be flanked and gets no trench benefit (15.1.6)." />
+                    <InfoTip Text="The fort's printed CF, added to the defender's factors (12.2.3). A besieged fort keeps its CF. A fort with no defending units cannot be flanked and gets no trench benefit (15.1.6).">Fortress</InfoTip>
                 </label>
                 <select id="pogFortressLevel" class="form-select form-select-sm" @bind="FortressLevel">
                     @foreach (FortressLevel option in Enum.GetValues<FortressLevel>())
@@ -49,35 +46,33 @@
             <div class="form-check form-check-inline mb-0">
                 <input class="form-check-input" type="checkbox" id="pogAttemptFlank" @bind="AttemptFlankAttack" disabled="@(!CanConfigureFlank)" />
                 <label class="form-check-label small" for="pogAttemptFlank">
-                    Attempt flank
-                    <InfoTip Text="Requires attack from 2+ spaces. Flank succeeds on 4+ after flank DRM. Without 'Detailed units', the side firing second fires with its factors minus the Loss Number it took - an approximation." />
+                    <InfoTip Text="Requires attack from 2+ spaces. Flank succeeds on 4+ after flank DRM. Without 'Detailed units', the side firing second fires with its factors minus the Loss Number it took - an approximation.">Attempt flank</InfoTip>
                 </label>
             </div>
             <div class="form-check form-check-inline mb-0">
                 <input class="form-check-input" type="checkbox" id="pogAllAttackersInSinai" @bind="IsAllAttackersInSinai" />
                 <label class="form-check-label small" for="pogAllAttackersInSinai">
-                    All attackers in Sinai
-                    <InfoTip Text="Applies -3 DRM to attacker per rule 12.2.7." />
+                    <InfoTip Text="Applies -3 DRM to attacker per rule 12.2.7.">All attackers in Sinai</InfoTip>
                 </label>
             </div>
             <div class="form-check form-check-inline mb-0">
                 <input class="form-check-input" type="checkbox" id="pogDetailedUnits" @bind="IsDetailed" />
                 <label class="form-check-label small" for="pogDetailedUnits">
-                    Detailed units
-                    <InfoTip Text="@DetailedTip" />
+                    <InfoTip Text="@DetailedTip">Detailed units</InfoTip>
                 </label>
             </div>
             @if (IsDetailed)
             {
                 <div class="d-flex align-items-center gap-1">
-                    <label class="small mb-0" for="pogAttackerFaction">Attacker</label>
+                    <label class="small mb-0" for="pogAttackerFaction">
+                        <InfoTip Text="@AttackerFactionTip">Attacker</InfoTip>
+                    </label>
                     <select id="pogAttackerFaction" class="form-select form-select-sm w-auto" value="@AttackerFaction" @onchange="OnAttackerFactionChanged">
                         @foreach (PoGFaction faction in Enum.GetValues<PoGFaction>())
                         {
                             <option value="@faction">@PoGUnitCatalog.Faction(faction).Name</option>
                         }
                     </select>
-                    <InfoTip Text="Each side lists only its own units; the defender is the other side. Changing it restarts both lists." />
                 </div>
             }
         </div>
@@ -85,8 +80,7 @@
         {
             <div class="mt-2" style="max-width: 18rem;">
                 <label class="form-label form-label-sm mb-1">
-                    Flank DRM
-                    <InfoTip Text="+1 per eligible extra attacking space beyond the pinning space." />
+                    <InfoTip Text="+1 per eligible extra attacking space beyond the pinning space.">Flank DRM</InfoTip>
                 </label>
                 <input id="pogFlankAttackDrm" type="number" class="form-control form-control-sm" @bind="FlankAttackDrm" onfocus="this.select()" min="0" max="3" />
             </div>
@@ -360,6 +354,9 @@
         "takes the first loss (12.4.5), the side firing second after a flank attack " +
         "fires with its real survivors (possibly on the Corps table), a retreat needs a full strength attacker left (12.5.1), " +
         "and cancelling a retreat needs a defending step left (12.5.3). Without it, these are approximated from the factors.";
+
+    private const string AttackerFactionTip =
+        "Each side lists only its own units; the defender is the other side. Changing it restarts both lists.";
 
     /// <summary>The table the defender starts on in a detailed-mode battle.</summary>
     private static FireTable InitialDefenderFireTable(PoGBattleModel battle) =>

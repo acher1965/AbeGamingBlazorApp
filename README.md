@@ -33,10 +33,10 @@ The Napoleonic Wars calculators are currently in **BETA**.
   `AbeGaming.GameLogic/PoG/PoGUnitTypes.json`. On a phone held in landscape, this mode swaps the
   sidebar for the menu button to leave room for the unit lists.
 
-### The Napoleonic Wars Battle, Naval Battle and Siege Calculators
+### The Napoleonic Wars Land Battle, Naval Battle and Siege Calculators
 Three calculators each on its own page, grouped under a single "TNW" entry in the navigation menu and on the Home page.
 
-The Battle calculator (rule 11) handles:
+The Land Battle calculator (rule 11) handles:
 - Each side's dice pool: Units, Commander Battle Rating, nationality bonus, battle event dice
 - Terrain crossed by the attacker, failed evasions, a defender that cannot retreat, and defending
   Armies not formed into an Army Group
@@ -48,6 +48,8 @@ The Naval Battle calculator (rule 13) handles:
 - Fleets of any mix of nations, with each nation's dice per Squadron and Squadrons under Refit
 - Sinking by "6"s split evenly across nations, and "5"s reducing a Fleet's later dice
 - Failed evasions, and battles in an enemy Port or Fortress-Port with shore battery fire
+- The optional "Gallant Danes" event (Admiral Fischer): a Danish Fleet rolls one extra die per
+  Squadron and may void one "6" rolled against it during the battle
 - Exact statistics for small and medium battles, Monte Carlo above that, as for land battles
 
 The Siege calculator (rule 12) handles:
@@ -126,7 +128,7 @@ AbeGamingBlazorApp.slnx
 │   │   ├── Home.razor                   # Landing page
 │   │   ├── FtpBattlePage.razor          # For The People calculator
 │   │   ├── PoGBattle.razor              # Paths of Glory calculator
-│   │   ├── TnwBattlePage.razor          # The Napoleonic Wars: Battle calculator
+│   │   ├── TnwBattlePage.razor          # The Napoleonic Wars: Land Battle calculator
 │   │   ├── TnwNavalPage.razor           # The Napoleonic Wars: Naval Battle calculator
 │   │   ├── TnwSiegePage.razor           # The Napoleonic Wars: Siege calculator
 │   │   ├── About.razor, Contact.razor   # Info pages

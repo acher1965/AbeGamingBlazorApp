@@ -10,8 +10,7 @@
     <div class="card-body py-2">
         <div style="max-width: 22rem;">
             <label class="form-label form-label-sm mb-1">
-                Location
-                <InfoTip Text="At sea, or the Active Fleet entering an enemy Port. A Port's shore batteries fire 2 dice (4 if a Fortress) before the battle and again with the defending Fleet each Round; if the Port loses, its Fleet is eliminated (rule 13.5)." />
+                <InfoTip Text="At sea, or the Active Fleet entering an enemy Port. A Port's shore batteries fire 2 dice (4 if a Fortress) before the battle and again with the defending Fleet each Round; if the Port loses, its Fleet is eliminated (rule 13.5).">Location</InfoTip>
             </label>
             <select id="tnwNavalLocation" class="form-select form-select-sm" @bind="Location">
                 <option value="@TnwNavalBattleLocation.OpenSea">Open sea</option>
@@ -20,7 +19,8 @@
             </select>
         </div>
         <div class="small text-muted mt-1">
-            The default setup is the rulebook's example (13.4): four British Squadrons against two French and two Spanish that failed to evade.
+            The default fleets are the rulebook's example (13.4): four British Squadrons against two French and two Spanish.
+            Tick "Enemy failed to evade" on a side to reproduce the full example (13 vs 6 dice).
         </div>
     </div>
 </div>
@@ -34,7 +34,8 @@
                        Round1Dice="@ActiveRound1Dice"
                        EvasionAllowed="@(!Location.IsPort())"
                        @bind-Fleet="ActiveFleet"
-                       @bind-EvasionDie="ActiveEvasionDie" />
+                       @bind-EvasionDie="ActiveEvasionDie"
+                       @bind-Fischer="ActiveFischer" />
     </div>
     <div class="col-12 col-md-6">
         <TnwFleetInput SideName="@(Location.IsPort() ? "Fleet in Port" : "Inactive Fleet")"
@@ -44,7 +45,8 @@
                        Round1Dice="@InactiveRound1Dice"
                        EvasionAllowed="@(!Location.IsPort())"
                        @bind-Fleet="InactiveFleet"
-                       @bind-EvasionDie="InactiveEvasionDie" />
+                       @bind-EvasionDie="InactiveEvasionDie"
+                       @bind-Fischer="InactiveFischer" />
     </div>
 </div>
 
@@ -149,8 +151,10 @@
     private TnwFleetComposition InactiveFleet = TnwFleetComposition.Empty
         .WithSquadrons(TnwNavalNation.France, 2, 0)
         .WithSquadrons(TnwNavalNation.Spain, 2, 0);
-    private bool ActiveEvasionDie = true;
+    private bool ActiveEvasionDie;
     private bool InactiveEvasionDie;
+    private bool ActiveFischer;
+    private bool InactiveFischer;
 
     private TnwNavalBattleStats? Stats;
     private TnwNavalBattleRollResult? RollResult;
@@ -159,7 +163,7 @@
     private string? ErrorMessage;
     private bool IsRunning;
 
-    private TnwNavalBattle CurrentBattle => new(ActiveFleet, InactiveFleet, Location, ActiveEvasionDie, InactiveEvasionDie);
+    private TnwNavalBattle CurrentBattle => new(ActiveFleet, InactiveFleet, Location, ActiveEvasionDie, InactiveEvasionDie, ActiveFischer, InactiveFischer);
 
     private int ActiveRound1Dice => TnwNavalBattleMethods.DiceForRound(
         CurrentBattle, isActive: true, TnwNavalBattleMethods.InitialState(ActiveFleet), 1);

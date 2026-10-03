@@ -13,24 +13,21 @@
                     <input class="form-check-input" type="checkbox" id="isArmyMove" 
                            checked="@IsArmyMove" @onchange="OnIsArmyMoveChanged" />
                     <label class="form-check-label small" for="isArmyMove">
-                        Army Move
-                        <InfoTip Text="Army-size naval move (rule 6.15), up to 15 SP: McClellan, Grant or Sherman between Washington, Aquia Creek, Urbanna and Fort Monroe (6.15a). Grant's or Sherman's riverine move is limited to 9 SP (6.15b). Otherwise a naval move carries up to 3 SP (6.12)." />
+                        <InfoTip Text="Army-size naval move (rule 6.15), up to 15 SP: McClellan, Grant or Sherman between Washington, Aquia Creek, Urbanna and Fort Monroe (6.15a). Grant's or Sherman's riverine move is limited to 9 SP (6.15b). Otherwise a naval move carries up to 3 SP (6.12).">Army Move</InfoTip>
                     </label>
                 </div>
                 <div class="form-check mb-1">
                     <input class="form-check-input" type="checkbox" id="admiral" 
                            checked="@Admiral" @onchange="OnAdmiralChanged" />
                     <label class="form-check-label small" for="admiral">
-                        Admiral
-                        <InfoTip Text="Admiral Foote or Porter present" />
+                        <InfoTip Text="Admiral Foote or Porter present">Admiral</InfoTip>
                     </label>
                 </div>
                 <div class="form-check mb-1">
                     <input class="form-check-input" type="checkbox" id="hunley" 
                            checked="@Hunley" @onchange="OnHunleyChanged" />
                     <label class="form-check-label small" for="hunley">
-                        Hunley
-                        <InfoTip Text="CSS Hunley submarine present" />
+                        <InfoTip Text="CSS Hunley submarine present">Hunley</InfoTip>
                     </label>
                 </div>
             </div>
@@ -40,22 +37,19 @@
                     <input class="form-check-input" type="checkbox" id="ironclad" 
                            checked="@Ironclad" @onchange="OnIroncladChanged" />
                     <label class="form-check-label small" for="ironclad">
-                        Ironclad
-                        <InfoTip Text="Ironclad present" />
+                        <InfoTip Text="Ironclad present">Ironclad</InfoTip>
                     </label>
                 </div>
                 <div class="form-check mb-1">
                     <input class="form-check-input" type="checkbox" id="torpedoes" 
                            checked="@Torpedoes" @onchange="OnTorpedoesChanged" />
                     <label class="form-check-label small" for="torpedoes">
-                        Torpedoes
-                        <InfoTip Text="Defender has torpedoes" />
+                        <InfoTip Text="Defender has torpedoes">Torpedoes</InfoTip>
                     </label>
                 </div>
                 <div class="row g-1 mt-1">
                     <label class="col-7 col-form-label col-form-label-sm">
-                        Assault Level
-                        <InfoTip Text="Amphibious Assault Modifier (0-5)" />
+                        <InfoTip Text="Amphibious Assault Modifier (0-5)">Assault Level</InfoTip>
                     </label>
                     <div class="col-5">
                         <input type="number" class="form-control form-control-sm" 
