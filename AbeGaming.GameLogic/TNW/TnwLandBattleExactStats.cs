@@ -24,42 +24,47 @@ namespace AbeGaming.GameLogic.TNW
 
             TnwBattleSideState attacker0 = TnwLandBattleMethods.InitialState(battle.Attacker);
             TnwBattleSideState defender0 = TnwLandBattleMethods.InitialState(battle.Defender);
-            (int Sixes, int Fives, double Probability)[] attackerRolls = Distribution(
-                distributions, TnwLandBattleMethods.DiceForRound(battle, isAttacker: true, attacker0, 1));
             (int Sixes, int Fives, double Probability)[] defenderRolls = Distribution(
                 distributions, TnwLandBattleMethods.DiceForRound(battle, isAttacker: false, defender0, 1));
 
-            long work = (long)attackerRolls.Length * defenderRolls.Length;
-            if (work > workBudget)
-                return false;
+            int shoreDice = battle.AmphibiousLanding.ShoreBatteryDice();
+            (int Sixes, int Fives, double Probability)[] shoreRolls = shoreDice > 0
+                ? Distribution(distributions, shoreDice)
+                : [(0, 0, 1.0)];
+
+            // An Amphibious Assault's pre-battle shore fire (13.7) can only reduce the attacker's
+            // Round 1 dice, never increase it, so bound the work across every shore outcome
+            // before running the heavier per-outcome enumeration below.
+            TnwBattleSideState[] attackerAfterShore = new TnwBattleSideState[shoreRolls.Length];
+            long work = 0;
+            for (int s = 0; s < shoreRolls.Length; s++)
+            {
+                attackerAfterShore[s] = shoreDice > 0
+                    ? TnwLandBattleMethods.ApplyHits(attacker0, shoreRolls[s].Sixes, shoreRolls[s].Fives)
+                    : attacker0;
+                if (attackerAfterShore[s].Eliminated)
+                    continue;
+
+                work += (long)Distribution(distributions, TnwLandBattleMethods.DiceForRound(battle, true, attackerAfterShore[s], 1)).Length
+                    * defenderRolls.Length;
+                if (work > workBudget)
+                    return false;
+            }
 
             TnwLandBattleStatsAccumulator accumulator = new(battle);
             Dictionary<(TnwBattleSideState Attacker, TnwBattleSideState Defender), double> ties = [];
 
-            // The attacker's state depends only on the defender's roll, so compute it once per roll.
-            TnwBattleSideState[] attackerAfter = defenderRolls
-                .Select(roll => TnwLandBattleMethods.ApplyHits(attacker0, roll.Sixes, roll.Fives))
-                .ToArray();
-
-            foreach ((int attackerSixes, int attackerFives, double pAttacker) in attackerRolls)
+            for (int s = 0; s < shoreRolls.Length; s++)
             {
-                TnwBattleSideState defenderAfter = TnwLandBattleMethods.ApplyHits(defender0, attackerSixes, attackerFives);
-                for (int d = 0; d < defenderRolls.Length; d++)
+                if (attackerAfterShore[s].Eliminated)
                 {
-                    double probability = pAttacker * defenderRolls[d].Probability;
-                    TnwRoundVerdict verdict = TnwLandBattleMethods.Verdict(attackerAfter[d], defenderAfter, 1);
-                    if (verdict == TnwRoundVerdict.SecondRound)
-                    {
-                        (TnwBattleSideState, TnwBattleSideState) key = (attackerAfter[d], defenderAfter);
-                        ties[key] = ties.GetValueOrDefault(key) + probability;
-                    }
-                    else
-                    {
-                        accumulator.Add(
-                            TnwLandBattleMethods.Conclude(battle, attackerAfter[d], defenderAfter, 1, verdict == TnwRoundVerdict.AttackerWins),
-                            probability);
-                    }
+                    accumulator.Add(
+                        TnwLandBattleMethods.Conclude(battle, attackerAfterShore[s], defender0, rounds: 0, attackerWins: false),
+                        shoreRolls[s].Probability);
+                    continue;
                 }
+
+                AccumulateRoundOne(battle, attackerAfterShore[s], defender0, shoreRolls[s].Probability, defenderRolls, distributions, accumulator, ties);
             }
 
             foreach ((TnwBattleSideState attacker, TnwBattleSideState defender) in ties.Keys)
@@ -96,6 +101,51 @@ namespace AbeGaming.GameLogic.TNW
 
             stats = accumulator.Build(isExact: true, monteCarloTrials: 0);
             return true;
+        }
+
+        /// <summary>
+        /// Enumerates Round 1 for one starting attacker state (after any shore fire) weighted by
+        /// <paramref name="weight"/>, adding concluded outcomes to <paramref name="accumulator"/>
+        /// and tied state pairs to <paramref name="ties"/> for Round 2.
+        /// </summary>
+        private static void AccumulateRoundOne(
+            TnwLandBattle battle,
+            TnwBattleSideState attacker0,
+            TnwBattleSideState defender0,
+            double weight,
+            (int Sixes, int Fives, double Probability)[] defenderRolls,
+            Dictionary<int, (int Sixes, int Fives, double Probability)[]> distributions,
+            TnwLandBattleStatsAccumulator accumulator,
+            Dictionary<(TnwBattleSideState Attacker, TnwBattleSideState Defender), double> ties)
+        {
+            (int Sixes, int Fives, double Probability)[] attackerRolls = Distribution(
+                distributions, TnwLandBattleMethods.DiceForRound(battle, isAttacker: true, attacker0, 1));
+
+            // The attacker's state depends only on the defender's roll, so compute it once per roll.
+            TnwBattleSideState[] attackerAfter = defenderRolls
+                .Select(roll => TnwLandBattleMethods.ApplyHits(attacker0, roll.Sixes, roll.Fives))
+                .ToArray();
+
+            foreach ((int attackerSixes, int attackerFives, double pAttacker) in attackerRolls)
+            {
+                TnwBattleSideState defenderAfter = TnwLandBattleMethods.ApplyHits(defender0, attackerSixes, attackerFives);
+                for (int d = 0; d < defenderRolls.Length; d++)
+                {
+                    double probability = weight * pAttacker * defenderRolls[d].Probability;
+                    TnwRoundVerdict verdict = TnwLandBattleMethods.Verdict(attackerAfter[d], defenderAfter, 1);
+                    if (verdict == TnwRoundVerdict.SecondRound)
+                    {
+                        (TnwBattleSideState, TnwBattleSideState) key = (attackerAfter[d], defenderAfter);
+                        ties[key] = ties.GetValueOrDefault(key) + probability;
+                    }
+                    else
+                    {
+                        accumulator.Add(
+                            TnwLandBattleMethods.Conclude(battle, attackerAfter[d], defenderAfter, 1, verdict == TnwRoundVerdict.AttackerWins),
+                            probability);
+                    }
+                }
+            }
         }
 
         private static (int Sixes, int Fives, double Probability)[] Distribution(

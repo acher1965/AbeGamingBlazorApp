@@ -19,8 +19,8 @@
             </select>
         </div>
         <div class="small text-muted mt-1">
-            The default fleets are the rulebook's example (13.4): four British Squadrons against two French and two Spanish.
-            Tick "Enemy failed to evade" on a side to reproduce the full example (13 vs 6 dice).
+            Both Fleets start empty - enter only the Squadrons you need. Dice per Squadron: British 3;
+            French, Danish, Swedish 2; Russian, Turkish, Spanish 1 (rule 13.4).
         </div>
     </div>
 </div>
@@ -147,10 +147,8 @@
         }
     }
 
-    private TnwFleetComposition ActiveFleet = TnwFleetComposition.Empty.WithSquadrons(TnwNavalNation.Britain, 4, 0);
-    private TnwFleetComposition InactiveFleet = TnwFleetComposition.Empty
-        .WithSquadrons(TnwNavalNation.France, 2, 0)
-        .WithSquadrons(TnwNavalNation.Spain, 2, 0);
+    private TnwFleetComposition ActiveFleet = TnwFleetComposition.Empty;
+    private TnwFleetComposition InactiveFleet = TnwFleetComposition.Empty;
     private bool ActiveEvasionDie;
     private bool InactiveEvasionDie;
     private bool ActiveFischer;

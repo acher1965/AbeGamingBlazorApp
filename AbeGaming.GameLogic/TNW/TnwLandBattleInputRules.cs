@@ -26,6 +26,12 @@ namespace AbeGaming.GameLogic.TNW
                 return false;
             }
 
+            if (battle.AmphibiousLanding != TnwAmphibiousLanding.None && battle.Terrain != TnwTerrain.None)
+            {
+                errorMessage = "An Amphibious Assault crosses no rough/pass/marsh line, so there is no terrain bonus to apply.";
+                return false;
+            }
+
             errorMessage = null;
             return true;
         }

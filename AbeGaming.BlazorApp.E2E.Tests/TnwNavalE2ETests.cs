@@ -21,19 +21,29 @@ namespace AbeGaming.BlazorApp.E2E.Tests
             return page;
         }
 
+        private static async Task SetUpRulebookExample(IPage page)
+        {
+            // Four British Squadrons vs two French and two Spanish (13.4).
+            await page.FillAsync("#tnwActiveBritainSquadrons", "4");
+            await page.PressAsync("#tnwActiveBritainSquadrons", "Tab");
+            await page.FillAsync("#tnwInactiveFranceSquadrons", "2");
+            await page.PressAsync("#tnwInactiveFranceSquadrons", "Tab");
+            await page.FillAsync("#tnwInactiveSpainSquadrons", "2");
+            await page.PressAsync("#tnwInactiveSpainSquadrons", "Tab");
+        }
+
         [Fact]
-        public async Task DefaultSetup_IsTheRulebookFleets_NoEvasionFailureTickedByDefault()
+        public async Task DefaultSetup_IsEmpty_NoEvasionFailureTickedByDefault()
         {
             using IPlaywright playwright = await Playwright.CreateAsync();
             await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
             IPage page = await OpenPage(browser);
 
-            // Four British Squadrons (3 dice each) vs two French (2) and two Spanish (1), neither side
-            // ticked as having forced a failed evasion.
+            // Both Fleets start empty, so changing them takes no time clearing out a prefilled example.
             Assert.False(await page.IsCheckedAsync("#tnwActiveEvasionDie"));
             Assert.False(await page.IsCheckedAsync("#tnwInactiveEvasionDie"));
-            Assert.Contains("12", await page.TextContentAsync("#tnwActiveRound1Dice") ?? string.Empty);
-            Assert.Contains("6", await page.TextContentAsync("#tnwInactiveRound1Dice") ?? string.Empty);
+            Assert.Contains("0", await page.TextContentAsync("#tnwActiveRound1Dice") ?? string.Empty);
+            Assert.Contains("0", await page.TextContentAsync("#tnwInactiveRound1Dice") ?? string.Empty);
         }
 
         [Fact]
@@ -42,6 +52,7 @@ namespace AbeGaming.BlazorApp.E2E.Tests
             using IPlaywright playwright = await Playwright.CreateAsync();
             await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
             IPage page = await OpenPage(browser);
+            await SetUpRulebookExample(page);
 
             await page.CheckAsync("#tnwActiveEvasionDie");
 
@@ -55,6 +66,8 @@ namespace AbeGaming.BlazorApp.E2E.Tests
             using IPlaywright playwright = await Playwright.CreateAsync();
             await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
             IPage page = await OpenPage(browser);
+            await page.FillAsync("#tnwActiveBritainSquadrons", "4");
+            await page.PressAsync("#tnwActiveBritainSquadrons", "Tab");
 
             Assert.True(await page.IsDisabledAsync("#tnwActiveFischer"));
 
@@ -82,6 +95,7 @@ namespace AbeGaming.BlazorApp.E2E.Tests
             using IPlaywright playwright = await Playwright.CreateAsync();
             await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
             IPage page = await OpenPage(browser);
+            await SetUpRulebookExample(page);
 
             await page.ClickAsync("#tnwNavalCalculateStats");
             await page.WaitForSelectorAsync("text=Exact Stats", new PageWaitForSelectorOptions { Timeout = 15000 });
@@ -111,6 +125,7 @@ namespace AbeGaming.BlazorApp.E2E.Tests
             using IPlaywright playwright = await Playwright.CreateAsync();
             await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
             IPage page = await OpenPage(browser);
+            await SetUpRulebookExample(page);
             await page.CheckAsync("#tnwActiveEvasionDie");
             Assert.True(await page.IsCheckedAsync("#tnwActiveEvasionDie"));
 
@@ -128,6 +143,7 @@ namespace AbeGaming.BlazorApp.E2E.Tests
             using IPlaywright playwright = await Playwright.CreateAsync();
             await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
             IPage page = await OpenPage(browser);
+            await SetUpRulebookExample(page);
 
             await page.ClickAsync("#tnwNavalRollOnce");
             await page.WaitForSelectorAsync("text=Single Battle Result", new PageWaitForSelectorOptions { Timeout = 10000 });

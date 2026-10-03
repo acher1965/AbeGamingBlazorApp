@@ -325,6 +325,7 @@ public class TnwNavalBattleRulesTests
         AtSea(Fleet((TnwNavalNation.Russia, 2, 1)), Fleet((TnwNavalNation.Ottoman, 3, 0)), inactiveEvasionDie: true),
         InPort(Fleet((TnwNavalNation.Britain, 2, 0)), Fleet((TnwNavalNation.France, 1, 0), (TnwNavalNation.Spain, 1, 0))),
         InPort(Fleet((TnwNavalNation.Britain, 3, 0)), TnwFleetComposition.Empty, fortress: true),
+        InPort(Fleet((TnwNavalNation.Britain, 3, 0)), Fleet((TnwNavalNation.France, 2, 0)), fortress: true),
         AtSea(Fleet((TnwNavalNation.Denmark, 2, 0)), Fleet((TnwNavalNation.Britain, 2, 0)), activeFischer: true),
     ];
 

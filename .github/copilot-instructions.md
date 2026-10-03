@@ -121,6 +121,15 @@ The solution file is `AbeGamingBlazorApp.slnx` (XML solution format).
 - Assumptions (see TNW-FEASIBILITY-2026-09-27.md §9): kills fall on already-disrupted Units first,
   then undisrupted Units, then the Commander; each disrupt beyond the Commander cancels one
   nationality bonus die; event dice apply to Round 1 only; a losing attacker can always retreat.
+- Amphibious Assault (`TnwLandBattle.AmphibiousLanding`, rule 13.7): the landing attacker takes one
+  round of shore battery fire (2 dice for a Port, 4 for a Fortress-Port, `TnwLandBattleMethods.
+  ShoreBatteryFire`) before Round 1 via the same `ApplyHits`, so its casualties already count
+  toward Round 1's total and reduce Round 1 dice. Unlike a naval Port battle (13.5), the batteries
+  fire only once - do not add them to `DiceForRound`'s defender branch. If the attacker is wiped
+  out by shore fire alone, the battle ends there (`Rounds == 0`, logged as Round 0). Terrain and an
+  Amphibious Assault are mutually exclusive (`TnwLandBattleInputRules`) since a landing crosses no
+  rough/pass/marsh line. `TnwLandBattleExactStats` enumerates every shore-fire outcome as an extra
+  weighted dimension ahead of Round 1 - see its `AccumulateRoundOne` helper before changing it.
 
 ## Tests for TNW Naval Battle
 
