@@ -488,3 +488,41 @@ The exact/Monte Carlo boundary stays at 1M evaluations, as for Land Battle.
 
 Nav now has 10 items. A single TNW landing page, or a grouped menu, is a reasonable next
 tidy-up.
+
+## 11. Amphibious Assault (rule 13.7) - implemented 2026-10-03
+
+Added to the Land Battle calculator at `/tnwbattle` as an "Amphibious landing" selector
+(Not a landing / Enemy Port / Enemy Fortress-Port), rather than a fourth page - it is the same
+Land Battle (rule 11) with one extra pre-battle step, not a distinct mechanic like Siege or Naval.
+
+**The rule, in calculator terms (13.7, via 13.5):** before Round 1, the Port's shore batteries
+fire once at the landing attacker - 2 dice for a Port, 4 for a Fortress-Port. Casualties from that
+fire count toward Round 1's casualty total and reduce the attacker's Round 1 dice, exactly like
+the pre-battle shore fire already built for naval Port battles (`TnwNavalBattleMethods.
+ShoreBatteryFire`) - the same `ApplyHits` is reused unchanged. The one place the naval pattern does
+**not** transfer: 13.5's shore batteries fire again every Round alongside the defending Fleet, but
+13.7 says the resulting land battle proceeds "without further shore battery fire" - so the
+batteries fire exactly once, and `DiceForRound` is untouched (a regression test pins this: the
+defender's dice are identical with or without a landing).
+
+**Exact stats.** `TnwLandBattleExactStats.TryCalculate` now enumerates the shore fire's own
+(sixes, fives) distribution as an extra weighted dimension ahead of Round 1 - each shore outcome
+gives the attacker a different (always smaller or equal) starting dice count for Round 1, so the
+work bound is summed across shore outcomes before the per-outcome loop runs, the same safety check
+as the existing Round-1-to-Round-2 bound. An attacker wiped out by shore fire alone never reaches
+Round 1 (`Rounds == 0`), mirroring the naval `Port_ActiveSunkByShoreFire_LosesWithoutARound` case.
+
+**Assumptions - please review, as with the other two extensions:**
+1. **Terrain and a landing are mutually exclusive.** 11.22's rough/pass/marsh bonus is about the
+   line the attacker crossed on land; a sea landing crosses none of them. The page disables and
+   clears the Terrain selector once a landing is chosen, and `TnwLandBattleInputRules` rejects the
+   combination if set programmatically.
+2. **Shore-fire kills count toward Flag Overrun (11.7).** `KillsReceived` accumulates shore-fire
+   kills the same way it accumulates Round 1/2 kills, so a landing that is mostly wiped out by
+   shore fire can still trigger Flag Overrun on the defender's side. Not stated either way by the
+   rule; reads naturally as "kills rolled against the loser" without a reason to exclude this
+   source.
+3. **13.71 (no Amphibious Assault against a Port containing an enemy Fleet) and 13.6's Attrition
+   on a forced retreat remain out of scope**, for the same reason Attrition is already out of scope
+   for ordinary Land Battle retreats (§9, assumption 5): naval control and post-battle movement are
+   full-game bookkeeping, not inputs to a single-battle calculator.

@@ -13,8 +13,9 @@ public class TnwLandBattleRulesTests
         TnwTerrain terrain = TnwTerrain.None,
         int failedEvasions = 0,
         bool defenderCannotRetreat = false,
-        bool defenderWithoutArmyGroup = false) =>
-        new(attacker, defender, terrain, failedEvasions, defenderCannotRetreat, defenderWithoutArmyGroup);
+        bool defenderWithoutArmyGroup = false,
+        TnwAmphibiousLanding amphibiousLanding = TnwAmphibiousLanding.None) =>
+        new(attacker, defender, terrain, failedEvasions, defenderCannotRetreat, defenderWithoutArmyGroup, amphibiousLanding);
 
     // ---- Dice (11.2, 11.21, 11.22, 10.2, 9.7) ----
 
@@ -257,6 +258,89 @@ public class TnwLandBattleRulesTests
         Assert.False(outcome.FlagOverrun);
     }
 
+    // ---- Amphibious Assault (13.7) ----
+
+    [Fact]
+    public void ShoreBatteryFire_ReducesRoundOneDiceAndCountsInTheRoundOneTotal()
+    {
+        TnwBattleSide side = Side(4, composition: TnwForceComposition.Minor);
+        TnwBattleSideState attacker = TnwLandBattleMethods.ShoreBatteryFire(
+            TnwLandBattleMethods.InitialState(side), sixes: 0, fives: 2);
+
+        TnwLandBattle battle = Battle(side, Side(4), amphibiousLanding: TnwAmphibiousLanding.EnemyPort);
+        Assert.Equal(4 - 2, TnwLandBattleMethods.DiceForRound(battle, isAttacker: true, attacker, round: 1));
+        Assert.Equal(2, attacker.HitsReceived);
+    }
+
+    [Fact]
+    public void DiceForRound_AmphibiousLanding_DefenderDiceAreUnaffected()
+    {
+        // Unlike a naval Port battle (13.5), the shore batteries fire only once, before Round 1 -
+        // they must never be added to the defender's own dice pool in any Round.
+        TnwLandBattle battle = Battle(Side(4), Side(4), amphibiousLanding: TnwAmphibiousLanding.EnemyFortressPort);
+        TnwLandBattle noLanding = Battle(Side(4), Side(4));
+
+        TnwBattleSideState defender = TnwLandBattleMethods.InitialState(battle.Defender);
+        Assert.Equal(
+            TnwLandBattleMethods.DiceForRound(noLanding, isAttacker: false, defender, round: 1),
+            TnwLandBattleMethods.DiceForRound(battle, isAttacker: false, defender, round: 1));
+        Assert.Equal(
+            TnwLandBattleMethods.DiceForRound(noLanding, isAttacker: false, defender, round: 2),
+            TnwLandBattleMethods.DiceForRound(battle, isAttacker: false, defender, round: 2));
+    }
+
+    [Fact]
+    public void Simulate_ShoreFireThenRoundOne_CasualtiesCarryIntoTheRoundOneVerdict()
+    {
+        // Shore fire inflicts 1 kill + 1 disrupt on a 4-Unit attacker (2 casualties already on
+        // its Round 1 total); Round 1 itself then has the attacker score 2 hits and the defender
+        // score 0 - an even 2-2 total, so it must tie into a second Round, not resolve as a
+        // Round 1 attacker win.
+        TnwBattleSideState attacker = TnwLandBattleMethods.ShoreBatteryFire(
+            TnwLandBattleMethods.InitialState(Side(4)), sixes: 1, fives: 1);
+        TnwBattleSideState defender0 = TnwLandBattleMethods.InitialState(Side(4));
+
+        TnwBattleSideState defenderAfterRound1 = TnwLandBattleMethods.ApplyHits(defender0, kills: 2, disrupts: 0);
+        TnwBattleSideState attackerAfterRound1 = TnwLandBattleMethods.ApplyHits(attacker, kills: 0, disrupts: 0);
+
+        Assert.Equal(2, attackerAfterRound1.HitsReceived);
+        Assert.Equal(2, defenderAfterRound1.HitsReceived);
+        Assert.Equal(TnwRoundVerdict.SecondRound, TnwLandBattleMethods.Verdict(attackerAfterRound1, defenderAfterRound1, round: 1));
+    }
+
+    [Fact]
+    public void ExactStats_AttackerWipedOutByShoreFire_LosesWithoutARound()
+    {
+        TnwLandBattle battle = Battle(Side(1), Side(1), amphibiousLanding: TnwAmphibiousLanding.EnemyFortressPort);
+
+        Assert.True(TnwLandBattleExactStats.TryCalculate(battle, TnwLandBattleExactStats.DefaultWorkBudget, out TnwLandBattleStats? stats));
+
+        // The lone attacking Unit dies to a shore-battery 6 on any of 4 dice: 1 - (5/6)^4.
+        Assert.InRange(stats!.Attacker.EliminatedProbability, 1 - Math.Pow(5.0 / 6, 4) - 0.000001, 1.0);
+    }
+
+    [Fact]
+    public void RollOnce_AmphibiousLanding_LogsShoreFireAsRoundZero()
+    {
+        TnwLandBattle battle = Battle(Side(6, 3), Side(5, 2), amphibiousLanding: TnwAmphibiousLanding.EnemyFortressPort);
+
+        TnwLandBattleRollResult result = TnwLandBattleMethods.RollOnce(battle);
+
+        Assert.Equal(0, result.RoundLog[0].Round);
+        Assert.Equal(4, result.RoundLog[0].DefenderDice);
+        Assert.Equal(0, result.RoundLog[0].AttackerDice);
+    }
+
+    [Fact]
+    public void IsBattleDefinitionConsistent_NoTerrainBonusForAnAmphibiousLanding()
+    {
+        TnwLandBattle battle = Battle(Side(4), Side(4), TnwTerrain.Marsh, amphibiousLanding: TnwAmphibiousLanding.EnemyPort);
+
+        Assert.False(TnwLandBattleInputRules.IsBattleDefinitionConsistent(battle, out string? error));
+        Assert.NotNull(error);
+        Assert.True(TnwLandBattleInputRules.IsBattleDefinitionConsistent(battle with { Terrain = TnwTerrain.None }, out _));
+    }
+
     // ---- Engines ----
 
     public static TheoryData<TnwLandBattle> SmallBattles() =>
@@ -265,6 +349,7 @@ public class TnwLandBattleRulesTests
         Battle(Side(4, 2, TnwForceComposition.MajorityFrench), Side(3, 1, TnwForceComposition.Minor), TnwTerrain.Pass),
         Battle(Side(6, 3), Side(6, 2), failedEvasions: 1, defenderCannotRetreat: true),
         Battle(Side(8, 4, TnwForceComposition.MajorityFrench, 1), Side(7, 3), TnwTerrain.Rough, defenderWithoutArmyGroup: true),
+        Battle(Side(5, 2), Side(4, 2), amphibiousLanding: TnwAmphibiousLanding.EnemyFortressPort),
     ];
 
     [Theory]

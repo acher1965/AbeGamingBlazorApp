@@ -41,6 +41,9 @@ The Land Battle calculator (rule 11) handles:
 - Terrain crossed by the attacker, failed evasions, a defender that cannot retreat, and defending
   Armies not formed into an Army Group
 - Two Rounds, kill/disrupt priority, rout, Overrun, Flag Overrun and the rout Resource roll
+- An optional Amphibious Assault (rule 13.7): the landing attacker takes one round of shore
+  battery fire (2 dice for a Port, 4 for a Fortress-Port) before Round 1, counting toward Round 1's
+  casualty total; unlike a naval Port battle the batteries do not fire again once the battle begins
 - Exact statistics for small and medium battles; larger battles fall back to a Monte Carlo
   estimate, and the result says which one you got
 

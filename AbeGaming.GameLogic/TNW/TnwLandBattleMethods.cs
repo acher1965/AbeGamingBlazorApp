@@ -168,13 +168,33 @@ namespace AbeGaming.GameLogic.TNW
         }
 
         /// <summary>
+        /// Pre-battle shore battery fire on an Amphibious Assault's landing attacker (13.7, via
+        /// 13.5), once, before Round 1. Its casualties count in Round 1's total and reduce the
+        /// attacker's Round 1 dice (via <see cref="ApplyHits"/>); unlike a naval Port battle, the
+        /// batteries do not fire again once the Land Battle itself begins.
+        /// </summary>
+        public static TnwBattleSideState ShoreBatteryFire(TnwBattleSideState attacker, int sixes, int fives) =>
+            ApplyHits(attacker, sixes, fives);
+
+        /// <summary>
         /// Resolves one battle with random dice. <paramref name="log"/>, when not null,
-        /// receives each Round's dice.
+        /// receives each Round's dice (Round 0 is pre-battle shore battery fire on an Amphibious
+        /// Assault's attacker, if any).
         /// </summary>
         public static TnwLandBattleOutcome Simulate(TnwLandBattle battle, Random random, List<TnwLandBattleRoundLog>? log)
         {
             TnwBattleSideState attacker = InitialState(battle.Attacker);
             TnwBattleSideState defender = InitialState(battle.Defender);
+
+            int shoreDice = battle.AmphibiousLanding.ShoreBatteryDice();
+            if (shoreDice > 0)
+            {
+                (int shoreSixes, int shoreFives) = RollSixesAndFives(random, shoreDice);
+                log?.Add(new TnwLandBattleRoundLog(0, 0, 0, 0, shoreDice, shoreSixes, shoreFives));
+                attacker = ShoreBatteryFire(attacker, shoreSixes, shoreFives);
+                if (attacker.Eliminated)
+                    return Conclude(battle, attacker, defender, rounds: 0, attackerWins: false);
+            }
 
             for (int round = 1; ; round++)
             {

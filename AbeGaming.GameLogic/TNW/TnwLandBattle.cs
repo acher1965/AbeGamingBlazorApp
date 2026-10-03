@@ -24,15 +24,21 @@ namespace AbeGaming.GameLogic.TNW
     /// <summary>
     /// Input for a Land Battle (rule 11). The attacker is the Active Formation.
     /// </summary>
-    /// <param name="Terrain">Terrain the attacker crossed; defender's first-Round bonus (11.22).</param>
+    /// <param name="Terrain">Terrain the attacker crossed; defender's first-Round bonus (11.22). Not applicable to an Amphibious Assault - a landing crosses no rough/pass/marsh line.</param>
     /// <param name="FailedEvasions">Failed defender evasion attempts: +1 attacker die each in the first Round, and the defender forfeits any terrain bonus (10.2, 11.22).</param>
     /// <param name="DefenderCannotRetreat">A defender that loses and cannot retreat is eliminated (11.42), an Overrun (11.6).</param>
     /// <param name="DefenderWithoutArmyGroup">Defending Armies not formed into an Army Group defend with a Commander Battle Rating of 0, but the printed rating still counts if routed (9.7).</param>
+    /// <param name="AmphibiousLanding">
+    /// If the attacker arrived by Amphibious Assault (13.7), the Port it landed in: its shore
+    /// batteries fire once at the attacker before Round 1, and no further times once the battle
+    /// itself begins (unlike a naval Port battle, 13.5).
+    /// </param>
     public record TnwLandBattle(
         TnwBattleSide Attacker,
         TnwBattleSide Defender,
         TnwTerrain Terrain,
         int FailedEvasions,
         bool DefenderCannotRetreat,
-        bool DefenderWithoutArmyGroup);
+        bool DefenderWithoutArmyGroup,
+        TnwAmphibiousLanding AmphibiousLanding = TnwAmphibiousLanding.None);
 }

@@ -86,6 +86,35 @@ namespace AbeGaming.BlazorApp.E2E.Tests
         }
 
         [Fact]
+        public async Task AmphibiousLanding_DisablesAndClearsTerrain()
+        {
+            using IPlaywright playwright = await Playwright.CreateAsync();
+            await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+            IPage page = await OpenPage(browser);
+            await page.SelectOptionAsync("#tnwTerrain", "Marsh");
+
+            await page.SelectOptionAsync("#tnwAmphibiousLanding", "EnemyFortressPort");
+
+            Assert.True(await page.IsDisabledAsync("#tnwTerrain"));
+            Assert.Equal("None", await page.InputValueAsync("#tnwTerrain"));
+        }
+
+        [Fact]
+        public async Task AmphibiousLanding_RollOnce_LogsShoreBatteriesAsRoundZero()
+        {
+            using IPlaywright playwright = await Playwright.CreateAsync();
+            await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+            IPage page = await OpenPage(browser);
+            await page.SelectOptionAsync("#tnwAmphibiousLanding", "EnemyFortressPort");
+
+            await page.ClickAsync("#tnwRollOnce");
+            await page.WaitForSelectorAsync("text=Single Battle Result", new PageWaitForSelectorOptions { Timeout = 10000 });
+
+            string bodyText = await page.TextContentAsync("#resultsSection") ?? string.Empty;
+            Assert.Contains("Shore batteries:", bodyText);
+        }
+
+        [Fact]
         public async Task NoPiecesOnASide_ShowsValidationError()
         {
             using IPlaywright playwright = await Playwright.CreateAsync();

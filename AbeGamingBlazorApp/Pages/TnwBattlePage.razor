@@ -11,9 +11,9 @@
         <div class="row g-2">
             <div class="col-6 col-md-4">
                 <label class="form-label form-label-sm mb-1">
-                    <InfoTip Text="Terrain the attacker crossed to enter the Duchy. The defender gets +1 (Rough), +2 (Pass) or +3 (Marsh) dice in Round 1, only if the Duchy is Friendly to it (rule 11.22).">Terrain crossed</InfoTip>
+                    <InfoTip Text="Terrain the attacker crossed to enter the Duchy. The defender gets +1 (Rough), +2 (Pass) or +3 (Marsh) dice in Round 1, only if the Duchy is Friendly to it (rule 11.22). Not available for an Amphibious Assault, which crosses no such line.">Terrain crossed</InfoTip>
                 </label>
-                <select id="tnwTerrain" class="form-select form-select-sm" @bind="Terrain">
+                <select id="tnwTerrain" class="form-select form-select-sm" @bind="Terrain" disabled="@(AmphibiousLanding != TnwAmphibiousLanding.None)">
                     @foreach (TnwTerrain option in Enum.GetValues<TnwTerrain>())
                     {
                         <option value="@option">@option</option>
@@ -25,6 +25,16 @@
                     <InfoTip Text="Defender evasion attempts that failed: +1 attacker die each in Round 1, and the defender loses any terrain bonus (rules 10.2, 11.22).">Failed evasions</InfoTip>
                 </label>
                 <input id="tnwFailedEvasions" type="number" class="form-control form-control-sm" @bind="FailedEvasions" onfocus="this.select()" min="0" max="3" />
+            </div>
+            <div class="col-6 col-md-4">
+                <label class="form-label form-label-sm mb-1">
+                    <InfoTip Text="If the attacker arrived by Amphibious Assault, the Port it landed in. Its shore batteries fire 2 dice (4 if a Fortress) once at the attacker before Round 1; unlike a naval Port battle, they do not fire again once the battle itself begins (rule 13.7).">Amphibious landing</InfoTip>
+                </label>
+                <select id="tnwAmphibiousLanding" class="form-select form-select-sm" @bind="AmphibiousLanding">
+                    <option value="@TnwAmphibiousLanding.None">Not a landing</option>
+                    <option value="@TnwAmphibiousLanding.EnemyPort">Enemy Port (2 shore dice)</option>
+                    <option value="@TnwAmphibiousLanding.EnemyFortressPort">Enemy Fortress-Port (4 shore dice)</option>
+                </select>
             </div>
         </div>
         <div class="d-flex flex-wrap gap-3 mt-2">
@@ -142,8 +152,17 @@
                     @foreach (TnwLandBattleRoundLog log in RollResult.RoundLog)
                     {
                         <div>
-                            Round @log.Round: attacker @log.AttackerDice dice -> @log.AttackerSixes six(es), @log.AttackerFives five(s);
-                            defender @log.DefenderDice dice -> @log.DefenderSixes six(es), @log.DefenderFives five(s)
+                            @if (log.Round == 0)
+                            {
+                                <span>Shore batteries: @log.DefenderDice dice -> @log.DefenderSixes six(es), @log.DefenderFives five(s)</span>
+                            }
+                            else
+                            {
+                                <span>
+                                    Round @log.Round: attacker @log.AttackerDice dice -> @log.AttackerSixes six(es), @log.AttackerFives five(s);
+                                    defender @log.DefenderDice dice -> @log.DefenderSixes six(es), @log.DefenderFives five(s)
+                                </span>
+                            }
                         </div>
                     }
                 </div>
@@ -154,6 +173,21 @@
 
 @code {
     private TnwTerrain Terrain = TnwTerrain.None;
+
+    private TnwAmphibiousLanding _amphibiousLanding = TnwAmphibiousLanding.None;
+    private TnwAmphibiousLanding AmphibiousLanding
+    {
+        get => _amphibiousLanding;
+        set
+        {
+            _amphibiousLanding = value;
+            if (_amphibiousLanding != TnwAmphibiousLanding.None)
+            {
+                // An Amphibious Assault crosses no rough/pass/marsh line (13.7).
+                Terrain = TnwTerrain.None;
+            }
+        }
+    }
 
     private int _failedEvasions;
     private int FailedEvasions
@@ -188,7 +222,8 @@
         Terrain,
         FailedEvasions,
         DefenderCannotRetreat,
-        DefenderWithoutArmyGroup);
+        DefenderWithoutArmyGroup,
+        AmphibiousLanding);
 
     private static string StatsTitle(TnwLandBattleStats stats) => stats.IsExact
         ? "📈Exact Stats"
